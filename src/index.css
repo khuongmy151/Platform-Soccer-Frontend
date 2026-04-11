@@ -1,0 +1,77 @@
+@import url("https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+@import "tailwindcss";
+@theme {
+  /* 1. ĐỊNH NGHĨA BASE (Để các biến gộp tham chiếu vào) */
+  --font-display: "Lexend", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+
+  /* 2. ĐỊNH NGHĨA TEXT GỘP (Kèm Size, Line-height và Font-family) */
+
+  /* DISPLAY */
+  --text-display-lg: 3.5rem;
+  --text-display-lg--line-height: 1.1;
+  --text-display-lg--font-family: var(--font-display);
+
+  --text-display-md: 2.5rem;
+  --text-display-md--line-height: 1.15;
+  --text-display-md--font-family: var(--font-display);
+
+  --text-display-sm: 2rem;
+  --text-display-sm--line-height: 1.2;
+  --text-display-sm--font-family: var(--font-display);
+
+  /* HEADLINE */
+  --text-headline-md: 1.75rem;
+  --text-headline-md--line-height: 1.25;
+  --text-headline-md--font-family: var(--font-display);
+
+  --text-headline-sm: 1.25rem;
+  --text-headline-sm--line-height: 1.3;
+  --text-headline-sm--font-family: var(--font-display);
+
+  /* TITLE */
+  --text-title-lg: 1.125rem;
+  --text-title-lg--line-height: 1.4;
+  --text-title-lg--font-family: var(--font-body);
+
+  --text-title-sm: 1rem;
+  --text-title-sm--line-height: 1.4;
+  --text-title-sm--font-family: var(--font-body);
+
+  /* BODY */
+  --text-body-lg: 1rem;
+  --text-body-lg--line-height: 1.5;
+  --text-body-lg--font-family: var(--font-body);
+
+  --text-body-md: 0.875rem;
+  --text-body-md--line-height: 1.5;
+  --text-body-md--font-family: var(--font-body);
+
+  /* LABEL */
+  --text-label-lg: 0.875rem;
+  --text-label-lg--line-height: 1.4;
+  --text-label-lg--font-family: var(--font-body);
+
+  --text-label-sm: 0.6875rem;
+  --text-label-sm--line-height: 1.4;
+  --text-label-sm--font-family: var(--font-body);
+  /* Core Brand Palette */
+  --color-brand-primary: #c8102e; /* Arena Red */
+  --color-brand-dark: #8b0000; /* Dark Crimson */
+  --color-brand-light: #e63950; /* Light Red */
+  --color-brand-accent: #ffb95f; /* Gold Accent */
+
+  /* Surface System */
+  --color-surface-bg: #f2f2f2; /* App Background */
+  --color-surface-white: #ffffff; /* Pure White Canvas */
+  --color-surface-card: #f8f8f8; /* Inner Card Soft */
+  --color-surface-nav: #1a1a1a; /* Dark Navigation */
+  --color-surface-panel: #0d0d0d; /* Deep Black Variant */
+
+  /* Auth & Hero Gradients */
+  --background-image-hero-gradient: linear-gradient(160deg, #1a0000, #c8102e);
+  --background-image-panel-gradient: linear-gradient(160deg, #1a0000, #8b0000);
+  --background-image-cta-gradient: linear-gradient(135deg, #ff4444, #ff8c00);
+  --background-image-player-card: linear-gradient(135deg, #c5e8e6, #f0d5c8);
+}
