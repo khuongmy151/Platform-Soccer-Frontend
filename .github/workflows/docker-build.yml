@@ -39,7 +39,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    environment: production   # thêm environment
+    environment: ${{ github.ref_name }}
     
     steps:
       - name: Setup SSH
