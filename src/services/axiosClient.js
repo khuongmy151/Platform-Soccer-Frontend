@@ -1,7 +1,7 @@
 import axios from "axios";
 // File cấu hình axios dùng chung cho toàn bộ dự án
 export const axiosClient = axios.create({
-  baseURL: "", //Đường dẫn backend tạm thời để trống
+  baseURL: "https://backend.cupzone.fun/", //Đường dẫn backend tạm thời để trống
   timeout: 10000,
   headers: {
     "Content-Type": "application/json", // Chỉ định định dạng dữ liệu gửi đi
