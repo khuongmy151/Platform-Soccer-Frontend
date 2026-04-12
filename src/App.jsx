@@ -10,6 +10,8 @@ import TeamDetail from "./pages/TeamDetail";
 import PlayerManagement from "./pages/PlayerManagement";
 import TournamentManagement from "./pages/TournamentManagement";
 import MatchDetail from "./pages/MatchDetail";
+import MatchManagement from "./pages/MatchManagement";
+import CreateMatch from "./pages/CreateMatch";
 import TournamentDetail from "./pages/TournamentDetail";
 import ProtectedRoute from "./pages/ProtectedRoute";
 
@@ -32,6 +34,8 @@ function App() {
             element={<TournamentDetail />}
           />
           <Route path="players" element={<PlayerManagement />} />
+          <Route path="matches" element={<MatchManagement />} />
+          <Route path="match/create" element={<CreateMatch />} />
           <Route path="match/:matchId" element={<MatchDetail />} />
 
           {/* PRIVATE: Chỉ Organizer có Token mới vào được */}
