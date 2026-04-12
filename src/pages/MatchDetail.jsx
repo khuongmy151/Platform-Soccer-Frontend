@@ -67,7 +67,7 @@ function StatBox({ label, value }) {
 export default function MatchPage() {
   const { matchId } = useParams()
   const navigate = useNavigate()
-  const [loading, setLoading] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [finished, setFinished] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
 
@@ -88,7 +88,6 @@ export default function MatchPage() {
     const fetchMatchDetails = async () => {
       if (!matchId) return
       try {
-        setLoading(true)
         const response = await matchService.getMatchDetail({
           url: `/matches/${matchId}`
         })
@@ -103,54 +102,39 @@ export default function MatchPage() {
         }
       } catch (error) {
         console.error("Lỗi lấy dữ liệu từ Backend:", error)
-      } finally {
-        setLoading(false)
       }
     }
     fetchMatchDetails()
   }, [matchId])
 
 
-  const triggerEventApi = async (eventType, newValue) => {
-    try {
-      await matchService.submitMatchEvent({
-        url: `/matches/${matchId}/events`,
-        data: {
-          type: eventType,
-          value: newValue
-        }
-      })
-    } catch (e) {
-      console.error("Lỗi gửi sự kiện cho Backend:", e)
-    }
-  }
 
   const handleFinish = async () => {
     try {
+      setSubmitting(true)
 
       await matchService.updateMatchStatus({
         url: `/matches/${matchId}/status`,
         data: { status: 'FINISHED' }
       })
 
-
       await matchService.submitMatchResult({
         url: `/matches/${matchId}/result`,
         data: { homeScore, awayScore }
       })
-
 
       await matchService.submitMatchStats({
         url: `/matches/${matchId}/stats`,
         data: { homeYellow, awayYellow, homeRed, awayRed }
       })
 
-
       setShowConfirm(false)
       setFinished(true)
     } catch (error) {
       console.error("Lỗi khi kết thúc trận đấu", error)
       alert("Kết nối đến Backend bị lỗi! \nVui lòng bật Server Backend trên port 8080 hoặc sửa lại link trong file.")
+    } finally {
+      setSubmitting(false)
     }
   }
 
