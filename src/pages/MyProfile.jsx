@@ -69,9 +69,10 @@ useEffect(() => {
       await updateProfileAPI(dataToSend, token);
       alert("Lưu thông tin thành công!");
       
+// Sửa thành thế này:
     } catch (error) {
-      alert("Lỗi khi lưu thông tin! Hãy check console.");
-      console.error("Chi tiết lỗi:", error);
+      console.error(error); // <--- THÊM DÒNG NÀY ĐỂ XÀI BIẾN ERROR
+      alert("Có lỗi xảy ra!");
     }
   };
 
@@ -100,13 +101,15 @@ useEffect(() => {
     if (!isConfirm) return;
 
     try {
-      const token = localStorage.getItem("accessToken");
+      // const token = localStorage.getItem("accessToken");
       
       // TODO: Khi có Backend, bật các dòng dưới lên
       // await deleteAccountAPI(token);
       // localStorage.removeItem("accessToken");
       // navigate("/login");
+      console.log("Chức năng xóa tài khoản đang chờ Backend");
     } catch (error) {
+      console.error(error);
       alert("Lỗi xóa tài khoản!");
     }
   };
