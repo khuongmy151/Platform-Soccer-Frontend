@@ -31,13 +31,14 @@ function App() {
             path="tournament/:tournamentId"
             element={<TournamentDetail />}
           />
+          <Route path="players" element={<PlayerManagement />} />
           <Route path="match/:matchId" element={<MatchDetail />} />
 
           {/* PRIVATE: Chỉ Organizer có Token mới vào được */}
           <Route element={<ProtectedRoute />}>
             <Route path="my-profile" element={<MyProfile />} />
             <Route path="team" element={<TeamManagement />} />
-            <Route path="player" element={<PlayerManagement />} />
+            
             <Route path="tournament" element={<TournamentManagement />} />
           </Route>
         </Route>
