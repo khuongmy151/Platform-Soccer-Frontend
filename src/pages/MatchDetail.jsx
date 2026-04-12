@@ -67,7 +67,7 @@ function StatBox({ label, value }) {
 export default function MatchPage() {
   const { matchId } = useParams()
   const navigate = useNavigate()
-  const [submitting, setSubmitting] = useState(false)
+
   const [finished, setFinished] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
 
@@ -111,8 +111,6 @@ export default function MatchPage() {
 
   const handleFinish = async () => {
     try {
-      setSubmitting(true)
-
       await matchService.updateMatchStatus({
         url: `/matches/${matchId}/status`,
         data: { status: 'FINISHED' }
@@ -133,8 +131,6 @@ export default function MatchPage() {
     } catch (error) {
       console.error("Lỗi khi kết thúc trận đấu", error)
       alert("Kết nối đến Backend bị lỗi! \nVui lòng bật Server Backend trên port 8080 hoặc sửa lại link trong file.")
-    } finally {
-      setSubmitting(false)
     }
   }
 
