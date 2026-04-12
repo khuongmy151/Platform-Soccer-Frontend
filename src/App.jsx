@@ -38,7 +38,7 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="my-profile" element={<MyProfile />} />
             <Route path="team" element={<TeamManagement />} />
-            
+            <Route path="player" element={<PlayerManagement />} />
             <Route path="tournament" element={<TournamentManagement />} />
           </Route>
         </Route>
