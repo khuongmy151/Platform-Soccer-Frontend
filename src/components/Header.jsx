@@ -1,7 +1,7 @@
 import { Link, NavLink } from "react-router-dom";
 import { IoNotificationsOutline, IoSettingsOutline } from "react-icons/io5";
 import logoSvg from "../assets/logo.svg";
-
+import { useSelector } from "react-redux";
 const navItems = [
   { to: "/", end: true, label: "Dashboard" },
   { to: "/players", label: "Players" },
@@ -18,6 +18,7 @@ const navClass = ({ isActive }) =>
   ].join(" ");
 
 function Header() {
+  const { profileData } = useSelector((state) => state.user);
   return (
     <header className="flex shrink-0 items-center justify-between gap-6 border-b border-header-line bg-surface-white px-6 py-4 shadow-[0_1px_3px_rgba(15,23,42,0.06)] sm:px-8">
       <div className="flex min-w-0 flex-1 items-center gap-6 lg:gap-10">
@@ -69,14 +70,21 @@ function Header() {
         >
           <IoSettingsOutline className="size-6" aria-hidden />
         </button>
-        <img
-          
-          alt="Ảnh đại diện"
-          className="ml-1 size-10 shrink-0 rounded-full object-cover sm:size-11"
-          width={44}
-          height={44}
-          referrerPolicy="no-referrer"
-        />
+      <Link 
+          to="/my-profile" 
+          className="ml-1 shrink-0 rounded-full hover:ring-2 hover:ring-brand-primary transition-all"
+          aria-label="Trang cá nhân"
+        >
+          <img
+            src={profileData?.avatarUrl || "https://i.pravatar.cc/150?img=11"}
+            alt="Ảnh đại diện"
+            className="size-10 rounded-full object-cover sm:size-11"
+            width={44}
+            height={44}
+            referrerPolicy="no-referrer"
+            // Nhớ thêm src={...} vào đây để hiện ảnh nhé
+          />
+        </Link>
       </div>
     </header>
   );
