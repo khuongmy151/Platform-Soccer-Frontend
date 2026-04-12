@@ -63,7 +63,7 @@ export const uploadAvatarAPI = async (imageFile, token) => {
 };
 
 // Hàm giả định cho Delete Account để tránh lỗi import
-export const deleteAccountAPI = async (token) => {
+export const deleteAccountAPI = async () => { // <--- Đã xóa chữ token ở đây
   console.warn("Endpoint xóa tài khoản chưa được định nghĩa rõ ràng trong ảnh.");
   return { message: "Chức năng đang chờ backend" };
 };

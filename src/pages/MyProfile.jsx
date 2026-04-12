@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { fetchUserProfile, updateField } from "../stores/features/userSlice";
-import { updateProfileAPI, changePasswordAPI } from "../services/userService";
+import { updateProfileAPI } from "../services/userService";
 
 export const MyProfile = () => {
   const dispatch = useDispatch();
@@ -81,11 +81,12 @@ useEffect(() => {
   const handleChangePassword = async () => {
     if (password === "············" || password === "") return alert("Vui lòng nhập mật khẩu mới!");
     try {
-      const token = localStorage.getItem("accessToken");
+      // const token = localStorage.getItem("accessToken");
       
       // TODO: Khi có Backend, bật 2 dòng dưới lên
       // await changePasswordAPI({ newPassword: password }, token);
       // alert("Đổi mật khẩu thành công!");
+      console.log("Chức năng đổi mật khẩu đang chờ Backend");
     } catch (error) {
       alert("Lỗi đổi mật khẩu!");
     }
