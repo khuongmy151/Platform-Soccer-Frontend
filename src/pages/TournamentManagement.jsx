@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { tournamentService } from "../services/tournamentService";
 import { setTournaments } from "../stores/features/tournamentSlice";
@@ -28,9 +28,25 @@ const TournamentManagement = () => {
     status: "UPCOMING",
   });
 
+  // Define fetchData before useEffect
+  const fetchData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      await tournamentService.getAllTournament({
+        url: "/tournaments",
+        dispatch,
+        func: setTournaments,
+      });
+    } catch (error) {
+      console.error("Fetch data failed:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [dispatch]);
+
   useEffect(() => {
     fetchData();
-  }, [dispatch]);
+  }, [dispatch, fetchData]);
 
   // Update selectedTournament when tournaments change
   useEffect(() => {
@@ -45,21 +61,6 @@ const TournamentManagement = () => {
       }
     }
   }, [tournaments, id]);
-
-  const fetchData = async () => {
-    try {
-      setIsLoading(true);
-      await tournamentService.getAllTournament({
-        url: "/tournaments",
-        dispatch,
-        func: setTournaments,
-      });
-    } catch (error) {
-      console.error("Fetch data failed:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";

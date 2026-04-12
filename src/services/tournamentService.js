@@ -16,8 +16,10 @@ export const tournamentService = {
   },
 
   // Lấy chi tiết 1 giải đấu theo ID (dùng list API rồi filter vì backend không có GET /tournaments/:id)
-  getTournamentById: async (_id) => {
-    return await axiosClient.get("/tournaments");
+  getTournamentById: async (id) => {
+    const response = await axiosClient.get("/tournaments");
+    const tournaments = Array.isArray(response) ? response : (response.data || []);
+    return tournaments.find(t => String(t.id) === String(id)) || null;
   },
 
   // Tạo giải đấu mới
