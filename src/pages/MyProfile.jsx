@@ -89,6 +89,7 @@ useEffect(() => {
       // alert("Đổi mật khẩu thành công!");
       console.log("Chức năng đổi mật khẩu đang chờ Backend");
     } catch (error) {
+      console.error(error);
       alert("Lỗi đổi mật khẩu!");
     }
   };
