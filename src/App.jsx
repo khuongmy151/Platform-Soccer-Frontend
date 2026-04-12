@@ -26,7 +26,7 @@ function App() {
         <Route path="/" element={<MainLayout />}>
           {/* PUBLIC: Ai cũng xem được */}
           <Route index element={<DashboardPublic />} />
-          <Route path="team/:teamId" element={<TeamDetail />} />
+          <Route path="teams/:teamId" element={<TeamDetail />} />
           <Route
             path="tournament/:tournamentId"
             element={<TournamentDetail />}
@@ -37,7 +37,7 @@ function App() {
           {/* PRIVATE: Chỉ Organizer có Token mới vào được */}
           <Route element={<ProtectedRoute />}>
             <Route path="my-profile" element={<MyProfile />} />
-            <Route path="team" element={<TeamManagement />} />
+            <Route path="teams" element={<TeamManagement />} />
             <Route path="player" element={<PlayerManagement />} />
             <Route path="tournament" element={<TournamentManagement />} />
           </Route>

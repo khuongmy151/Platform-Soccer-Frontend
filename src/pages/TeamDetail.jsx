@@ -31,7 +31,7 @@ const TeamDetail = () => {
             <div className="w-[9%] h-1 bg-cta-gradient"></div>
           </div>
           <button
-            onClick={() => navigate("/team")}
+            onClick={() => navigate("/teams")}
             className="w-[10%] py-2 bg-surface-nav text-body-lg text-surface-white rounded-[12px] hover:cursor-pointer hover:scale-105 transition-transform duration-300"
           >
             BACK

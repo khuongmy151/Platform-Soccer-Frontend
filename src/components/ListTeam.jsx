@@ -81,7 +81,7 @@ const ListTeam = ({ data }) => {
                 {/* ACTIONS */}
                 <td className="px-4 py-6">
                   <div className="flex items-center justify-center space-x-4">
-                    <Link to={`/team/${value.id}`}>
+                    <Link to={`/teams/${value.id}`}>
                       <FaEye className="w-5 h-5 hover:cursor-pointer hover:scale-105 transition-transform duration-300" />
                     </Link>
                     <MdEdit
