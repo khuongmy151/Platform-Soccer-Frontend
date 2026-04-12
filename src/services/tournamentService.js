@@ -16,7 +16,7 @@ export const tournamentService = {
   },
 
   // Lấy chi tiết 1 giải đấu theo ID (dùng list API rồi filter vì backend không có GET /tournaments/:id)
-  getTournamentById: async (id) => {
+  getTournamentById: async (_id) => {
     return await axiosClient.get("/tournaments");
   },
 

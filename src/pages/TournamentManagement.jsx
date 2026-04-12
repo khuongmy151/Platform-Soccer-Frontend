@@ -1,13 +1,12 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { tournamentService } from "../services/tournamentService";
 import { setTournaments } from "../stores/features/tournamentSlice";
-import { Upload, Calendar as CalendarIcon } from "lucide-react";
+import { Upload } from "lucide-react";
 
 const TournamentManagement = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const dispatch = useDispatch();
   const tournaments = useSelector((state) => state.tournaments.items);
   const [selectedTournament, setSelectedTournament] = useState(null);
