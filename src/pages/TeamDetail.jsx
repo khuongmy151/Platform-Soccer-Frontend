@@ -1,27 +1,23 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { MdEdit, MdDelete, MdGroup } from "react-icons/md";
 import { IoIosPersonAdd } from "react-icons/io";
-import { useEffect, useState } from "react";
 import { teamService } from "../services/teamService";
 import { players } from "../mock_data";
+import { deleteTeam } from "../stores/features/teamSlice";
 
 const TeamDetail = () => {
   const navigate = useNavigate();
   const { teamId } = useParams();
   const [team, setTeam] = useState(null);
+
   useEffect(() => {
     teamService.getTeamById({ url: `/teams/${teamId}`, setData: setTeam });
   }, [teamId]);
 
-  const handleUpdateTeam = (id) => {
-    alert(id);
-  };
-  const handleDeleteTeam = (id) => {
-    alert(id);
-  };
   return (
     <>
-      <div className="flex flex-col min-h-screen bg-surface-bg">
+      <div className="flex flex-col py-6 min-h-screen bg-surface-bg">
         {/* TOP TITLE */}
         <div className="flex items-center justify-between w-[90%] h-[60px] mx-auto my-8">
           <div className="w-[90%]">
@@ -39,7 +35,7 @@ const TeamDetail = () => {
         </div>
         <div className="w-[90%] mx-auto overflow-hidden rounded-[12px]">
           <div className="flex items-center justify-evenly h-[185px] bg-surface-white">
-            <div className="flex items-center w-[60%] h-[120px]">
+            <div className="flex items-center w-[65%] h-[120px]">
               <img
                 className="rounded-[12px]"
                 src={team?.logo_url}
@@ -54,32 +50,27 @@ const TeamDetail = () => {
                 <p>{team?.description}</p>
               </div>
             </div>
-            <div className="flex flex-col items-end justify-between w-[30%] h-[76px]">
-              <button
-                onClick={() => handleUpdateTeam(team?.id)}
-                className="flex items-center gap-2 w-[60%] h-[42%] px-2 border border-surface-bg rounded-[8px] hover:cursor-pointer hover:scale-105 transition-transform duration-300"
-              >
-                <MdEdit className="w-5 h-5 cursor-pointer" />
-                <p>EDIT TEAM</p>
-              </button>
-              <button
-                onClick={() => handleDeleteTeam(team?.id)}
-                className="flex items-center gap-2 w-[60%] h-[42%] px-2 border border-surface-bg rounded-[8px] hover:cursor-pointer hover:scale-105 transition-transform duration-300"
-              >
-                <MdDelete className="w-5 h-5 cursor-pointer" />
-                <p>DELETE TEAM</p>
-              </button>
+            <div className="flex items-end justify-between py-4 w-[30%] h-full">
+              {team?.kit_url?.map((value, index) => {
+                return (
+                  <img
+                    className="w-[50%] h-full object-contain"
+                    key={index}
+                    src={value}
+                  />
+                );
+              })}
             </div>
           </div>
           <div className="bg-surface-bg">
             <div className="flex w-[94%] h-[35px] mx-auto mt-8 ">
-              <div className="flex w-[85%] items-center gap-1">
+              <div className="flex w-[82%] items-center gap-1">
                 <MdGroup className="w-[24px] text-brand-primary" />
                 <p className="text-body-lg text-surface-nav font-bold">
                   PLAYER
                 </p>
               </div>
-              <button className="flex items-center gap-1 w-[15%] px-2 bg-surface-white border border-surface-bg rounded-[9999px] hover:cursor-pointer hover:scale-105 transition-transform duration-300">
+              <button className="flex items-center gap-1 w-[18%] px-2 bg-surface-white border border-surface-bg rounded-[9999px] hover:cursor-pointer hover:scale-105 transition-transform duration-300">
                 <IoIosPersonAdd className="w-[24px] text-surface-nav" />
                 <p>ADD PLAYER</p>
               </button>
@@ -90,7 +81,7 @@ const TeamDetail = () => {
               return (
                 <li
                   key={index}
-                  className="flex items-center justify-evenly w-[32%] h-[88px]  bg-surface-white border-s-3 border-s-surface-nav rounded-[6px] hover:border-s-brand-primary hover:cursor-pointer hover:scale-y-105 transition-transform duration-300"
+                  className="flex items-center gap-2 w-[18%] h-[88px]  bg-surface-white border-s-3 border-s-surface-nav rounded-[6px] hover:border-s-brand-primary hover:cursor-pointer hover:scale-y-105 transition-transform duration-300"
                 >
                   <img
                     className="rounded-[9999px]"

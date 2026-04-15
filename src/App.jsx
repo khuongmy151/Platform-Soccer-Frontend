@@ -5,14 +5,14 @@ import Welcome from "./pages/Welcome";
 import MainLayout from "./pages/MainLayout";
 import DashboardPublic from "./pages/DashboardPublic";
 import MyProfile from "./pages/MyProfile";
+import PlayerManagement from "./pages/PlayerManagement";
+import MemberDetail from "./pages/MemberDetail";
 import TeamManagement from "./pages/TeamManagement";
 import TeamDetail from "./pages/TeamDetail";
-import PlayerManagement from "./pages/PlayerManagement";
-
-import TournamentManagement from "./pages/TournamentManagement";
-import MatchDetail from "./pages/MatchDetail";
 import MatchManagement from "./pages/MatchManagement";
+import MatchDetail from "./pages/MatchDetail";
 import CreateMatch from "./pages/CreateMatch";
+import TournamentManagement from "./pages/TournamentManagement";
 import TournamentDetail from "./pages/TournamentDetail";
 import ProtectedRoute from "./pages/ProtectedRoute";
 
@@ -29,23 +29,22 @@ function App() {
         <Route path="/" element={<MainLayout />}>
           {/* PUBLIC: Ai cũng xem được */}
           <Route index element={<DashboardPublic />} />
+          <Route path="members/:memberId" element={<MemberDetail />} />
           <Route path="teams/:teamId" element={<TeamDetail />} />
           <Route
             path="tournament/:tournamentId"
             element={<TournamentDetail />}
           />
-          <Route path="players" element={<PlayerManagement />} />
-          <Route path="matches" element={<MatchManagement />} />
-          <Route path="match/create" element={<CreateMatch />} />
-          <Route path="match/:matchId" element={<MatchDetail />} />
-
-          <Route path="tournaments" element={<TournamentManagement />} />
 
           {/* PRIVATE: Chỉ Organizer có Token mới vào được */}
           <Route element={<ProtectedRoute />}>
             <Route path="my-profile" element={<MyProfile />} />
+            <Route path="players" element={<PlayerManagement />} />
             <Route path="teams" element={<TeamManagement />} />
-            <Route path="player" element={<PlayerManagement />} />
+            <Route path="matches" element={<MatchManagement />} />
+            <Route path="match/create" element={<CreateMatch />} />
+            <Route path="match/:matchId" element={<MatchDetail />} />
+            <Route path="tournaments" element={<TournamentManagement />} />
           </Route>
         </Route>
       </Routes>

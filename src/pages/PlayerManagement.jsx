@@ -234,9 +234,15 @@ const PlayerManagement = () => {
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity">
           <div className="w-full max-w-md transform self-center rounded-2xl bg-white p-6 shadow-2xl transition-all">
-            <h3 className="text-title-lg font-extrabold text-gray-900">Remove</h3>
+            <h3 className="text-title-lg font-extrabold text-gray-900">
+              Remove
+            </h3>
             <p className="mt-2 text-body-md text-gray-600 leading-relaxed">
-              Are you sure you want to delete the player <span className="font-bold text-[var(--color-brand-accent)]">{selectedPlayer?.name || "this"}</span> from the list? This action cannot be undone.
+              Are you sure you want to delete the player{" "}
+              <span className="font-bold text-[var(--color-brand-accent)]">
+                {selectedPlayer?.name || "this"}
+              </span>{" "}
+              from the list? This action cannot be undone.
             </p>
             <div className="mt-8 flex gap-3">
               <button
@@ -395,7 +401,14 @@ const PlayerForm = ({
 };
 
 // Input tái sử dụng trong form
-const FormField = ({ label, value, onChange, error, type = "text", placeholder }) => (
+const FormField = ({
+  label,
+  value,
+  onChange,
+  error,
+  type = "text",
+  placeholder,
+}) => (
   <div>
     <label className="mb-2 block text-label-sm font-semibold uppercase tracking-wider text-gray-500">
       {label}
