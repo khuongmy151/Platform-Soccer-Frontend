@@ -1,10 +1,8 @@
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { MdEdit, MdDelete, MdGroup } from "react-icons/md";
 import { IoIosPersonAdd } from "react-icons/io";
 import { teamService } from "../services/teamService";
 import { players } from "../mock_data";
-import { deleteTeam } from "../stores/features/teamSlice";
 
 const TeamDetail = () => {
   const navigate = useNavigate();
