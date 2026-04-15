@@ -17,11 +17,8 @@ const TeamManagement = () => {
   const [searchParams] = useSearchParams();
   const params = new URLSearchParams(searchParams);
   const key = searchParams.get("key");
-  const teamId = searchParams.get("teamId");
-  const [teamWithId, setTeamWithId] = useState(null);
   const [inputValue, setInputValue] = useState(key || "");
   const [isLoading, setIsLoading] = useState(true);
-  const [isEdit, setIsEdit] = useState(false);
   const formDialog = useRef();
 
   // GetAllTeam
@@ -51,19 +48,6 @@ const TeamManagement = () => {
     return teams?.items;
   }, [key, teams]);
 
-  // Set dữ liệu và hiện form Popup
-  useEffect(() => {
-    if (teamId) {
-      setTeamWithId(teams?.items?.find((value) => value.id == teamId));
-      setIsEdit(true);
-      formDialog.current.showModal();
-    } else {
-      setTeamWithId(null);
-      setIsEdit(false);
-      formDialog.current.close();
-    }
-  }, [teamId, teams]);
-
   // Hàm tìm kiếm team theo tên
   const handleSearch = () => {
     if (inputValue !== "") {
@@ -91,6 +75,7 @@ const TeamManagement = () => {
     if (window.confirm("Bạn có chắc chắn muốn xóa?")) {
       teamService.deleteTeam({ id, dispatch, func: deleteTeam });
     }
+    alert("Xóa thành công");
   };
 
   return (
@@ -163,7 +148,7 @@ const TeamManagement = () => {
           handleDeleteTeam={handleDeleteTeam}
         />
         {/* MODAL FORM */}
-        <FormTeam ref={formDialog} isEdit={isEdit} data={teamWithId} />
+        <FormTeam ref={formDialog} />
       </div>
     </>
   );

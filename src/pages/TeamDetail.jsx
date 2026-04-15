@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { IoIosPersonAdd } from "react-icons/io";
 import { teamService } from "../services/teamService";
 import { players } from "../mock_data";
+import { MdGroup } from "react-icons/md";
 
 const TeamDetail = () => {
   const navigate = useNavigate();
