@@ -9,7 +9,7 @@ export const axiosClient = axios.create({
 });
 axiosClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
     // Nếu có token thì đính kèm request gửi về server
     config.headers.Authorization = `Bearer ${token}`;
     return config;

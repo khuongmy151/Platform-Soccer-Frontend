@@ -2,13 +2,32 @@ import { axiosClient } from "../services/axiosClient";
 export const teamService = {
   getAllTeam: async ({ url, params, dispatch, func }) => {
     const result = await axiosClient.get(`${url}`, { params });
-    console.log(result.data);
-    dispatch(func(result.data || []));
-    return result;
+    const data = result?.data || result;
+    console.log(data);
+    dispatch(func(data || []));
+    return data;
   },
   getTeamById: async ({ url, setData }) => {
-    const result = await axiosClient.get(`${url}`);
-    setData(result.data || null);
-    return result;
+    try {
+      const result = await axiosClient.get(`${url}`);
+      setData(result.data || null);
+      return result;
+    } catch {
+      console.log("Lỗi mạng");
+    }
+  },
+  deleteTeam: ({ id, dispatch, func }) => {
+    dispatch(func(id));
+  },
+  updateTeam: ({ team, dispatch, func }) => {
+    dispatch(func(team));
+  },
+  createTeam: async ({ url, data, dispatch, func }) => {
+    const result = await axiosClient.post(`${url}`, data);
+    const payload = result?.data || result;
+    if (dispatch && func) {
+      dispatch(func(payload));
+    }
+    return payload;
   },
 };
