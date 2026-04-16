@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Welcome from "./pages/Welcome";
@@ -16,8 +17,24 @@ import CreateMatch from "./pages/CreateMatch";
 import TournamentManagement from "./pages/TournamentManagement";
 import TournamentDetail from "./pages/TournamentDetail";
 import ProtectedRoute from "./pages/ProtectedRoute";
+import { useEffect } from "react";
+import { getMe } from "./services/userService";
+import { setMe } from "./stores/features/meSlice";
+import { setIsLogin } from "./stores/features/authSlice";
 
 function App() {
+  const dispatch = useDispatch();
+  useEffect(() => {
+    const fetchGetMe = async () => {
+      try {
+        await getMe({ url: "/users", dispatch, func: setMe });
+        dispatch(setIsLogin(true));
+      } catch (error) {
+        console.log("Có lỗi xảy ra", error);
+      }
+    };
+    fetchGetMe();
+  });
   return (
     <>
       <Routes>

@@ -1,3 +1,4 @@
+import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react"; // Thêm useState
 import { Link, NavLink } from "react-router-dom";
 import {
@@ -7,7 +8,7 @@ import {
   IoCloseOutline,
 } from "react-icons/io5"; // Thêm icon menu
 import logoSvg from "../assets/logo.svg";
-import { useSelector } from "react-redux";
+import { setIsLogin } from "../stores/features/authSlice";
 
 const navItems = [
   { to: "/", end: true, label: "Dashboard" },
@@ -25,7 +26,9 @@ const navClass = ({ isActive }) =>
   ].join(" ");
 
 function Header() {
-  const { profileData } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
+  const isLogin = useSelector((state) => state.auth.isLogin);
+  const me = useSelector((state) => state.me.item);
   const [isMenuOpen, setIsMenuOpen] = useState(false); // State quản lý menu mobile
 
   return (
@@ -77,16 +80,69 @@ function Header() {
           <IoNotificationsOutline className="size-6" />
         </button>
 
-        <Link
-          to="/my-profile"
-          className="shrink-0 rounded-full ring-2 ring-pink-100 hover:ring-brand-primary transition-all p-0.5"
-        >
-          <img
-            src={profileData?.avatarUrl || "https://i.pravatar.cc/150?img=11"}
-            alt="Avatar"
-            className="size-9 rounded-full object-cover sm:size-11"
-          />
-        </Link>
+        {isLogin ? (
+          <div className="relative">
+            {/* Avatar - Bấm để toggle menu */}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="shrink-0 rounded-full ring-2 ring-pink-100 hover:ring-[#ff4444] transition-all p-0.5 block focus:outline-none"
+            >
+              <img
+                src={
+                  me?.avatarUrl ||
+                  "https://img.icons8.com/nolan/1200/user-default.jpg"
+                }
+                alt="Avatar"
+                className="size-9 rounded-full object-cover sm:size-11"
+              />
+            </button>
+
+            {/* Dropdown Menu */}
+            {isMenuOpen && (
+              <>
+                {/* Lớp phủ để bấm ra ngoài là đóng menu */}
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setIsMenuOpen(false)}
+                ></div>
+
+                <div className="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-20">
+                  <Link
+                    to="/my-profile"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#ff4444] transition-colors"
+                  >
+                    My Profile
+                  </Link>
+                  <button
+                    onClick={() => {
+                      // Xử lý Logout ở đây (vd: dispatch action logout)
+                      setIsMenuOpen(false);
+                      localStorage.removeItem("accessToken");
+                      localStorage.removeItem("userEmail"); // Xóa luôn email khi đăng xuất
+                      dispatch(setIsLogin(false));
+                      alert("Đăng xuất thành công");
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors border-t border-gray-50"
+                  >
+                    Logout
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <Link to="/login">
+            <button
+              className="px-6 py-2 rounded-full font-bold text-white shadow-md hover:opacity-90 active:scale-95 transition-all"
+              style={{
+                backgroundImage: "linear-gradient(135deg, #ff4444, #ff8c00)",
+              }}
+            >
+              Login
+            </button>
+          </Link>
+        )}
       </div>
 
       {/* MOBILE MENU DROPDOWN */}
