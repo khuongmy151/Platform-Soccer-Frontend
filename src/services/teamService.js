@@ -22,4 +22,12 @@ export const teamService = {
   updateTeam: ({ team, dispatch, func }) => {
     dispatch(func(team));
   },
+  createTeam: async ({ url, data, dispatch, func }) => {
+    const result = await axiosClient.post(`${url}`, data);
+    const payload = result?.data || result;
+    if (dispatch && func) {
+      dispatch(func(payload));
+    }
+    return payload;
+  },
 };

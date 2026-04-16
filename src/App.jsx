@@ -9,6 +9,7 @@ import PlayerManagement from "./pages/PlayerManagement";
 import MemberDetail from "./pages/MemberDetail";
 import TeamManagement from "./pages/TeamManagement";
 import TeamDetail from "./pages/TeamDetail";
+import CreateTeam from "./pages/CreateTeam";
 import MatchManagement from "./pages/MatchManagement";
 import MatchDetail from "./pages/MatchDetail";
 import CreateMatch from "./pages/CreateMatch";
@@ -41,6 +42,7 @@ function App() {
             <Route path="my-profile" element={<MyProfile />} />
             <Route path="players" element={<PlayerManagement />} />
             <Route path="teams" element={<TeamManagement />} />
+            <Route path="teams/create" element={<CreateTeam />} />
             <Route path="matches" element={<MatchManagement />} />
             <Route path="match/create" element={<CreateMatch />} />
             <Route path="match/:matchId" element={<MatchDetail />} />

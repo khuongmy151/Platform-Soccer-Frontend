@@ -59,7 +59,7 @@ const TeamManagement = () => {
   };
 
   const handleCreateTeam = () => {
-    handleOpenFormDialog(null);
+    navigate("/teams/create");
   };
 
   const handleOpenFormDialog = (id) => {

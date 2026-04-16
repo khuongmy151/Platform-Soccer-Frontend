@@ -10,6 +10,9 @@ export const teamSlice = createSlice({
     setTeams: (state, action) => {
       state.items = action.payload;
     },
+    addTeam: (state, action) => {
+      state.items.unshift(action.payload);
+    },
     deleteTeam: (state, action) => {
       state.items = state.items.filter((value) => value.id !== action.payload);
     },
@@ -21,4 +24,4 @@ export const teamSlice = createSlice({
     },
   },
 });
-export const { setTeams, deleteTeam, updateTeam } = teamSlice.actions;
+export const { setTeams, addTeam, deleteTeam, updateTeam } = teamSlice.actions;
