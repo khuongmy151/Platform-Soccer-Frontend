@@ -15,7 +15,7 @@ export const MyProfile = () => {
     me?.avatarUrl || "https://img.icons8.com/nolan/1200/user-default.jpg"
   );
   const [showPassword] = useState(false);
-  const [password, setPassword] = useState("············");
+  const [password] = useState("············");
   const fileRef = useRef();
 
   useEffect(() => {
