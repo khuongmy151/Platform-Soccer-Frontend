@@ -11,6 +11,7 @@ import {
   IoLockClosedOutline,
 } from "react-icons/io5";
 import { setIsLogin } from "../stores/features/authSlice";
+import { toast } from "react-toastify";
 
 export const Login = () => {
   const dispatch = useDispatch();
@@ -33,8 +34,10 @@ export const Login = () => {
         localStorage.setItem("accessToken", token);
         localStorage.setItem("userEmail", formData.email);
         dispatch(setIsLogin(true));
-        alert("Đăng nhập thành công!");
-        navigate("/");
+        toast.success("Đăng nhập thành công");
+        setTimeout(() => {
+          navigate("/");
+        }, 1000);
       }
     } catch (error) {
       alert(error.response?.data?.message || "Lỗi đăng nhập!");

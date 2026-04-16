@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react"; // Thêm useState
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import {
   IoNotificationsOutline,
   IoSettingsOutline,
@@ -9,13 +9,7 @@ import {
 } from "react-icons/io5"; // Thêm icon menu
 import logoSvg from "../assets/logo.svg";
 import { setIsLogin } from "../stores/features/authSlice";
-
-const navItems = [
-  { to: "/", end: true, label: "Dashboard" },
-  { to: "/players", label: "Player" },
-  { to: "/teams", label: "Team" },
-  { to: "/tournaments", label: "Tournament" },
-];
+import { toast } from "react-toastify";
 
 const navClass = ({ isActive }) =>
   [
@@ -26,10 +20,22 @@ const navClass = ({ isActive }) =>
   ].join(" ");
 
 function Header() {
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const isLogin = useSelector((state) => state.auth.isLogin);
   const me = useSelector((state) => state.me.item);
   const [isMenuOpen, setIsMenuOpen] = useState(false); // State quản lý menu mobile
+
+  const handleLogout = () => {
+    setIsMenuOpen(false);
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("userEmail"); // Xóa luôn email khi đăng xuất
+    dispatch(setIsLogin(false));
+    toast.success("Đăng xuất thành công");
+    setTimeout(() => {
+      navigate("/");
+    }, 1000);
+  };
 
   return (
     <header className="sticky top-0 z-50 flex shrink-0 items-center justify-between gap-6 border-b border-header-line bg-surface-white px-4 py-3 shadow-[0_1px_3px_rgba(15,23,42,0.06)] sm:px-8 sm:py-4">
@@ -63,14 +69,22 @@ function Header() {
             </p>
           </div>
         </Link>
-
-        {/* Desktop Nav */}
+        {/* Desktop Nav: Chỉ hiện Team/Tournament khi đã Login */}
         <nav className="hidden min-w-0 items-center gap-6 overflow-x-auto md:flex lg:gap-8">
-          {navItems.map(({ to, end, label }) => (
-            <NavLink key={to} to={to} end={end} className={navClass}>
-              {label}
-            </NavLink>
-          ))}
+          <NavLink to="/" end className={navClass}>
+            Dashboard
+          </NavLink>
+
+          {isLogin && (
+            <>
+              <NavLink to="/teams" className={navClass}>
+                Team
+              </NavLink>
+              <NavLink to="/tournaments" className={navClass}>
+                Tournament
+              </NavLink>
+            </>
+          )}
         </nav>
       </div>
 
@@ -115,14 +129,7 @@ function Header() {
                     My Profile
                   </Link>
                   <button
-                    onClick={() => {
-                      // Xử lý Logout ở đây (vd: dispatch action logout)
-                      setIsMenuOpen(false);
-                      localStorage.removeItem("accessToken");
-                      localStorage.removeItem("userEmail"); // Xóa luôn email khi đăng xuất
-                      dispatch(setIsLogin(false));
-                      alert("Đăng xuất thành công");
-                    }}
+                    onClick={handleLogout}
                     className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors border-t border-gray-50"
                   >
                     Logout
@@ -149,26 +156,58 @@ function Header() {
       {isMenuOpen && (
         <div className="absolute left-0 top-[100%] w-full border-b border-header-line bg-surface-white px-4 py-4 shadow-xl md:hidden animate-in fade-in slide-in-from-top-2 duration-300">
           <nav className="flex flex-col gap-2">
-            {navItems.map(({ to, end, label }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={end}
-                onClick={() => setIsMenuOpen(false)} // Đóng menu khi bấm chuyển trang
-                className={({ isActive }) =>
-                  `rounded-xl px-4 py-3 text-title-md font-bold uppercase tracking-wide transition-all ${
-                    isActive
-                      ? "bg-brand-primary/10 text-brand-primary"
-                      : "text-surface-nav hover:bg-surface-bg"
-                  }`
-                }
-              >
-                {label}
-              </NavLink>
-            ))}
+            {/* Luôn hiện Dashboard */}
+            <NavLink
+              to="/"
+              end
+              onClick={() => setIsMenuOpen(false)}
+              className={({ isActive }) =>
+                `rounded-xl px-4 py-3 text-title-md font-bold uppercase tracking-wide transition-all ${
+                  isActive
+                    ? "bg-brand-primary/10 text-brand-primary"
+                    : "text-surface-nav hover:bg-surface-bg"
+                }`
+              }
+            >
+              Dashboard
+            </NavLink>
+
+            {/* Mobile: Chỉ hiện Team/Tournament khi isLogin = true */}
+            {isLogin && (
+              <>
+                <NavLink
+                  to="/teams"
+                  onClick={() => setIsMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `rounded-xl px-4 py-3 text-title-md font-bold uppercase tracking-wide transition-all ${
+                      isActive
+                        ? "bg-brand-primary/10 text-brand-primary"
+                        : "text-surface-nav hover:bg-surface-bg"
+                    }`
+                  }
+                >
+                  Team
+                </NavLink>
+                <NavLink
+                  to="/tournaments"
+                  onClick={() => setIsMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `rounded-xl px-4 py-3 text-title-md font-bold uppercase tracking-wide transition-all ${
+                      isActive
+                        ? "bg-brand-primary/10 text-brand-primary"
+                        : "text-surface-nav hover:bg-surface-bg"
+                    }`
+                  }
+                >
+                  Tournament
+                </NavLink>
+              </>
+            )}
+
             <div className="mt-2 border-t border-header-line pt-2">
               <Link
                 to="/settings"
+                onClick={() => setIsMenuOpen(false)}
                 className="flex items-center gap-2 px-4 py-3 font-bold text-surface-nav opacity-70"
               >
                 <IoSettingsOutline className="size-5" /> Settings

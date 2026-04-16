@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import { useDispatch } from "react-redux";
+import { ToastContainer } from "react-toastify";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Welcome from "./pages/Welcome";
@@ -67,6 +68,7 @@ function App() {
           </Route>
         </Route>
       </Routes>
+      <ToastContainer position="top-center" autoClose={1000} />
     </>
   );
 }

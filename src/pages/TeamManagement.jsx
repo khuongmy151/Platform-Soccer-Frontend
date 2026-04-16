@@ -9,10 +9,13 @@ import { FaSearch } from "react-icons/fa";
 import { players } from "../mock_data";
 import ListTeam from "../components/ListTeam";
 import FormTeam from "../components/FormTeam";
+import ConfirmDialog from "../components/ConfirmDialog";
+import { toast } from "react-toastify";
 
 const TeamManagement = () => {
   const dispatch = useDispatch();
   const teams = useSelector((state) => state.teams);
+  const [teamWithId, setTeamWithId] = useState(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const params = new URLSearchParams(searchParams);
@@ -20,6 +23,7 @@ const TeamManagement = () => {
   const [inputValue, setInputValue] = useState(key || "");
   const [isLoading, setIsLoading] = useState(true);
   const formDialog = useRef();
+  const confirmDialog = useRef();
 
   // GetAllTeam
   useEffect(() => {
@@ -71,11 +75,15 @@ const TeamManagement = () => {
     navigate(`?${params.toString()}`);
   };
 
-  const handleDeleteTeam = (id) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa?")) {
-      teamService.deleteTeam({ id, dispatch, func: deleteTeam });
-    }
-    alert("Xóa thành công");
+  const handleOpenConfirmDialog = (id) => {
+    setTeamWithId(teams?.items?.find((value) => value.id == id));
+    confirmDialog.current.showModal();
+  };
+
+  const handleDeleteTeam = () => {
+    teamService.deleteTeam({ id: teamWithId?.id, dispatch, func: deleteTeam });
+    toast.success("Xóa thành công");
+    confirmDialog.current.close();
   };
 
   return (
@@ -145,10 +153,15 @@ const TeamManagement = () => {
           data={displayTeams}
           isLoading={isLoading}
           handleOpenFormDialog={handleOpenFormDialog}
-          handleDeleteTeam={handleDeleteTeam}
+          handleOpenConfirmDialog={handleOpenConfirmDialog}
         />
         {/* MODAL FORM */}
         <FormTeam ref={formDialog} />
+        <ConfirmDialog
+          message="Bạn có muốn xóa đội bóng này không?"
+          ref={confirmDialog}
+          handleConfirm={handleDeleteTeam}
+        />
       </div>
     </>
   );
