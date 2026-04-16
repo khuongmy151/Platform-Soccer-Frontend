@@ -62,7 +62,7 @@ export const userSlice = createSlice({
             fullName: userData.full_name || state.profileData.fullName,
             email: userData.email || state.profileData.email, 
             phone: userData.phone || state.profileData.phone,
-            // avatarUrl: finalAvatarUrl // Đã gán link ảnh hoàn chỉnh
+            avatarUrl: finalAvatarUrl // Đã gán link ảnh hoàn chỉnh
           };
         }
       })

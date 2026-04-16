@@ -12,7 +12,7 @@ export const MyProfile = () => {
 
   const { profileData } = useSelector((state) => state.user);
   
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword] = useState(false);
   const [password, setPassword] = useState("············");
   const [selectedFile, setSelectedFile] = useState(null);
 
