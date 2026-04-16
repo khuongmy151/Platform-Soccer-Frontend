@@ -20,7 +20,7 @@ export const userSlice = createSlice({
       fullName: "Đang tải...",
       email: "Đang tải...",
       phone: "",
-      avatarUrl: "https://i.pravatar.cc/150?img=11"
+      avatarUrl: "https://i.pravatar.cc/150?img=11" // LUÔN LẤY ẢNH NÀY CHỜ BACKEND
     },
     isLoading: false,
     error: null,
@@ -44,7 +44,8 @@ export const userSlice = createSlice({
         const userData = action.payload.data; 
 
         if (userData) {
-          // LOGIC XỬ LÝ ẢNH ĐỂ HIỂN THỊ ĐƯỢC
+          
+          /* TẠM KHÓA LOGIC NỐI LINK ẢNH TỪ BACKEND
           const BACKEND_URL = "https://backend.cupzone.fun";
           let finalAvatarUrl = state.profileData.avatarUrl;
 
@@ -56,13 +57,16 @@ export const userSlice = createSlice({
               finalAvatarUrl = `${BACKEND_URL}${path}?t=${new Date().getTime()}`;
             }
           }
+          */
 
           state.profileData = {
             ...state.profileData,
             fullName: userData.full_name || state.profileData.fullName,
             email: userData.email || state.profileData.email, 
             phone: userData.phone || state.profileData.phone,
-            avatarUrl: finalAvatarUrl // Đã gán link ảnh hoàn chỉnh
+            
+            // ÉP KIỂU LẤY ẢNH MẶC ĐỊNH
+            avatarUrl: state.profileData.avatarUrl 
           };
         }
       })
