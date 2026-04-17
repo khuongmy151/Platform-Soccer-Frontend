@@ -6,7 +6,7 @@ const ListTeam = ({
   data,
   isLoading,
   handleOpenFormDialog,
-  handleDeleteTeam,
+  handleOpenConfirmDialog,
 }) => {
   if (isLoading)
     return (
@@ -83,7 +83,7 @@ const ListTeam = ({
                         className="w-5 h-5 cursor-pointer hover:scale-105"
                       />
                       <MdDelete
-                        onClick={() => handleDeleteTeam(value.id)}
+                        onClick={() => handleOpenConfirmDialog(value.id)}
                         className="w-5 h-5 cursor-pointer hover:scale-105"
                       />
                     </div>
@@ -141,7 +141,7 @@ const ListTeam = ({
                       <MdEdit className="w-5 h-5 text-surface-nav" />
                     </button>
                     <button
-                      onClick={() => handleDeleteTeam(value.id)}
+                      onClick={() => handleOpenConfirmDialog(value.id)}
                       className="p-2.5 bg-surface-bg rounded-xl hover:scale-105 active:scale-95 transition-all"
                     >
                       <MdDelete className="w-5 h-5 text-surface-nav" />

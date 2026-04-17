@@ -27,7 +27,8 @@ const CreateTeam = () => {
     [form.logoFile]
   );
   const playerJerseyPreview = useMemo(
-    () => (form.playerJerseyFile ? URL.createObjectURL(form.playerJerseyFile) : null),
+    () =>
+      form.playerJerseyFile ? URL.createObjectURL(form.playerJerseyFile) : null,
     [form.playerJerseyFile]
   );
   const goalkeeperJerseyPreview = useMemo(
@@ -89,7 +90,9 @@ const CreateTeam = () => {
     <div className="mx-auto w-full max-w-[1120px] pb-44 md:pb-0">
       <div className="mb-6 md:mb-8">
         <h1 className="text-[38px] leading-[1.05] md:text-display-md font-extrabold tracking-tight text-surface-panel uppercase">
-          <span className="md:hidden">Create <span className="text-brand-primary">Team</span></span>
+          <span className="md:hidden">
+            Create <span className="text-brand-primary">Team</span>
+          </span>
           <span className="hidden md:inline">
             Create <span className="text-brand-primary">Team</span>
           </span>
@@ -129,7 +132,10 @@ const CreateTeam = () => {
                   accept="image/png,image/svg+xml,image/jpeg,image/webp"
                   className="hidden"
                   onChange={(e) =>
-                    setForm((prev) => ({ ...prev, logoFile: e.target.files?.[0] || null }))
+                    setForm((prev) => ({
+                      ...prev,
+                      logoFile: e.target.files?.[0] || null,
+                    }))
                   }
                 />
               </label>
@@ -212,7 +218,9 @@ const CreateTeam = () => {
               </label>
               <input
                 value={form.name}
-                onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, name: e.target.value }))
+                }
                 placeholder="E.g., Neon Strike FC"
                 className="w-full border-b border-gray-400 md:border-b-2 bg-transparent py-2 text-[30px] md:text-xl text-surface-panel uppercase outline-none placeholder:text-gray-300"
               />
@@ -224,7 +232,9 @@ const CreateTeam = () => {
               </label>
               <input
                 value={form.country}
-                onChange={(e) => setForm((prev) => ({ ...prev, country: e.target.value }))}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, country: e.target.value }))
+                }
                 placeholder="Vietnam"
                 className="w-full border-b border-gray-400 md:border-b-2 bg-transparent py-2 text-base text-surface-panel outline-none placeholder:text-gray-300"
               />

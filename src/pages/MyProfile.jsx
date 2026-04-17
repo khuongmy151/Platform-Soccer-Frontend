@@ -15,7 +15,7 @@ export const MyProfile = () => {
     me?.avatarUrl || "https://img.icons8.com/nolan/1200/user-default.jpg"
   );
   const [showPassword] = useState(false);
-  const [password, setPassword] = useState("············");
+  const [password] = useState("············");
   const fileRef = useRef();
 
   useEffect(() => {
@@ -65,7 +65,7 @@ export const MyProfile = () => {
       };
       await updateProfileAPI(dataToSend, token);
       alert("Lưu thông tin thành công!");
-      navigate("/");
+      navigate("/my-profile");
     } catch (error) {
       console.error("Lỗi khi lưu:", error);
       alert(
@@ -209,13 +209,13 @@ export const MyProfile = () => {
               <label className="px-1 text-[#595c5f] text-[10px] font-bold tracking-widest uppercase">
                 Password
               </label>
-              <div className="border-b-2 border-[#abadb1] px-1 py-2">
+              <div className="bg-[#eff1f5] border-b-2 border-transparent px-1 py-2">
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onFocus={() => password === "············" && setPassword("")}
-                  className="w-full bg-transparent text-[#2c2f32] text-base outline-none"
+
+                  readOnly
+                  className="w-full bg-transparent text-zinc-400 text-base outline-none cursor-not-allowed"
                 />
               </div>
             </div>

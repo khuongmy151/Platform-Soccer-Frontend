@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import matchService from '../services/matchService';
 import { axiosClient } from '../services/axiosClient';
 
@@ -36,6 +36,8 @@ const InputField = ({ label, type = "text", placeholder, options, icon, value, o
 
 export default function CreateMatch() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const tournamentId = searchParams.get('tournamentId');
 
   // --- THIẾT LẬP STATE LƯU TRỮ DỮ LIỆU ĐỂ GỬI API ---
   const [teamA, setTeamA] = useState('')
@@ -108,7 +110,7 @@ export default function CreateMatch() {
         sign + pad(Math.floor(Math.abs(offset) / 60)) + ':' + pad(Math.abs(offset) % 60);
 
       const newMatchData = {
-        tournamentId: 1, // Fix cứng tạm hoặc lấy từ store
+        tournamentId: tournamentId ? parseInt(tournamentId) : 1, // Lấy từ URL hoặc default là 1
         title: matchTitle,
         homeTeamId: teamA, // Lúc này teamA sẽ đang lưu ID thay vì Name
         awayTeamId: teamB,

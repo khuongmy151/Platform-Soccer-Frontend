@@ -3,7 +3,6 @@ import { NavLink } from "react-router-dom";
 import { TbLayoutDashboard } from "react-icons/tb";
 import { IoTrophyOutline } from "react-icons/io5";
 import { MdGroups } from "react-icons/md";
-import { FaUser } from "react-icons/fa";
 
 const itemClassDesktop = ({ isActive }) =>
   [
@@ -23,7 +22,6 @@ const itemClassMobile = ({ isActive }) =>
 
 const items = [
   { to: "/", end: true, label: "DASHBOARD", Icon: TbLayoutDashboard }, // Đổi label uppercase cho giống mẫu
-  { to: "/players", label: "PLAYER", Icon: FaUser },
   { to: "/teams", label: "TEAMS", Icon: MdGroups },
   { to: "/tournaments", label: "TOURNAMENT", Icon: IoTrophyOutline },
 ];

@@ -11,6 +11,7 @@ import {
   IoLockClosedOutline,
 } from "react-icons/io5";
 import { setIsLogin } from "../stores/features/authSlice";
+import { toast } from "react-toastify";
 
 export const Login = () => {
   const dispatch = useDispatch();
@@ -33,11 +34,49 @@ export const Login = () => {
         localStorage.setItem("accessToken", token);
         localStorage.setItem("userEmail", formData.email);
         dispatch(setIsLogin(true));
-        alert("Đăng nhập thành công!");
-        navigate("/");
+
+        // Lấy tên từ email (vd: alex@gmail.com -> Alex)
+        const rawName = formData.email.split('@')[0];
+        const userName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+
+        // HIỂN THỊ TOAST THÀNH CÔNG THEO MOCKUP
+        toast.success(
+          <div>
+            <div className="font-bold text-slate-800 text-[15px] mb-0.5">Login Successful</div>
+            <div className="text-slate-500 text-xs">
+              Welcome back, <span className="text-[#BA0022] font-bold">{userName}</span>! You have successfully logged in.
+            </div>
+          </div>, 
+          {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            theme: "light",
+          }
+        );
+
+        setTimeout(() => {
+          navigate("/");
+        }, 1000);
       }
     } catch (error) {
-      alert(error.response?.data?.message || "Lỗi đăng nhập!");
+      // ĐỔI ALERT THÀNH TOAST LỖI CHO ĐỒNG BỘ GIAO DIỆN
+      toast.error(
+        <div>
+           <div className="font-bold text-slate-800 text-[15px] mb-0.5">Login Failed</div>
+           <div className="text-slate-500 text-xs">
+             {error.response?.data?.message || "Vui lòng kiểm tra lại email và mật khẩu!"}
+           </div>
+        </div>,
+        {
+           position: "top-right",
+           autoClose: 3000,
+           theme: "light",
+        }
+      );
     }
   };
 
