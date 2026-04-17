@@ -62,10 +62,7 @@ const TeamManagement = () => {
     navigate(`?${params.toString()}`);
   };
 
-  const handleCreateTeam = () => {
-    navigate("/teams/create");
-  };
-
+  //Hàm mở Form Edit
   const handleOpenFormDialog = (id) => {
     if (id !== null) {
       params.set("teamId", id);
@@ -75,15 +72,24 @@ const TeamManagement = () => {
     navigate(`?${params.toString()}`);
   };
 
+  //Hàm mở hộp thoại xác nhận
   const handleOpenConfirmDialog = (id) => {
     setTeamWithId(teams?.items?.find((value) => value.id == id));
     confirmDialog.current.showModal();
   };
 
-  const handleDeleteTeam = () => {
-    teamService.deleteTeam({ id: teamWithId?.id, dispatch, func: deleteTeam });
-    toast.success("Xóa thành công");
-    confirmDialog.current.close();
+  //Hàm xóa team
+  const handleDeleteTeam = async () => {
+    try {
+      await teamService.deleteTeam({ url: `/teams/${teamWithId?.id}` });
+      await teamService.getAllTeam({ url: "/teams", dispatch, func: setTeams });
+      confirmDialog.current.close();
+    } catch (error) {
+      console.log(error);
+      dispatch(deleteTeam(teamWithId?.id));
+      toast.success("Lỗi xử lý ở server, tạm thời xóa ở phía Frontend");
+      confirmDialog.current.close();
+    }
   };
 
   return (
@@ -138,7 +144,7 @@ const TeamManagement = () => {
             </div>
             {/* Button Add Team */}
             <button
-              onClick={handleCreateTeam}
+              onClick={() => navigate("/teams/create")}
               className="flex items-center justify-center aspect-square h-full md:aspect-auto md:w-[15%] rounded-[16px] md:rounded-[12px] bg-cta-gradient hover:cursor-pointer hover:scale-105 transition-all duration-300 shrink-0 shadow-lg shadow-brand-primary/20 md:shadow-none"
             >
               <IoIosAdd className="text-[32px] md:text-[24px] md:ms-5 text-white md:text-surface-panel" />

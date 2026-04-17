@@ -1,3 +1,4 @@
+import { toast } from "react-toastify";
 import { axiosClient } from "../services/axiosClient";
 export const teamService = {
   getAllTeam: async ({ url, params, dispatch, func }) => {
@@ -16,18 +17,19 @@ export const teamService = {
       console.log("Lỗi mạng");
     }
   },
-  deleteTeam: ({ id, dispatch, func }) => {
-    dispatch(func(id));
+  createTeam: async ({ url, data }) => {
+    const response = await axiosClient.post(`${url}`, data);
+    console.log(response);
+    toast.success(response?.message);
   },
-  updateTeam: ({ team, dispatch, func }) => {
-    dispatch(func(team));
+  deleteTeam: async ({ url }) => {
+    const response = await axiosClient.delete(`${url}`);
+    console.log(response);
+    toast.success(response?.message);
   },
-  createTeam: async ({ url, data, dispatch, func }) => {
-    const result = await axiosClient.post(`${url}`, data);
-    const payload = result?.data || result;
-    if (dispatch && func) {
-      dispatch(func(payload));
-    }
-    return payload;
+  updateTeam: async ({ url, data }) => {
+    const response = await axiosClient.put(`${url}`, data);
+    console.log(response);
+    toast.success(response?.message);
   },
 };

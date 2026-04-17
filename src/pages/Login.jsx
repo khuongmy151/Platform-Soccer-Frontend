@@ -36,17 +36,21 @@ export const Login = () => {
         dispatch(setIsLogin(true));
 
         // Lấy tên từ email (vd: alex@gmail.com -> Alex)
-        const rawName = formData.email.split('@')[0];
+        const rawName = formData.email.split("@")[0];
         const userName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
 
         // HIỂN THỊ TOAST THÀNH CÔNG THEO MOCKUP
         toast.success(
           <div>
-            <div className="font-bold text-slate-800 text-[15px] mb-0.5">Login Successful</div>
-            <div className="text-slate-500 text-xs">
-              Welcome back, <span className="text-[#BA0022] font-bold">{userName}</span>! You have successfully logged in.
+            <div className="font-bold text-slate-800 text-[15px] mb-0.5">
+              Login Successful
             </div>
-          </div>, 
+            <div className="text-slate-500 text-xs">
+              Welcome back,{" "}
+              <span className="text-[#BA0022] font-bold">{userName}</span>! You
+              have successfully logged in.
+            </div>
+          </div>,
           {
             position: "top-right",
             autoClose: 3000,
@@ -66,15 +70,18 @@ export const Login = () => {
       // ĐỔI ALERT THÀNH TOAST LỖI CHO ĐỒNG BỘ GIAO DIỆN
       toast.error(
         <div>
-           <div className="font-bold text-slate-800 text-[15px] mb-0.5">Login Failed</div>
-           <div className="text-slate-500 text-xs">
-             {error.response?.data?.message || "Vui lòng kiểm tra lại email và mật khẩu!"}
-           </div>
+          <div className="font-bold text-slate-800 text-[15px] mb-0.5">
+            Login Failed
+          </div>
+          <div className="text-slate-500 text-xs">
+            {error.response?.data?.message ||
+              "Vui lòng kiểm tra lại email và mật khẩu!"}
+          </div>
         </div>,
         {
-           position: "top-right",
-           autoClose: 3000,
-           theme: "light",
+          position: "top-right",
+          autoClose: 3000,
+          theme: "light",
         }
       );
     }
@@ -212,6 +219,7 @@ export const Login = () => {
 
               {/* Nút LOGIN */}
               <button
+                data-umami-event="Login button click"
                 type="submit"
                 className="w-full py-4 bg-gradient-to-r from-[#FF0000] to-[#FF6B00] text-white font-black uppercase tracking-widest rounded-lg shadow-[0_10px_20px_rgba(255,0,0,0.2)] hover:shadow-[0_15px_30px_rgba(255,0,0,0.4)] active:scale-[0.98] transition-all text-sm"
               >
