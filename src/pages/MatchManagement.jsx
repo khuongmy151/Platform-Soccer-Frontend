@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import matchService from '../services/matchService';
 import { setMatches } from '../stores/features/matchSlice';
@@ -67,6 +67,8 @@ const MatchCard = ({ status, rawStatus, timeTopInfo, teamA, teamB, bottomArea, e
 
 export default function MatchManagement() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const tournamentId = searchParams.get('tournamentId');
   const dispatch = useDispatch();
   const matches = useSelector((state) => state.matches?.items || []);
 
@@ -127,7 +129,7 @@ export default function MatchManagement() {
     <div className="flex flex-col h-full font-[var(--font-body)]">
       <div className="flex justify-between items-center mb-8 shrink-0">
          <h1 className="text-4xl md:text-5xl font-black text-[#2e2e2e] tracking-tight font-[var(--font-display)]">Match List</h1>
-         <button onClick={() => navigate('/match/create')} className="bg-[var(--color-brand-primary)] text-white px-6 py-3 rounded-xl text-xs font-black tracking-widest hover:opacity-90 transition-opacity shadow-md">
+         <button onClick={() => navigate(`/match/create?tournamentId=${tournamentId || ''}`)} className="bg-[var(--color-brand-primary)] text-white px-6 py-3 rounded-xl text-xs font-black tracking-widest hover:opacity-90 transition-opacity shadow-md">
            + NEW MATCH
          </button>
       </div>

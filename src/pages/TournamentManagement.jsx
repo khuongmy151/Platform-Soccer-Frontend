@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { tournamentService } from "../services/tournamentService";
@@ -7,6 +7,7 @@ import { Upload } from "lucide-react";
 
 const TournamentManagement = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const tournaments = useSelector((state) => state.tournaments.items);
   const [selectedTournament, setSelectedTournament] = useState(null);
@@ -226,7 +227,16 @@ const TournamentManagement = () => {
               className="flex-1 py-4 rounded-xl font-bold text-slate-900 bg-gradient-to-r from-red-500 to-yellow-400 hover:from-red-600 hover:to-yellow-500 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"            >
               EDIT
             </button>
-            <button className="flex-1 py-4 rounded-xl font-bold text-slate-900 bg-gradient-to-r from-red-500 to-yellow-400 hover:from-red-600 hover:to-yellow-500 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+            <button 
+              onClick={() => {
+                if (selectedTournament?.id) {
+                  navigate(`/matches?tournamentId=${selectedTournament.id}`);
+                } else {
+                  console.error("No tournament selected");
+                  alert("Vui lòng chọn một tournament trước!");
+                }
+              }}
+              className="flex-1 py-4 rounded-xl font-bold text-slate-900 bg-gradient-to-r from-red-500 to-yellow-400 hover:from-red-600 hover:to-yellow-500 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
               CREATE MATCH
             </button>
             <button 
