@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { FiUpload } from "react-icons/fi";
@@ -21,23 +21,21 @@ const CreateTeam = () => {
   const dispatch = useDispatch();
   const [form, setForm] = useState(initialForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const logo = useRef();
+  const playerJersey = useRef();
+  const goalkeeperJersey = useRef();
 
-  const logoPreview = useMemo(
-    () => (form.logoFile ? URL.createObjectURL(form.logoFile) : null),
-    [form.logoFile]
-  );
-  const playerJerseyPreview = useMemo(
-    () =>
-      form.playerJerseyFile ? URL.createObjectURL(form.playerJerseyFile) : null,
-    [form.playerJerseyFile]
-  );
-  const goalkeeperJerseyPreview = useMemo(
-    () =>
-      form.goalkeeperJerseyFile
-        ? URL.createObjectURL(form.goalkeeperJerseyFile)
-        : null,
-    [form.goalkeeperJerseyFile]
-  );
+  const logoPreview = useMemo(() => {
+    if (form.logoFile !== null) return URL.createObjectURL(form.logoFile);
+  }, [form.logoFile]);
+  const playerJerseyPreview = useMemo(() => {
+    if (form.playerJerseyFile !== null)
+      return URL.createObjectURL(form.playerJerseyFile);
+  }, [form.playerJerseyFile]);
+  const goalkeeperJerseyPreview = useMemo(() => {
+    if (form.goalkeeperJerseyFile !== null)
+      return URL.createObjectURL(form.goalkeeperJerseyFile);
+  }, [form.goalkeeperJerseyFile]);
 
   useEffect(() => {
     return () => {
@@ -49,28 +47,37 @@ const CreateTeam = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log(form);
     if (!form.name.trim() || !form.country.trim()) {
       alert("Vui lòng nhập đầy đủ thông tin.");
       return;
     }
-
+    if (
+      !logo.current.files[0] ||
+      !playerJersey.current.files[0] ||
+      !goalkeeperJersey.current.files[0]
+    ) {
+      alert("Vui lòng chọn ảnh");
+      return;
+    }
     setIsSubmitting(true);
+    const kitUrl = [
+      form.playerJerseyFile?.name,
+      form.goalkeeperJerseyFile?.name,
+    ];
     const payload = {
       name: form.name.trim(),
       country: form.country.trim(),
       description: form.description.trim(),
-      logo_url: logoPreview || "",
-      kit_url: [playerJerseyPreview, goalkeeperJerseyPreview].filter(Boolean),
+      logo_url: form.logoFile?.name || null,
+      kit_url: kitUrl || [],
     };
 
     try {
       await teamService.createTeam({
         url: "/teams",
         data: payload,
-        dispatch,
-        func: addTeam,
       });
-      alert("Tạo team thành công!");
       navigate("/teams");
     } catch (error) {
       console.error(error);
@@ -131,6 +138,7 @@ const CreateTeam = () => {
                   type="file"
                   accept="image/png,image/svg+xml,image/jpeg,image/webp"
                   className="hidden"
+                  ref={logo}
                   onChange={(e) =>
                     setForm((prev) => ({
                       ...prev,
@@ -166,6 +174,7 @@ const CreateTeam = () => {
                     type="file"
                     accept="image/*"
                     className="hidden"
+                    ref={playerJersey}
                     onChange={(e) =>
                       setForm((prev) => ({
                         ...prev,
@@ -194,6 +203,7 @@ const CreateTeam = () => {
                     type="file"
                     accept="image/*"
                     className="hidden"
+                    ref={goalkeeperJersey}
                     onChange={(e) =>
                       setForm((prev) => ({
                         ...prev,
