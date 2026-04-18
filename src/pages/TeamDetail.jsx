@@ -1,19 +1,29 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { IoIosPersonAdd } from "react-icons/io";
+import { toast } from "react-toastify";
 import { teamService } from "../services/teamService";
-import { players } from "../mock_data";
+import {
+  createPlayer,
+  removePlayer,
+  updatePlayer,
+} from "../services/playerService";
+import { players as mockPlayers } from "../mock_data";
 import { MdGroup } from "react-icons/md";
 import { FaPen, FaTrash, FaArrowLeft } from "react-icons/fa";
 import FormPlayer from "../components/FormPlayer";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 const TeamDetail = () => {
   const navigate = useNavigate();
   const { teamId } = useParams();
   const [team, setTeam] = useState(null);
+  const [playersList, setPlayersList] = useState(mockPlayers);
   const playerFormRef = useRef(null);
+  const confirmRef = useRef(null);
   const [formMode, setFormMode] = useState("add");
   const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [playerToDelete, setPlayerToDelete] = useState(null);
 
   useEffect(() => {
     teamService.getTeamById({ url: `/teams/${teamId}`, setData: setTeam });
@@ -31,8 +41,82 @@ const TeamDetail = () => {
     playerFormRef.current?.showModal();
   };
 
-  const handleSubmitPlayer = (data) => {
-    console.log(formMode === "edit" ? "Update player" : "Create player", data);
+  const openDeleteConfirm = (player) => {
+    setPlayerToDelete(player);
+    confirmRef.current?.showModal();
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!playerToDelete) return;
+    try {
+      await removePlayer(playerToDelete.id);
+      toast.success(`Đã xóa cầu thủ ${playerToDelete.name}`);
+    } catch (error) {
+      console.log("Lỗi khi xóa cầu thủ", error);
+      toast("Lỗi xử lý ở server, tạm thời xóa ở phía Frontend");
+    }
+    setPlayersList((prev) =>
+      prev.filter((p) => p.id !== playerToDelete.id)
+    );
+    setPlayerToDelete(null);
+    confirmRef.current?.close();
+  };
+
+  const handleSubmitPlayer = async (data) => {
+    const avatarUrl =
+      data.avatar && typeof data.avatar === "object"
+        ? URL.createObjectURL(data.avatar)
+        : data.avatar;
+
+    const payload = {
+      name: data.name,
+      height: Number(data.height) || 0,
+      weight: Number(data.weight) || 0,
+      preferredFoot: data.preferred_foot,
+      mainPosition: data.main_position,
+      avatarUrl,
+    };
+
+    if (formMode === "edit") {
+      try {
+        await updatePlayer(data.id, payload);
+        toast.success(`Đã cập nhật cầu thủ ${data.name}`);
+      } catch (error) {
+        console.log("Lỗi cập nhật cầu thủ", error);
+        toast("Lỗi xử lý ở server, tạm thời cập nhật ở phía Frontend");
+      }
+      setPlayersList((prev) =>
+        prev.map((p) =>
+          p.id === data.id
+            ? {
+                ...p,
+                name: data.name,
+                position: data.main_position,
+                avatar: avatarUrl,
+              }
+            : p
+        )
+      );
+    } else {
+      let newId = `p${Date.now()}`;
+      try {
+        const created = await createPlayer(payload);
+        newId = created?.id || newId;
+        toast.success(`Đã thêm cầu thủ ${data.name}`);
+      } catch (error) {
+        console.log("Lỗi thêm cầu thủ", error);
+        toast("Lỗi xử lý ở server, tạm thời thêm ở phía Frontend");
+      }
+      setPlayersList((prev) => [
+        ...prev,
+        {
+          id: newId,
+          name: data.name,
+          position: data.main_position,
+          avatar: avatarUrl,
+        },
+      ]);
+    }
   };
 
   return (
@@ -103,7 +187,7 @@ const TeamDetail = () => {
             </div>
             <div className="h-px bg-surface-bg my-6" />
             <ul className="flex flex-wrap gap-6">
-              {players?.map((value, index) => {
+              {playersList?.map((value, index) => {
                 return (
                   <li
                     key={index}
@@ -144,6 +228,7 @@ const TeamDetail = () => {
                         </button>
                         <button
                           aria-label="Remove"
+                          onClick={() => openDeleteConfirm(value)}
                           className="flex items-center justify-center w-9 h-9 text-surface-white bg-brand-primary rounded-full hover:cursor-pointer hover:scale-110 transition-transform duration-200"
                         >
                           <FaTrash className="w-[14px] h-[14px]" />
@@ -161,7 +246,7 @@ const TeamDetail = () => {
                   TOTAL
                 </p>
                 <p className="text-headline-md text-surface-nav font-extrabold">
-                  {players?.length}
+                  {playersList?.length}
                   <span className="text-nav-muted font-semibold"> / 11</span>
                 </p>
               </div>
@@ -174,6 +259,15 @@ const TeamDetail = () => {
         mode={formMode}
         player={selectedPlayer}
         onSubmit={handleSubmitPlayer}
+      />
+      <ConfirmDialog
+        ref={confirmRef}
+        message={
+          playerToDelete
+            ? `Bạn có chắc chắn muốn xóa cầu thủ "${playerToDelete.name}"?`
+            : ""
+        }
+        handleConfirm={handleConfirmDelete}
       />
     </>
   );
