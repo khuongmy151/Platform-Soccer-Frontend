@@ -22,10 +22,11 @@ const ImageWithFallback = ({
   alt,
   className = "",
   fallbackClassName = "",
-  icon: Icon,
+  icon,
   iconClassName = "",
 }) => {
   const [hasError, setHasError] = useState(false);
+  const FallbackIcon = icon;
 
   if (!src || hasError) {
     return (
@@ -33,7 +34,7 @@ const ImageWithFallback = ({
         className={`flex items-center justify-center ${fallbackClassName || className}`}
         aria-label={alt}
       >
-        <Icon className={iconClassName} />
+        <FallbackIcon className={iconClassName} />
       </div>
     );
   }
