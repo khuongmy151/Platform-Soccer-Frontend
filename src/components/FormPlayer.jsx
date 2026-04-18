@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { IoCloudUploadOutline } from "react-icons/io5";
 import { FiTarget } from "react-icons/fi";
 import { IoClose } from "react-icons/io5";
@@ -13,26 +13,32 @@ const EMPTY_PLAYER = {
   main_position: "",
 };
 
+const derivePlayer = (isEdit, player) => {
+  if (!isEdit || !player) return EMPTY_PLAYER;
+  return {
+    id: player.id || "",
+    name: player.name || "",
+    avatar: player.avatar || "",
+    height: player.height || "",
+    weight: player.weight || "",
+    preferred_foot: player.preferred_foot || "LEFT",
+    main_position: player.position || player.main_position || "",
+  };
+};
+
 const FormPlayer = ({ ref, mode = "add", player = null, onSubmit }) => {
   const isEdit = mode === "edit";
   const avatarRef = useRef();
-  const [formPlayer, setFormPlayer] = useState(EMPTY_PLAYER);
+  const sourceKey = `${mode}-${player?.id ?? "new"}`;
+  const [prevKey, setPrevKey] = useState(sourceKey);
+  const [formPlayer, setFormPlayer] = useState(() =>
+    derivePlayer(isEdit, player)
+  );
 
-  useEffect(() => {
-    if (isEdit && player) {
-      setFormPlayer({
-        id: player.id || "",
-        name: player.name || "",
-        avatar: player.avatar || "",
-        height: player.height || "",
-        weight: player.weight || "",
-        preferred_foot: player.preferred_foot || "LEFT",
-        main_position: player.position || player.main_position || "",
-      });
-    } else {
-      setFormPlayer(EMPTY_PLAYER);
-    }
-  }, [isEdit, player]);
+  if (prevKey !== sourceKey) {
+    setPrevKey(sourceKey);
+    setFormPlayer(derivePlayer(isEdit, player));
+  }
 
   const avatarPreview = useMemo(() => {
     if (!formPlayer.avatar) return null;
