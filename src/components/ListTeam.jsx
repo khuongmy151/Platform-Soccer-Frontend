@@ -109,7 +109,7 @@ const ListTeam = ({
             </h2>
           </div>
           <div className="bg-white rounded-2xl shadow-sm border border-surface-bg divide-y divide-surface-bg">
-            {data?.length > 0 &&
+            {data?.length > 0 ? (
               data.map((value, index) => (
                 <div
                   key={index}
@@ -148,7 +148,12 @@ const ListTeam = ({
                     </button>
                   </div>
                 </div>
-              ))}
+              ))
+            ) : (
+              <div className="text-center bg-surface-bg">
+                <p className="text-body-lg">Không tìm thấy kết quả</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

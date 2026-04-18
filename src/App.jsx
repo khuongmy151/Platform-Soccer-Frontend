@@ -35,7 +35,7 @@ function App() {
       }
     };
     fetchGetMe();
-  });
+  }, [dispatch]);
   return (
     <>
       <Routes>
