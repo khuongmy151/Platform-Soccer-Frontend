@@ -1,3 +1,4 @@
+import { toast } from "react-toastify";
 import { axiosClient } from "./axiosClient";
 
 export const loginAPI = async (credentials) => {
@@ -27,6 +28,8 @@ export const updateProfileAPI = async (data, token) => {
   const response = await axiosClient.put("/users/me", data, {
     headers: { Authorization: `Bearer ${token}` },
   });
+  console.log(response);
+  toast.success(response?.message);
   return response.data;
 };
 

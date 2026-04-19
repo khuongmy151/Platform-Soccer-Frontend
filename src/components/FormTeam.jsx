@@ -173,8 +173,6 @@ const FormTeam = ({ ref }) => {
 
             {/* SECTION: TEAM JERSEY */}
             <div className="bg-surface-white p-4 md:p-6 rounded-lg shadow-sm border-b-4 border-[#A55E26]">
-              {" "}
-              {/* Màu nâu giống ảnh */}
               <h3 className="text-label-sm text-surface-nav font-bold mb-4 uppercase italic">
                 Team Jersey
               </h3>

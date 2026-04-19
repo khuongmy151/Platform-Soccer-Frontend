@@ -103,7 +103,7 @@ function Header() {
             >
               <img
                 src={
-                  me?.avatarUrl ||
+                  me?.avatar_url ||
                   "https://img.icons8.com/nolan/1200/user-default.jpg"
                 }
                 alt="Avatar"

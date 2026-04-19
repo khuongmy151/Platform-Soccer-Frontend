@@ -1,19 +1,18 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useSelector } from "react-redux";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { updateProfileAPI, uploadAvatarAPI } from "../services/userService";
+import { setMe } from "../stores/features/meSlice";
 
 export const MyProfile = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const me = useSelector((state) => state.me.item);
   const [formData, setFormData] = useState({
     full_name: "",
-    phone: "",
+    avatar: null,
   });
   const email = localStorage.getItem("userEmail");
-  const [avatar, setAvatar] = useState(
-    me?.avatarUrl || "https://img.icons8.com/nolan/1200/user-default.jpg"
-  );
   const [showPassword] = useState(false);
   const [password] = useState("············");
   const fileRef = useRef();
@@ -21,20 +20,20 @@ export const MyProfile = () => {
   useEffect(() => {
     if (me !== null)
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setFormData({ full_name: me?.full_name || "", phone: me?.phone || "" });
+      setFormData({
+        full_name: me?.full_name || "",
+        avatar: me?.avatar_url || null,
+      });
   }, [me]);
 
-  // Hàm xử lý khi CHỌN FILE (Hiện preview ngay lập tức)
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (!file.type.startsWith("image/")) {
-        return alert("Vui lòng chọn định dạng ảnh!");
-      }
-      const previewUrl = URL.createObjectURL(file);
-      setAvatar(previewUrl);
+  const avatarReview = useMemo(() => {
+    if (formData.avatar !== null) {
+      return typeof formData.avatar === "object"
+        ? URL.createObjectURL(formData.avatar)
+        : formData.avatar;
     }
-  };
+    return "https://img.icons8.com/nolan/1200/user-default.jpg";
+  }, [formData.avatar]);
 
   const handleAvatarClick = () => {
     fileRef.current.click();
@@ -45,14 +44,8 @@ export const MyProfile = () => {
       const token = localStorage.getItem("accessToken");
       if (!token) return alert("Hết phiên làm việc!");
       if (fileRef.current.files[0]) {
-        const file = fileRef.current.files[0];
-        const previewUrl = URL.createObjectURL(file);
-        setAvatar(previewUrl);
         try {
-          const response = await uploadAvatarAPI(
-            fileRef.current.files[0],
-            token
-          );
+          const response = await uploadAvatarAPI(formData.avatar, token);
           console.log("Upload thành công:", response);
         } catch (error) {
           console.error("Có lỗi xảy ra:", error);
@@ -63,9 +56,9 @@ export const MyProfile = () => {
         full_name: formData.full_name,
         phone: formData.phone || "",
       };
-      await updateProfileAPI(dataToSend, token);
-      alert("Lưu thông tin thành công!");
-      navigate("/my-profile");
+      const response = await updateProfileAPI(dataToSend, token);
+      dispatch(setMe(response));
+      navigate("/");
     } catch (error) {
       console.error("Lỗi khi lưu:", error);
       alert(
@@ -121,7 +114,9 @@ export const MyProfile = () => {
               >
                 <div
                   className="w-full h-full bg-cover bg-center transition-transform duration-300 group-hover:scale-110"
-                  style={{ backgroundImage: `url('${avatar}')` }}
+                  style={{
+                    backgroundImage: `url('${avatarReview}')`,
+                  }}
                 />
                 {/* Overlay hover */}
                 <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -153,7 +148,12 @@ export const MyProfile = () => {
                   ref={fileRef}
                   accept="image/*"
                   className="hidden"
-                  onChange={handleFileChange}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      avatar: e.target.files[0],
+                    }))
+                  }
                 />
               </div>
             </div>
@@ -213,7 +213,6 @@ export const MyProfile = () => {
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
-
                   readOnly
                   className="w-full bg-transparent text-zinc-400 text-base outline-none cursor-not-allowed"
                 />

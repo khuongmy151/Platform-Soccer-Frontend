@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 // IMPORT LOGO CỦA BẠN VÀO ĐÂY
 import logo from "../assets/logo.svg";
 import { registerAPI } from "../services/userService";
+import { toast } from "react-toastify";
 
 export const Register = () => {
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ export const Register = () => {
         return;
       }
 
-      alert("Đăng ký thành công! Vui lòng đăng nhập.");
+      toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
       navigate("/login");
     } catch (error) {
       const errorMsg =
@@ -141,6 +142,7 @@ export const Register = () => {
 
               {/* NÚT JOIN NOW: GRADIENT ĐỎ CAM */}
               <button
+                data-umami-event="Register button click"
                 type="submit"
                 className="w-full py-4 mt-10 bg-[#FF0032] text-white font-black uppercase tracking-widest rounded-lg shadow-[0_10px_30px_rgba(255,0,50,0.3)] hover:shadow-[0_15px_40px_rgba(255,0,50,0.5)] active:scale-95 transition-all"
               >

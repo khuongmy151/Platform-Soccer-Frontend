@@ -10,7 +10,7 @@ export default function TeamDisplay({ name }) {
           {firstLetter}
         </span>
       </div>
-      
+
       {/* Tên đội bóng */}
       <span className="font-bold text-gray-800 text-[14px] truncate">
         {name}

@@ -12,12 +12,12 @@ const TournamentManagement = () => {
   const tournaments = useSelector((state) => state.tournaments.items);
   const [selectedTournament, setSelectedTournament] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  
+
   // Form data for create/edit
   const [formData, setFormData] = useState({
     name: "",
@@ -83,7 +83,7 @@ const TournamentManagement = () => {
       setShowEditModal(true);
     }
   };
-  
+
   const handleCreate = () => {
     setFormData({
       name: "",
@@ -96,12 +96,12 @@ const TournamentManagement = () => {
     });
     setShowCreateModal(true);
   };
-  
+
   const handleCloseModal = () => {
     setShowCreateModal(false);
     setShowEditModal(false);
   };
-  
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -109,7 +109,7 @@ const TournamentManagement = () => {
       [name]: value,
     }));
   };
-  
+
   const handleSubmitCreate = async (e) => {
     e.preventDefault();
     try {
@@ -125,7 +125,7 @@ const TournamentManagement = () => {
       setIsSaving(false);
     }
   };
-  
+
   const handleSubmitEdit = async (e) => {
     e.preventDefault();
     try {
@@ -224,10 +224,11 @@ const TournamentManagement = () => {
           <div className="flex flex-wrap gap-4 w-full justify-center">
             <button
               onClick={handleEdit}
-              className="flex-1 py-4 rounded-xl font-bold text-slate-900 bg-gradient-to-r from-red-500 to-yellow-400 hover:from-red-600 hover:to-yellow-500 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"            >
+              className="flex-1 py-4 rounded-xl font-bold text-slate-900 bg-gradient-to-r from-red-500 to-yellow-400 hover:from-red-600 hover:to-yellow-500 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+            >
               EDIT
             </button>
-            <button 
+            <button
               onClick={() => {
                 if (selectedTournament?.id) {
                   navigate(`/matches?tournamentId=${selectedTournament.id}`);
@@ -236,11 +237,11 @@ const TournamentManagement = () => {
                   alert("Vui lòng chọn một tournament trước!");
                 }
               }}
-              className="flex-1 py-4 rounded-xl font-bold text-slate-900 bg-gradient-to-r from-red-500 to-yellow-400 hover:from-red-600 hover:to-yellow-500 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+              className="flex-1 py-4 rounded-xl font-bold text-slate-900 bg-gradient-to-r from-red-500 to-yellow-400 hover:from-red-600 hover:to-yellow-500 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+            >
               CREATE MATCH
             </button>
-            <button 
-            className="flex-1 py-4 rounded-xl font-bold text-slate-700 bg-slate-200 hover:bg-slate-300 transition-all shadow-sm">
+            <button className="flex-1 py-4 rounded-xl font-bold text-slate-700 bg-slate-200 hover:bg-slate-300 transition-all shadow-sm">
               REMOVE
             </button>
           </div>
@@ -318,7 +319,7 @@ const TournamentManagement = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Create Tournament Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -326,9 +327,9 @@ const TournamentManagement = () => {
             <h2 className="text-3xl font-black text-center mb-10 text-gray-900">
               Create Tournament
             </h2>
-            <TournamentForm 
-              formData={formData} 
-              handleChange={handleChange} 
+            <TournamentForm
+              formData={formData}
+              handleChange={handleChange}
               handleSubmit={handleSubmitCreate}
               handleClose={handleCloseModal}
               isSaving={isSaving}
@@ -337,7 +338,7 @@ const TournamentManagement = () => {
           </div>
         </div>
       )}
-      
+
       {/* Edit Tournament Modal */}
       {showEditModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -345,9 +346,9 @@ const TournamentManagement = () => {
             <h2 className="text-3xl font-black text-center mb-10 text-gray-900">
               Edit Tournament
             </h2>
-            <TournamentForm 
-              formData={formData} 
-              handleChange={handleChange} 
+            <TournamentForm
+              formData={formData}
+              handleChange={handleChange}
               handleSubmit={handleSubmitEdit}
               handleClose={handleCloseModal}
               isSaving={isSaving}
@@ -361,13 +362,23 @@ const TournamentManagement = () => {
 };
 
 // Helper component for form
-const TournamentForm = ({ formData, handleChange, handleSubmit, handleClose, isSaving, submitLabel }) => (
-  <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-8 md:gap-12">
+const TournamentForm = ({
+  formData,
+  handleChange,
+  handleSubmit,
+  handleClose,
+  isSaving,
+  submitLabel,
+}) => (
+  <form
+    onSubmit={handleSubmit}
+    className="flex flex-col md:flex-row gap-8 md:gap-12"
+  >
     {/* Left Column: Logo Upload */}
     <div className="w-full md:w-[350px] flex-shrink-0 mx-auto md:mx-0">
       <div className="bg-white rounded-[2rem] p-4 shadow-[0_0_40px_rgba(204,29,36,0.1)] border border-red-50">
         <div
-          onClick={() => document.getElementById('logo-upload').click()}
+          onClick={() => document.getElementById("logo-upload").click()}
           className="aspect-square rounded-3xl bg-[#131c2e] overflow-hidden relative group mb-4 flex items-center justify-center cursor-pointer"
         >
           {formData.logo_url ? (
@@ -383,11 +394,11 @@ const TournamentForm = ({ formData, handleChange, handleSubmit, handleClose, isS
             <p className="text-white font-bold">Change Image</p>
           </div>
         </div>
-        
+
         <div className="flex justify-center -mt-8 relative z-10">
           <button
             type="button"
-            onClick={() => document.getElementById('logo-upload').click()}
+            onClick={() => document.getElementById("logo-upload").click()}
             className="bg-[#cc1d24] text-white px-8 py-2 rounded-full font-bold text-sm shadow-lg hover:bg-red-700 transition-colors"
           >
             UPLOAD LOGO
@@ -403,7 +414,7 @@ const TournamentForm = ({ formData, handleChange, handleSubmit, handleClose, isS
             const file = e.target.files[0];
             if (file) {
               const url = URL.createObjectURL(file);
-              handleChange({ target: { name: 'logo_url', value: url } });
+              handleChange({ target: { name: "logo_url", value: url } });
             }
           }}
         />
