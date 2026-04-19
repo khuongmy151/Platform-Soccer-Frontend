@@ -1,18 +1,22 @@
-export default function TeamDisplay({ name }) {
-  // Lấy ký tự đầu tiên của tên đội (ví dụ: "Lions FC" -> "L")
+export default function TeamDisplay({ name, isHome, logoUrl, onClick }) {
   const firstLetter = name ? name.charAt(0).toUpperCase() : "?";
 
   return (
-    <div className="flex items-center gap-3 w-[150px]">
-      {/* Vòng tròn thay thế ảnh đội */}
-      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center border-2 border-white shadow-sm shrink-0">
-        <span className="text-white font-black text-xs tracking-tighter">
-          {firstLetter}
-        </span>
+    <div 
+      onClick={onClick}
+      className={`flex items-center gap-2 flex-1 min-w-0 cursor-pointer hover:opacity-80 transition-opacity ${
+        isHome ? 'flex-row-reverse text-right' : 'flex-row text-left'
+      }`}
+    >
+      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center border border-white shadow-sm shrink-0 overflow-hidden">
+        {logoUrl ? (
+          <img src={logoUrl} alt={name} className="w-full h-full object-cover" />
+        ) : (
+          <span className="text-white font-black text-[10px] tracking-tighter">{firstLetter}</span>
+        )}
       </div>
       
-      {/* Tên đội bóng */}
-      <span className="font-bold text-gray-800 text-[14px] truncate">
+      <span className="font-bold text-gray-800 text-[10px] md:text-[12px] truncate leading-tight uppercase tracking-tight">
         {name}
       </span>
     </div>
