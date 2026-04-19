@@ -48,11 +48,14 @@ function App() {
         <Route path="/" element={<MainLayout />}>
           {/* PUBLIC: Ai cũng xem được */}
           <Route index element={<DashboardPublic />} />
-          <Route path="members/:memberId" element={<MemberDetail />} />
-          <Route path="teams/:teamId" element={<TeamDetail />} />
           <Route
             path="tournament/:tournamentId"
             element={<TournamentDetail />}
+          />
+          <Route path="teams/:teamId" element={<TeamDetail />} />
+          <Route
+            path="/teams/:teamId/members/:memberId"
+            element={<MemberDetail />}
           />
 
           {/* PRIVATE: Chỉ Organizer có Token mới vào được */}

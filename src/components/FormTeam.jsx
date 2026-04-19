@@ -67,7 +67,7 @@ const FormTeam = ({ ref }) => {
         setIsEdit(true);
         setFormTeam({
           id: foundTeam.id || "",
-          logo_url: foundTeam.logo_url || "",
+          logo_url: foundTeam.logo_url || null,
           kit_url: foundTeam.kit_url || [],
           name: foundTeam.name || "",
           country: foundTeam.country || "",
@@ -79,7 +79,7 @@ const FormTeam = ({ ref }) => {
       setIsEdit(false);
       setFormTeam({
         id: "",
-        logo_url: "",
+        logo_url: null,
         kit_url: [],
         name: "",
         country: "",
@@ -101,10 +101,46 @@ const FormTeam = ({ ref }) => {
   //Hàm cập nhật team
   const handleUpdateTeam = async (e) => {
     e.preventDefault();
+    if (!formTeam.name || !formTeam.country || !formTeam.description) {
+      alert("Vui lòng điền đầy đủ thông tin");
+      return;
+    }
+    const formData = new FormData();
+    formData.append("name", formTeam.name);
+    formData.append("country", formTeam.country);
+    formData.append("description", formTeam.description);
+    // XỬ LÝ LOGO
+    // Nếu logo_url là File object (người dùng mới chọn ảnh)
+    if (formTeam.logo_url instanceof File) {
+      formData.append("logo", formTeam.logo_url);
+    } else {
+      // Nếu là String (link cũ), gửi vào đúng field 'logo_url' để BE nhận lại
+      formData.append("logo_url", formTeam.logo_url);
+    }
+    // XỬ LÝ KITS
+    const oldKits = [];
+    formTeam.kit_url.forEach((kit) => {
+      if (kit instanceof File) {
+        // Nếu là file mới chọn
+        formData.append("kit", kit);
+      } else if (typeof kit === "string" && kit !== "") {
+        // Nếu là link ảnh cũ
+        oldKits.push(kit);
+      }
+    });
+    // Gửi mảng link cũ dưới dạng string để BE dùng JSON.parse
+    formData.append("kit_url", JSON.stringify(oldKits));
     try {
-      await teamService.updateTeam({ url: `/teams/${teamId}`, data: formTeam });
+      await teamService.updateTeam({
+        url: `/teams/${teamId}`,
+        data: formData,
+      });
       deleteQueryString();
-      await teamService.getAllTeam({ url: "/teams", dispatch, func: setTeams });
+      await teamService.getAllTeam({
+        url: "/teams",
+        dispatch,
+        func: setTeams,
+      });
     } catch (error) {
       console.log("Có lỗi xảy ra", error);
       dispatch(updateTeam(formTeam));

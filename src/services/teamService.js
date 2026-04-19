@@ -18,7 +18,11 @@ export const teamService = {
     }
   },
   createTeam: async ({ url, data }) => {
-    const response = await axiosClient.post(`${url}`, data);
+    const response = await axiosClient.post(`${url}`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
     console.log(response);
     toast.success(response?.message);
   },
@@ -28,7 +32,11 @@ export const teamService = {
     toast.success(response?.message);
   },
   updateTeam: async ({ url, data }) => {
-    const response = await axiosClient.put(`${url}`, data);
+    const response = await axiosClient.put(`${url}`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
     console.log(response);
     toast.success(response?.message);
   },

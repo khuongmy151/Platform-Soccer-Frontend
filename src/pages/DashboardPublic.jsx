@@ -75,7 +75,9 @@ function DateSelector() {
         onMouseLeave={handleMouseLeaveOrUp}
         onMouseUp={handleMouseLeaveOrUp}
         onMouseMove={handleMouseMove}
-        className={`flex items-center gap-1.5 overflow-x-auto w-full lg:w-auto py-1 cursor-grab active:cursor-grabbing transition-all ${isDragging ? "scale-[0.99]" : ""}`}
+        className={`flex items-center gap-1.5 overflow-x-auto w-full lg:w-auto py-1 cursor-grab active:cursor-grabbing transition-all ${
+          isDragging ? "scale-[0.99]" : ""
+        }`}
         style={{
           scrollbarWidth: "none",
           msOverflowStyle: "none",
@@ -98,7 +100,9 @@ function DateSelector() {
               }`}
             >
               <span
-                className={`text-[9px] font-bold uppercase tracking-wider mb-0.5 ${isActive ? "text-white/90" : "text-gray-500"}`}
+                className={`text-[9px] font-bold uppercase tracking-wider mb-0.5 ${
+                  isActive ? "text-white/90" : "text-gray-500"
+                }`}
               >
                 {item.monthName}
               </span>
@@ -171,8 +175,10 @@ export default function Dashboard() {
     setLoadingMatches(true);
 
     try {
-      const response =
-        await publicDashboard.getMatchesByTournament(tournamentId);
+      const response = await publicDashboard.getMatchesByTournament(
+        tournamentId
+      );
+      console.log(response);
       const result = response?.data;
       setMatches(Array.isArray(result?.matches) ? result.matches : []);
     } catch (err) {
@@ -253,7 +259,11 @@ export default function Dashboard() {
               >
                 <div
                   onClick={() => handleToggle(tournament.id)}
-                  className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 md:p-5 cursor-pointer relative transition-all duration-300 gap-4 ${isOpen ? "bg-gradient-to-r from-red-50/40 to-surface-white" : "hover:bg-surface-card"}`}
+                  className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 md:p-5 cursor-pointer relative transition-all duration-300 gap-4 ${
+                    isOpen
+                      ? "bg-gradient-to-r from-red-50/40 to-surface-white"
+                      : "hover:bg-surface-card"
+                  }`}
                 >
                   {isOpen && (
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-brand-primary rounded-l-xl"></div>
@@ -280,7 +290,11 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-label-sm font-bold transition-all ${isOpen ? "bg-gray-200 text-gray-900" : "bg-gray-100 text-gray-600"}`}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-label-sm font-bold transition-all ${
+                      isOpen
+                        ? "bg-gray-200 text-gray-900"
+                        : "bg-gray-100 text-gray-600"
+                    }`}
                   >
                     DETAILS{" "}
                     {isOpen ? (
@@ -315,7 +329,7 @@ export default function Dashboard() {
                           <div className="flex flex-col">
                             {matches.map((match) => {
                               const { date, time } = formatMatchDateTime(
-                                match.start_time,
+                                match.start_time
                               );
                               return (
                                 <div
@@ -344,7 +358,7 @@ export default function Dashboard() {
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         navigate(
-                                          `/teams/${match.home_team_id}`,
+                                          `/teams/${match.home_team_id}`
                                         );
                                       }}
                                     />
@@ -363,7 +377,7 @@ export default function Dashboard() {
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         navigate(
-                                          `/teams/${match.away_team_id}`,
+                                          `/teams/${match.away_team_id}`
                                         );
                                       }}
                                     />
