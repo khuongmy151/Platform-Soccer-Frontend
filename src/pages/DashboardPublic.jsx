@@ -6,13 +6,11 @@ import {
   IoTrophySharp,
   IoCalendarClearOutline,
   IoEllipse,
-  IoEllipse,
 } from "react-icons/io5";
 import { HiOutlineRefresh } from "react-icons/hi";
 
 import TeamDisplay from "../components/TeamDisplay";
 import publicDashboard from "../services/publicDashboardService";
-
 
 function DateSelector() {
   const scrollRef = useRef(null);
@@ -21,7 +19,7 @@ function DateSelector() {
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
 
-  // 1. Generate dates 
+  // 1. Generate dates
   const currentYear = new Date().getFullYear();
   const daysInYear = [];
   const dateCursor = new Date(currentYear, 0, 1);
@@ -391,4 +389,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
