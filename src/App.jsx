@@ -22,6 +22,7 @@ import { useEffect } from "react";
 import { getMe } from "./services/userService";
 import { setMe } from "./stores/features/meSlice";
 import { setIsLogin } from "./stores/features/authSlice";
+import ListTeamPublic from "./pages/ListTeamPublic";
 
 function App() {
   const dispatch = useDispatch();
@@ -47,6 +48,7 @@ function App() {
         {/* MAIN LAYOUT */}
         <Route path="/" element={<MainLayout />}>
           {/* PUBLIC: Ai cũng xem được */}
+          <Route path="public/teams" element={<ListTeamPublic />} />
           <Route index element={<DashboardPublic />} />
           <Route
             path="tournament/:tournamentId"
@@ -57,7 +59,6 @@ function App() {
             path="/teams/:teamId/members/:memberId"
             element={<MemberDetail />}
           />
-
           {/* PRIVATE: Chỉ Organizer có Token mới vào được */}
           <Route element={<ProtectedRoute />}>
             <Route path="my-profile" element={<MyProfile />} />
