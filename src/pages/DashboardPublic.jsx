@@ -6,6 +6,7 @@ import {
   IoTrophySharp,
   IoCalendarClearOutline,
   IoEllipse,
+  IoEllipse,
 } from "react-icons/io5";
 import { HiOutlineRefresh } from "react-icons/hi";
 
@@ -390,3 +391,4 @@ export default function Dashboard() {
     </div>
   );
 }
+

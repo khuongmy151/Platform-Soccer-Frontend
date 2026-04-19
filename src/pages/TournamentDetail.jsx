@@ -1,10 +1,9 @@
-import MatchManagement from "../components/MatchManagement";
-
+import MatchList from "../components/MatchList";
 const TournamentDetail = () => {
   return (
     <>
       <h2>TournamentDetail Page</h2>
-      <MatchManagement />
+      <MatchList />
     </>
   );
 };

@@ -12,6 +12,7 @@ import {
 } from "react-icons/io5";
 import { setIsLogin } from "../stores/features/authSlice";
 import { toast } from "react-toastify";
+import { setMe } from "../stores/features/meSlice";
 
 export const Login = () => {
   const dispatch = useDispatch();
@@ -28,12 +29,14 @@ export const Login = () => {
     e.preventDefault();
     try {
       const response = await loginAPI(formData);
+      console.log(response);
       const token =
         response?.data?.token || response?.token || response?.access_token;
       if (token) {
         localStorage.setItem("accessToken", token);
         localStorage.setItem("userEmail", formData.email);
         dispatch(setIsLogin(true));
+        dispatch(setMe(response?.user));
 
         // Lấy tên từ email (vd: alex@gmail.com -> Alex)
         const rawName = formData.email.split("@")[0];
@@ -53,7 +56,7 @@ export const Login = () => {
           </div>,
           {
             position: "top-right",
-            autoClose: 3000,
+            autoClose: 2000,
             hideProgressBar: false,
             closeOnClick: true,
             pauseOnHover: true,

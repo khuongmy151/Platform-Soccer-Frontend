@@ -10,7 +10,6 @@ const ConfirmDialog = ({ ref, message, handleConfirm }) => {
           <p className="text-gray-700 text-md font-medium mb-6 leading-relaxed">
             {message}
           </p>
-
           <div className="flex gap-3 w-full">
             <button
               onClick={() => ref?.current.close()}
@@ -18,7 +17,6 @@ const ConfirmDialog = ({ ref, message, handleConfirm }) => {
             >
               Hủy
             </button>
-
             <button
               onClick={handleConfirm}
               className="flex-[1.5] px-4 py-2.5 text-white font-bold rounded-xl shadow-lg 

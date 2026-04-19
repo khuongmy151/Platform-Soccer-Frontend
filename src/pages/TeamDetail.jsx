@@ -2,10 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { teamService } from "../services/teamService";
 import { players as mockPlayers } from "../mock_data";
-import {
-  MdGroup,
-  MdSportsSoccer,
-} from "react-icons/md";
+import { MdGroup, MdSportsSoccer } from "react-icons/md";
 import { FaArrowLeft, FaTimes, FaUserCircle } from "react-icons/fa";
 import { GiTShirt } from "react-icons/gi";
 
@@ -31,7 +28,9 @@ const ImageWithFallback = ({
   if (!src || hasError) {
     return (
       <div
-        className={`flex items-center justify-center ${fallbackClassName || className}`}
+        className={`flex items-center justify-center ${
+          fallbackClassName || className
+        }`}
         aria-label={alt}
       >
         <FallbackIcon className={iconClassName} />
@@ -144,10 +143,7 @@ const TeamDetail = () => {
             <ul className="flex flex-wrap gap-6">
               {playersList?.map((value, index) => {
                 return (
-                  <li
-                    key={index}
-                    className="w-[calc((100%-72px)/4)]"
-                  >
+                  <li key={index} className="w-[calc((100%-72px)/4)]">
                     <button
                       type="button"
                       onClick={() => setSelectedPlayer(value)}
@@ -254,8 +250,6 @@ const TeamDetail = () => {
             aria-modal="true"
             aria-labelledby="player-detail-title"
           >
-            
-
             <div className="grid gap-0 lg:grid-cols-[320px_minmax(0,1fr)]">
               <div className="relative min-h-[360px] bg-surface-nav">
                 <ImageWithFallback
@@ -323,7 +317,10 @@ const TeamDetail = () => {
                   </div>
                   {Object.entries(selectedPlayer.stats || {}).map(
                     ([key, value]) => (
-                      <div key={key} className="rounded-[16px] bg-surface-bg p-4">
+                      <div
+                        key={key}
+                        className="rounded-[16px] bg-surface-bg p-4"
+                      >
                         <p className="text-label-sm font-semibold tracking-[0.15em] text-nav-muted">
                           {formatStatLabel(key)}
                         </p>
