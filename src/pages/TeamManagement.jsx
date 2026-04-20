@@ -94,7 +94,7 @@ const TeamManagement = () => {
 
   return (
     <>
-      <div className="flex flex-col min-h-screen bg-surface-bg">
+      <div className="flex flex-col min-h-screen bg-surface-bg rounded-[12px]">
         {/* TOP TITLE SECTION */}
         <div className="flex items-center justify-between w-[90%] md:h-[100px] mx-auto my-6 md:my-8">
           <div className="w-full md:w-[70%]">
@@ -124,35 +124,33 @@ const TeamManagement = () => {
           </div>
         </div>
         {/* SEARCH + BUTTON ADD TEAM */}
-        <div className="flex items-center w-[90%] h-auto md:h-[80px] mx-auto bg-transparent md:bg-surface-white rounded-[12px] border-none md:border md:border-header-line mb-3">
-          <div className="flex w-full md:w-[95%] h-[56px] md:h-[60%] m-auto gap-3 md:gap-0">
-            {/* Search Input Container */}
-            <div className="flex items-center flex-1 md:w-[85%] bg-surface-white md:bg-surface-bg rounded-2xl md:rounded-none px-4 md:px-5 shadow-sm md:shadow-none border border-header-line md:border-none">
-              <IoFilter className="hidden md:block w-[5%] text-[24px] text-icon-muted" />
-              <FaSearch className="md:hidden text-icon-muted text-lg shrink-0" />
-              <input
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                value={inputValue}
-                className="flex-1 md:w-[80%] bg-transparent outline-none ml-3 md:ml-4 text-surface-nav font-medium"
-                placeholder="Search team..."
-              />
-              <FaSearch
-                onClick={handleSearch}
-                className="hidden md:block text-surface-nav md:mr-4 hover:cursor-pointer hover:scale-125 transition-transform duration-300 shrink-0"
-              />
-            </div>
-            {/* Button Add Team */}
-            <button
-              onClick={() => navigate("/teams/create")}
-              className="flex items-center justify-center aspect-square h-full md:aspect-auto md:w-[15%] rounded-[16px] md:rounded-[12px] bg-cta-gradient hover:cursor-pointer hover:scale-105 transition-all duration-300 shrink-0 shadow-lg shadow-brand-primary/20 md:shadow-none"
-            >
-              <IoIosAdd className="text-[32px] md:text-[24px] md:ms-5 text-white md:text-surface-panel" />
-              <p className="hidden md:block text-body-lg text-surface-panel font-bold ml-1">
-                Add Team
-              </p>
-            </button>
+        <div className="flex items-center justify-between w-[90%] mx-auto mb-6 gap-4 mt-2">
+          {/* Search Input Container */}
+          <div className="flex items-center flex-1 h-[56px] bg-surface-white rounded-[16px] px-5 shadow-sm border border-header-line transition-all hover:border-brand-primary/50 focus-within:border-brand-primary focus-within:shadow-md">
+            <IoFilter className="hidden md:block w-5 h-5 text-icon-muted" />
+            <FaSearch className="md:hidden text-icon-muted text-lg shrink-0" />
+            <input
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              value={inputValue}
+              className="flex-1 bg-transparent outline-none ml-4 text-surface-nav font-medium placeholder:text-nav-muted"
+              placeholder="Search team..."
+            />
+            <FaSearch
+              onClick={handleSearch}
+              className="hidden md:block w-5 h-5 text-surface-nav hover:cursor-pointer hover:text-brand-primary hover:scale-110 transition-all duration-300 shrink-0"
+            />
           </div>
+          {/* Button Add Team */}
+          <button
+            onClick={() => navigate("/teams/create")}
+            className="flex items-center justify-center h-[56px] px-5 md:px-7 rounded-[16px] bg-cta-gradient hover:scale-[1.03] active:scale-95 transition-all duration-300 shrink-0 shadow-lg shadow-brand-primary/25 cursor-pointer text-white border border-[#ba0022]/20"
+          >
+            <IoIosAdd className="text-[28px] shrink-0" />
+            <span className="hidden md:block text-body-lg font-bold ml-1.5 tracking-wide uppercase mt-[2px]">
+              Add Team
+            </span>
+          </button>
         </div>
         {/* LIST TEAM*/}
         <ListTeam

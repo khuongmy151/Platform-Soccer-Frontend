@@ -131,7 +131,7 @@ const CreateTeam = () => {
                 )}
                 <input
                   type="file"
-                  // accept="image/png,image/svg+xml,image/jpeg,image/webp"
+                  accept=".png, .jpg, .jpeg"
                   className="hidden"
                   ref={logo}
                   onChange={(e) =>
@@ -167,7 +167,7 @@ const CreateTeam = () => {
                   </div>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept=".png, .jpg, .jpeg"
                     className="hidden"
                     ref={playerJersey}
                     onChange={(e) =>
@@ -196,7 +196,7 @@ const CreateTeam = () => {
                   </div>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept=".png, .jpg, .jpeg"
                     className="hidden"
                     ref={goalkeeperJersey}
                     onChange={(e) =>

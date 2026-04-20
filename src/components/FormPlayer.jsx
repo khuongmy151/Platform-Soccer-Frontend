@@ -78,13 +78,13 @@ const FormPlayer = ({ ref, mode = "add", player = null, onSubmit }) => {
           <h2 className="text-display-sm font-extrabold text-surface-nav tracking-wide mb-8">
             {isEdit ? "EDIT PLAYER" : "ADD PLAYER"}
           </h2>
-          <div className="relative w-full max-w-[320px] aspect-square rounded-[16px] overflow-hidden bg-surface-nav shadow-lg">
+          <div className="relative w-full max-w-[320px] aspect-square rounded-[16px] overflow-hidden bg-surface-white shadow-lg">
             <input
               type="file"
               ref={avatarRef}
               onChange={(e) => handleChange("avatar", e.target.files[0])}
               className="hidden"
-              accept="image/*"
+              accept=".png, .jpg, .jpeg"
             />
             {avatarPreview ? (
               <img
@@ -93,7 +93,7 @@ const FormPlayer = ({ ref, mode = "add", player = null, onSubmit }) => {
                 alt="Player avatar"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-surface-white/40 text-body-md">
+              <div className="w-full h-full flex items-center justify-center text-surface-black/40 text-body-md">
                 No image
               </div>
             )}
