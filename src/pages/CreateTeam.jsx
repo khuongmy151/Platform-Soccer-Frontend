@@ -47,7 +47,7 @@ const CreateTeam = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(form);
+
     if (!form.name.trim() || !form.country.trim()) {
       alert("Vui lòng nhập đầy đủ thông tin.");
       return;
@@ -61,28 +61,23 @@ const CreateTeam = () => {
       return;
     }
     setIsSubmitting(true);
-    const kitUrl = [
-      form.playerJerseyFile?.name,
-      form.goalkeeperJerseyFile?.name,
-    ];
-    const payload = {
-      name: form.name.trim(),
-      country: form.country.trim(),
-      description: form.description.trim(),
-      logo_url: form.logoFile?.name || null,
-      kit_url: kitUrl || [],
-    };
-
+    const formData = new FormData();
+    formData.append("name", form.name.trim());
+    formData.append("country", form.country.trim());
+    formData.append("description", form.description.trim());
+    formData.append("logo", form.logoFile);
+    formData.append("kit", form.playerJerseyFile);
+    formData.append("kit", form.goalkeeperJerseyFile);
     try {
       await teamService.createTeam({
         url: "/teams",
-        data: payload,
+        data: formData,
       });
       navigate("/teams");
     } catch (error) {
       console.error(error);
       const fallbackTeam = {
-        ...payload,
+        ...formData,
         id: Date.now(),
       };
       dispatch(addTeam(fallbackTeam));
@@ -136,7 +131,7 @@ const CreateTeam = () => {
                 )}
                 <input
                   type="file"
-                  accept="image/png,image/svg+xml,image/jpeg,image/webp"
+                  // accept="image/png,image/svg+xml,image/jpeg,image/webp"
                   className="hidden"
                   ref={logo}
                   onChange={(e) =>

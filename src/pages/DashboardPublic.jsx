@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   IoChevronDown,
   IoChevronUp,
@@ -8,7 +8,7 @@ import {
   IoEllipse,
 } from "react-icons/io5";
 import { HiOutlineRefresh } from "react-icons/hi";
-
+import PublicTeamCard from "../components/PublicTeamCard";
 import TeamDisplay from "../components/TeamDisplay";
 import publicDashboard from "../services/publicDashboardService";
 
@@ -19,7 +19,6 @@ function DateSelector() {
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
 
-  // 1. Generate dates
   const currentYear = new Date().getFullYear();
   const daysInYear = [];
   const dateCursor = new Date(currentYear, 0, 1);
@@ -38,7 +37,6 @@ function DateSelector() {
     dateCursor.setDate(dateCursor.getDate() + 1);
   }
 
-  // 2. Auto-scroll to today on mount
   useEffect(() => {
     if (scrollRef.current) {
       const todayElement = scrollRef.current.querySelector(".is-today");
@@ -48,22 +46,19 @@ function DateSelector() {
     }
   }, []);
 
-  // 3. Mouse Drag Logic (to simulate mobile swiping on desktop)
   const handleMouseDown = (e) => {
     setIsDragging(true);
     setStartX(e.pageX - scrollRef.current.offsetLeft);
     setScrollLeft(scrollRef.current.scrollLeft);
   };
 
-  const handleMouseLeaveOrUp = () => {
-    setIsDragging(false);
-  };
+  const handleMouseLeaveOrUp = () => setIsDragging(false);
 
   const handleMouseMove = (e) => {
     if (!isDragging) return;
     e.preventDefault();
     const x = e.pageX - scrollRef.current.offsetLeft;
-    const walk = (x - startX) * 2; // Scroll speed
+    const walk = (x - startX) * 2;
     scrollRef.current.scrollLeft = scrollLeft - walk;
   };
 
@@ -76,17 +71,11 @@ function DateSelector() {
         onMouseUp={handleMouseLeaveOrUp}
         onMouseMove={handleMouseMove}
         className={`flex items-center gap-1.5 overflow-x-auto w-full lg:w-auto py-1 cursor-grab active:cursor-grabbing transition-all ${isDragging ? "scale-[0.99]" : ""}`}
-        style={{
-          scrollbarWidth: "none",
-          msOverflowStyle: "none",
-          WebkitOverflowScrolling: "touch", // Enables native momentum scroll on mobile
-        }}
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         <style>{`div::-webkit-scrollbar { display: none; }`}</style>
-
         {daysInYear.map((item) => {
           const isActive = selectedDate === item.fullDateString;
-
           return (
             <button
               key={item.fullDateString}
@@ -106,9 +95,7 @@ function DateSelector() {
                 {item.dayNumber}
               </span>
               <span
-                className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap ${
-                  isActive ? "bg-white/20 text-white" : "text-gray-500/60"
-                }`}
+                className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap ${isActive ? "bg-white/20 text-white" : "text-gray-500/60"}`}
               >
                 {item.dayName}
               </span>
@@ -116,8 +103,6 @@ function DateSelector() {
           );
         })}
       </div>
-
-      {/* Season Selector */}
       <div className="flex flex-col items-start lg:items-end gap-1 w-full lg:w-auto">
         <label className="text-[9px] font-black text-brand-primary uppercase tracking-widest lg:mr-2">
           Select Season
@@ -134,7 +119,63 @@ function DateSelector() {
   );
 }
 
-// --- Main Dashboard ---
+function TeamSection() {
+  const [teams, setTeams] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchPublicTeams = async () => {
+      try {
+        setLoading(true);
+        const response = await publicDashboard.getAllTeams();
+        const raw = response?.data || response;
+        const data = Array.isArray(raw) ? raw : raw?.data || [];
+        setTeams(data);
+      } catch (err) {
+        console.error("Error fetching teams:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPublicTeams();
+  }, []);
+
+  if (loading)
+    return (
+      <div className="flex justify-center p-12 text-gray-400">
+        <HiOutlineRefresh
+          className="animate-spin text-brand-primary"
+          size={24}
+        />
+      </div>
+    );
+
+  return (
+    <section className="bg-surface-white rounded-2xl border border-gray-100 p-6 shadow-sm mt-8">
+      <div className="flex items-center justify-between mb-8">
+        <h2 className="text-headline-sm font-black text-gray-900 uppercase tracking-tighter font-display">
+          Teams
+        </h2>
+        <Link to="/public/teams">
+          <button className="bg-brand-primary hover:bg-brand-dark text-white text-[10px] font-bold px-4 py-2 rounded-lg transition-colors uppercase tracking-widest shadow-sm">
+            View All
+          </button>
+        </Link>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {teams.slice(0, 8).map((team) => (
+          <PublicTeamCard
+            key={team.id}
+            team={team}
+            onClick={(id) => navigate(`/teams/${id}`)}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [tournaments, setTournaments] = useState([]);
@@ -165,11 +206,9 @@ export default function Dashboard() {
       setMatches([]);
       return;
     }
-
     setExpandedId(tournamentId);
     setMatches([]);
     setLoadingMatches(true);
-
     try {
       const response =
         await publicDashboard.getMatchesByTournament(tournamentId);
@@ -227,10 +266,8 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-surface-bg font-body pb-16">
-      {/* Scrollbar Removal Hack (since index.css is untouched) */}
       <style>{`body::-webkit-scrollbar { display: none; }`}</style>
 
-      {/* Header */}
       <div className="bg-surface-white border-b border-gray-100 mb-6 pt-10 pb-7">
         <div className="max-w-[1000px] mx-auto px-6">
           <h1 className="text-headline-sm md:text-headline-md font-black text-gray-900 flex items-center gap-3 italic uppercase tracking-tighter font-display leading-none">
@@ -305,7 +342,6 @@ export default function Dashboard() {
                       </div>
                     ) : (
                       <>
-                        {/* Headers exactly like the picture */}
                         <div className="hidden md:grid grid-cols-3 py-3 bg-surface-card text-label-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">
                           <div className="text-center">Schedule / Status</div>
                           <div className="col-span-2 text-center">Matchup</div>
@@ -384,6 +420,7 @@ export default function Dashboard() {
               </div>
             );
           })}
+          <TeamSection />
         </div>
       </main>
     </div>
