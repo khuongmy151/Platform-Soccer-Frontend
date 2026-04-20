@@ -6,6 +6,8 @@ import { HiOutlineShieldCheck } from "react-icons/hi";
 import { IoInformationCircleOutline } from "react-icons/io5";
 import { teamService } from "../services/teamService";
 import { addTeam } from "../stores/features/teamSlice";
+import { toast } from "react-toastify";
+import validateForm from "../helpers/validateForm";
 
 const initialForm = {
   name: "",
@@ -24,6 +26,11 @@ const CreateTeam = () => {
   const logo = useRef();
   const playerJersey = useRef();
   const goalkeeperJersey = useRef();
+  const [error, setError] = useState({
+    errorName: "",
+    errorCountry: "",
+    errorDescription: "",
+  });
 
   const logoPreview = useMemo(() => {
     if (form.logoFile !== null) return URL.createObjectURL(form.logoFile);
@@ -47,44 +54,64 @@ const CreateTeam = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!form.name.trim() || !form.country.trim()) {
-      alert("Vui lòng nhập đầy đủ thông tin.");
+    // Kiểm tra xem đã chọn đủ 3 file chưa
+    const logoFile = logo.current.files[0];
+    const playerFile = playerJersey.current.files[0];
+    const gkFile = goalkeeperJersey.current.files[0];
+    if (!logoFile || !playerFile || !gkFile) {
+      toast.warning("Vui lòng chọn đầy đủ 3 ảnh");
       return;
     }
-    if (
-      !logo.current.files[0] ||
-      !playerJersey.current.files[0] ||
-      !goalkeeperJersey.current.files[0]
-    ) {
-      alert("Vui lòng chọn ảnh");
-      return;
+    // Định nghĩa các định dạng cho phép và dung lượng tối đa
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/jpg"];
+    const MAX_SIZE = 300 * 1024; // 300KB
+    const files = [
+      { file: logoFile, label: "Logo" },
+      { file: playerFile, label: "Áo cầu thủ" },
+      { file: gkFile, label: "Áo thủ môn" },
+    ];
+    // Vòng lặp kiểm tra từng file
+    for (const item of files) {
+      // Kiểm tra định dạng
+      if (!allowedTypes.includes(item.file.type)) {
+        toast.error(
+          `${item.label} không đúng định dạng. Chỉ chấp nhận JPEG, PNG, GIF.`
+        );
+        return;
+      }
+      // Kiểm tra dung lượng
+      if (item.file.size > MAX_SIZE) {
+        toast.error(`${item.label} quá lớn (Tối đa 300KB).`);
+        return;
+      }
     }
-    setIsSubmitting(true);
-    const formData = new FormData();
-    formData.append("name", form.name.trim());
-    formData.append("country", form.country.trim());
-    formData.append("description", form.description.trim());
-    formData.append("logo", form.logoFile);
-    formData.append("kit", form.playerJerseyFile);
-    formData.append("kit", form.goalkeeperJerseyFile);
-    try {
-      await teamService.createTeam({
-        url: "/teams",
-        data: formData,
-      });
-      navigate("/teams");
-    } catch (error) {
-      console.error(error);
-      const fallbackTeam = {
-        ...formData,
-        id: Date.now(),
-      };
-      dispatch(addTeam(fallbackTeam));
-      alert("Không kết nối được backend, đã lưu tạm ở local list.");
-      navigate("/teams");
-    } finally {
-      setIsSubmitting(false);
+    if (validateForm.validateFormTeam({ formTeam: form, setError })) {
+      setIsSubmitting(true);
+      const formData = new FormData();
+      formData.append("name", form.name.trim());
+      formData.append("country", form.country.trim());
+      formData.append("description", form.description.trim());
+      formData.append("logo", form.logoFile);
+      formData.append("kit", form.playerJerseyFile);
+      formData.append("kit", form.goalkeeperJerseyFile);
+      try {
+        await teamService.createTeam({
+          url: "/teams",
+          data: formData,
+        });
+        navigate("/teams");
+      } catch (error) {
+        console.error(error);
+        const fallbackTeam = {
+          ...formData,
+          id: Date.now(),
+        };
+        dispatch(addTeam(fallbackTeam));
+        alert("Không kết nối được backend, đã lưu tạm ở local list.");
+        navigate("/teams");
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -223,12 +250,16 @@ const CreateTeam = () => {
               </label>
               <input
                 value={form.name}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, name: e.target.value }))
-                }
+                onChange={(e) => {
+                  setForm((prev) => ({ ...prev, name: e.target.value }));
+                  setError((prev) => ({ ...prev, errorName: "" }));
+                }}
                 placeholder="E.g., Neon Strike FC"
                 className="w-full border-b border-gray-400 md:border-b-2 bg-transparent py-2 text-[30px] md:text-xl text-surface-panel uppercase outline-none placeholder:text-gray-300"
               />
+              <span className="text-brand-primary text-label-sm">
+                {error.errorName}
+              </span>
             </div>
 
             <div>
@@ -237,12 +268,16 @@ const CreateTeam = () => {
               </label>
               <input
                 value={form.country}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, country: e.target.value }))
-                }
+                onChange={(e) => {
+                  setForm((prev) => ({ ...prev, country: e.target.value }));
+                  setError((prev) => ({ ...prev, errorCountry: "" }));
+                }}
                 placeholder="Vietnam"
                 className="w-full border-b border-gray-400 md:border-b-2 bg-transparent py-2 text-base text-surface-panel outline-none placeholder:text-gray-300"
               />
+              <span className="text-brand-primary text-label-sm">
+                {error.errorCountry}
+              </span>
             </div>
 
             <div>
@@ -251,12 +286,16 @@ const CreateTeam = () => {
               </label>
               <textarea
                 value={form.description}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, description: e.target.value }))
-                }
+                onChange={(e) => {
+                  setForm((prev) => ({ ...prev, description: e.target.value }));
+                  setError((prev) => ({ ...prev, errorDescription: "" }));
+                }}
                 placeholder="Club mission and history..."
                 className="min-h-18 md:min-h-24 w-full border-b border-gray-400 md:border-b-2 bg-transparent py-1.5 md:py-2 text-[14px] md:text-base text-surface-panel outline-none placeholder:text-gray-300 resize-none"
               />
+              <span className="text-brand-primary text-label-sm">
+                {error.errorDescription}
+              </span>
             </div>
 
             <div className="space-y-3 pt-1 md:pt-2">
@@ -278,6 +317,7 @@ const CreateTeam = () => {
 
         <div className="col-span-full hidden md:flex justify-end gap-6 pt-1">
           <button
+            data-umami-event="Cancel create team button click"
             type="button"
             onClick={() => navigate("/teams")}
             className="text-label-lg rounded-xl bg-[#dadde2] px-10 py-4 font-bold tracking-[0.2em] text-gray-500 uppercase cursor-pointer"
@@ -285,6 +325,7 @@ const CreateTeam = () => {
             Cancel
           </button>
           <button
+            data-umami-event="Create team button click"
             type="submit"
             disabled={isSubmitting}
             className="rounded-xl bg-cta-gradient px-10 py-4 text-label-lg font-bold tracking-[0.2em] text-white uppercase shadow-lg shadow-brand-primary/20 disabled:opacity-70 cursor-pointer disabled:cursor-not-allowed"
@@ -297,6 +338,7 @@ const CreateTeam = () => {
       <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] left-0 right-0 z-40 border-t border-header-line bg-surface-white px-5 py-4 shadow-[0_-8px_30px_rgba(0,0,0,0.05)] md:hidden">
         <div className="mx-auto flex w-full max-w-[1120px] items-center gap-4">
           <button
+            data-umami-event="Cancel create team button click"
             type="button"
             onClick={() => navigate("/teams")}
             className="h-14 w-[28%] rounded-xl bg-[#dadde2] text-[12px] font-black tracking-[0.2em] text-[#595c5f] uppercase cursor-pointer"
@@ -304,6 +346,7 @@ const CreateTeam = () => {
             Cancel
           </button>
           <button
+            data-umami-event="Create team button click"
             type="button"
             disabled={isSubmitting}
             onClick={handleSubmit}

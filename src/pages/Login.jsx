@@ -13,6 +13,7 @@ import {
 import { setIsLogin } from "../stores/features/authSlice";
 import { toast } from "react-toastify";
 import { setMe } from "../stores/features/meSlice";
+import validateForm from "../helpers/validateForm";
 
 export const Login = () => {
   const dispatch = useDispatch();
@@ -23,70 +24,80 @@ export const Login = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    setError({ errorEmail: "", errorPassword: "" });
   };
+  const [error, setError] = useState({ errorEmail: "", errorPassword: "" });
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    try {
-      const response = await loginAPI(formData);
-      console.log(response);
-      const token =
-        response?.data?.token || response?.token || response?.access_token;
-      if (token) {
-        localStorage.setItem("accessToken", token);
-        localStorage.setItem("userEmail", formData.email);
-        dispatch(setIsLogin(true));
-        dispatch(setMe(response?.user));
+    if (
+      validateForm.validateFormAuth({
+        email: formData.email,
+        password: formData.password,
+        setError,
+      })
+    ) {
+      try {
+        const response = await loginAPI(formData);
+        console.log(response);
+        const token =
+          response?.data?.token || response?.token || response?.access_token;
+        if (token) {
+          localStorage.setItem("accessToken", token);
+          localStorage.setItem("userEmail", formData.email);
+          dispatch(setIsLogin(true));
+          dispatch(setMe(response?.user));
 
-        // Lấy tên từ email (vd: alex@gmail.com -> Alex)
-        const rawName = formData.email.split("@")[0];
-        const userName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+          // Lấy tên từ email (vd: alex@gmail.com -> Alex)
+          const rawName = formData.email.split("@")[0];
+          const userName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
 
-        // HIỂN THỊ TOAST THÀNH CÔNG THEO MOCKUP
-        toast.success(
+          // HIỂN THỊ TOAST THÀNH CÔNG THEO MOCKUP
+          toast.success(
+            <div>
+              <div className="font-bold text-slate-800 text-[15px] mb-0.5">
+                Login Successful
+              </div>
+              <div className="text-slate-500 text-xs">
+                Welcome back,{" "}
+                <span className="text-[#BA0022] font-bold">{userName}</span>!
+                You have successfully logged in.
+              </div>
+            </div>,
+            {
+              position: "top-right",
+              autoClose: 2000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              theme: "light",
+            }
+          );
+
+          setTimeout(() => {
+            navigate("/");
+          }, 1000);
+        }
+      } catch (error) {
+        // ĐỔI ALERT THÀNH TOAST LỖI CHO ĐỒNG BỘ GIAO DIỆN
+        toast.error(
           <div>
             <div className="font-bold text-slate-800 text-[15px] mb-0.5">
-              Login Successful
+              Login Failed
             </div>
             <div className="text-slate-500 text-xs">
-              Welcome back,{" "}
-              <span className="text-[#BA0022] font-bold">{userName}</span>! You
-              have successfully logged in.
+              {error.response?.data?.message ||
+                "Vui lòng kiểm tra lại email và mật khẩu!"}
             </div>
           </div>,
           {
             position: "top-right",
-            autoClose: 2000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
+            autoClose: 3000,
             theme: "light",
           }
         );
-
-        setTimeout(() => {
-          navigate("/");
-        }, 1000);
       }
-    } catch (error) {
-      // ĐỔI ALERT THÀNH TOAST LỖI CHO ĐỒNG BỘ GIAO DIỆN
-      toast.error(
-        <div>
-          <div className="font-bold text-slate-800 text-[15px] mb-0.5">
-            Login Failed
-          </div>
-          <div className="text-slate-500 text-xs">
-            {error.response?.data?.message ||
-              "Vui lòng kiểm tra lại email và mật khẩu!"}
-          </div>
-        </div>,
-        {
-          position: "top-right",
-          autoClose: 3000,
-          theme: "light",
-        }
-      );
     }
   };
 
@@ -123,7 +134,7 @@ export const Login = () => {
         </div>
 
         {/* CỘT PHẢI: FORM ĐĂNG NHẬP */}
-        <div className="flex flex-1 flex-col justify-center items-center px-10 bg-white">
+        <div className="flex flex-1 flex-col items-center px-10 bg-white overflow-y-auto">
           <div className="w-full max-w-[440px]">
             <h1 className="text-5xl font-black text-slate-900 mb-2 tracking-tight">
               Welcome
@@ -160,14 +171,15 @@ export const Login = () => {
                   <IoMailOutline className="text-slate-400 text-xl mr-3" />
                   <input
                     name="email"
-                    type="email"
-                    required
                     onChange={handleInputChange}
                     placeholder="Email address"
                     autoComplete="off"
                     className="w-full outline-none text-slate-800 font-semibold placeholder:text-slate-300 bg-transparent text-sm"
                   />
                 </div>
+                <span className="text-brand-primary text-label-sm">
+                  {error.errorEmail}
+                </span>
               </div>
 
               {/* Password Input */}
@@ -180,7 +192,6 @@ export const Login = () => {
                   <input
                     name="password"
                     type={showPassword ? "text" : "password"}
-                    required
                     onChange={handleInputChange}
                     placeholder="Password"
                     autoComplete="new-password"
@@ -198,6 +209,9 @@ export const Login = () => {
                     )}
                   </button>
                 </div>
+                <span className="text-brand-primary text-label-sm">
+                  {error.errorPassword}
+                </span>
               </div>
 
               {/* Remember me & Forgot Password */}

@@ -1,3 +1,4 @@
+import { useSelector, useDispatch } from "react-redux";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
@@ -11,6 +12,8 @@ import { HiOutlineRefresh } from "react-icons/hi";
 import PublicTeamCard from "../components/PublicTeamCard";
 import TeamDisplay from "../components/TeamDisplay";
 import publicDashboard from "../services/publicDashboardService";
+import { setTeams } from "../stores/features/teamSlice";
+import { setTournaments } from "../stores/features/tournamentSlice";
 
 function DateSelector() {
   const scrollRef = useRef(null);
@@ -70,7 +73,9 @@ function DateSelector() {
         onMouseLeave={handleMouseLeaveOrUp}
         onMouseUp={handleMouseLeaveOrUp}
         onMouseMove={handleMouseMove}
-        className={`flex items-center gap-1.5 overflow-x-auto w-full lg:w-auto py-1 cursor-grab active:cursor-grabbing transition-all ${isDragging ? "scale-[0.99]" : ""}`}
+        className={`flex items-center gap-1.5 overflow-x-auto w-full lg:w-auto py-1 cursor-grab active:cursor-grabbing transition-all ${
+          isDragging ? "scale-[0.99]" : ""
+        }`}
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         <style>{`div::-webkit-scrollbar { display: none; }`}</style>
@@ -87,7 +92,9 @@ function DateSelector() {
               }`}
             >
               <span
-                className={`text-[9px] font-bold uppercase tracking-wider mb-0.5 ${isActive ? "text-white/90" : "text-gray-500"}`}
+                className={`text-[9px] font-bold uppercase tracking-wider mb-0.5 ${
+                  isActive ? "text-white/90" : "text-gray-500"
+                }`}
               >
                 {item.monthName}
               </span>
@@ -95,7 +102,9 @@ function DateSelector() {
                 {item.dayNumber}
               </span>
               <span
-                className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap ${isActive ? "bg-white/20 text-white" : "text-gray-500/60"}`}
+                className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap ${
+                  isActive ? "bg-white/20 text-white" : "text-gray-500/60"
+                }`}
               >
                 {item.dayName}
               </span>
@@ -120,18 +129,20 @@ function DateSelector() {
 }
 
 function TeamSection() {
-  const [teams, setTeams] = useState([]);
+  const dispatch = useDispatch();
+  const teams = useSelector((state) => state.teams.items);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchPublicTeams = async () => {
       try {
+        await publicDashboard.getAllTeams({
+          url: "/public/teams",
+          dispatch,
+          func: setTeams,
+        });
         setLoading(true);
-        const response = await publicDashboard.getAllTeams();
-        const raw = response?.data || response;
-        const data = Array.isArray(raw) ? raw : raw?.data || [];
-        setTeams(data);
       } catch (err) {
         console.error("Error fetching teams:", err);
       } finally {
@@ -139,7 +150,7 @@ function TeamSection() {
       }
     };
     fetchPublicTeams();
-  }, []);
+  }, [dispatch]);
 
   if (loading)
     return (
@@ -168,7 +179,7 @@ function TeamSection() {
           <PublicTeamCard
             key={team.id}
             team={team}
-            onClick={(id) => navigate(`/teams/${id}`)}
+            onClick={(id) => navigate(`/public/teams/${id}`)}
           />
         ))}
       </div>
@@ -177,8 +188,8 @@ function TeamSection() {
 }
 
 export default function Dashboard() {
-  const navigate = useNavigate();
-  const [tournaments, setTournaments] = useState([]);
+  const dispatch = useDispatch();
+  const tournaments = useSelector((state) => state.tournaments.items);
   const [expandedId, setExpandedId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [matches, setMatches] = useState([]);
@@ -187,10 +198,12 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchTournaments = async () => {
       try {
+        await publicDashboard.getAllTournaments({
+          url: "/public/tournament",
+          dispatch,
+          func: setTournaments,
+        });
         setLoading(true);
-        const response = await publicDashboard.getAllTournaments();
-        const data = response?.data || response;
-        setTournaments(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Fetch error:", err);
       } finally {
@@ -198,7 +211,7 @@ export default function Dashboard() {
       }
     };
     fetchTournaments();
-  }, []);
+  }, [dispatch]);
 
   const handleToggle = async (tournamentId) => {
     if (expandedId === tournamentId) {
@@ -210,8 +223,9 @@ export default function Dashboard() {
     setMatches([]);
     setLoadingMatches(true);
     try {
-      const response =
-        await publicDashboard.getMatchesByTournament(tournamentId);
+      const response = await publicDashboard.getMatchesByTournament(
+        tournamentId
+      );
       const result = response?.data;
       setMatches(Array.isArray(result?.matches) ? result.matches : []);
     } catch (err) {
@@ -290,7 +304,11 @@ export default function Dashboard() {
               >
                 <div
                   onClick={() => handleToggle(tournament.id)}
-                  className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 md:p-5 cursor-pointer relative transition-all duration-300 gap-4 ${isOpen ? "bg-gradient-to-r from-red-50/40 to-surface-white" : "hover:bg-surface-card"}`}
+                  className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 md:p-5 cursor-pointer relative transition-all duration-300 gap-4 ${
+                    isOpen
+                      ? "bg-gradient-to-r from-red-50/40 to-surface-white"
+                      : "hover:bg-surface-card"
+                  }`}
                 >
                   {isOpen && (
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-brand-primary rounded-l-xl"></div>
@@ -317,7 +335,11 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-label-sm font-bold transition-all ${isOpen ? "bg-gray-200 text-gray-900" : "bg-gray-100 text-gray-600"}`}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-label-sm font-bold transition-all ${
+                      isOpen
+                        ? "bg-gray-200 text-gray-900"
+                        : "bg-gray-100 text-gray-600"
+                    }`}
                   >
                     DETAILS{" "}
                     {isOpen ? (
@@ -351,7 +373,7 @@ export default function Dashboard() {
                           <div className="flex flex-col">
                             {matches.map((match) => {
                               const { date, time } = formatMatchDateTime(
-                                match.start_time,
+                                match.start_time
                               );
                               return (
                                 <div
@@ -377,12 +399,12 @@ export default function Dashboard() {
                                       name={match.home_team?.name}
                                       isHome={true}
                                       logoUrl={match.home_team?.logo}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        navigate(
-                                          `/teams/${match.home_team_id}`,
-                                        );
-                                      }}
+                                      // onClick={(e) => {
+                                      //   e.stopPropagation();
+                                      //   navigate(
+                                      //     `/teams/${match.home_team_id}`
+                                      //   );
+                                      // }}
                                     />
                                     <div className="flex flex-col items-center min-w-[60px] md:min-w-[70px]">
                                       <span className="text-gray-300 text-[10px] font-bold italic uppercase">
@@ -396,12 +418,12 @@ export default function Dashboard() {
                                       name={match.away_team?.name}
                                       isHome={false}
                                       logoUrl={match.away_team?.logo}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        navigate(
-                                          `/teams/${match.away_team_id}`,
-                                        );
-                                      }}
+                                      // onClick={(e) => {
+                                      //   e.stopPropagation();
+                                      //   navigate(
+                                      //     `/teams/${match.away_team_id}`
+                                      //   );
+                                      // }}
                                     />
                                   </div>
                                 </div>

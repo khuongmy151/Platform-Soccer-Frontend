@@ -89,7 +89,7 @@ const TeamDetail = () => {
             <div className="w-[9%] h-1 bg-cta-gradient"></div>
           </div>
           <button
-            onClick={() => navigate("/teams")}
+            onClick={() => navigate(-1)}
             aria-label="Back"
             className="flex items-center justify-center w-11 h-11 bg-surface-nav text-surface-white rounded-full hover:cursor-pointer hover:scale-110 transition-transform duration-300"
           >
@@ -103,8 +103,10 @@ const TeamDetail = () => {
                 <ImageWithFallback
                   className="h-24 w-24 rounded-[12px] object-cover"
                   fallbackClassName="h-24 w-24 rounded-[12px] bg-surface-bg text-surface-nav"
-                  src={team?.logo_url}
-                  alt={team?.name || "Team logo"}
+                  src={
+                    team?.logo_url ||
+                    "https://cdn-icons-png.freepik.com/256/11680/11680860.png?semt=ais_white_label"
+                  }
                   icon={MdSportsSoccer}
                   iconClassName="h-12 w-12"
                 />
@@ -122,9 +124,7 @@ const TeamDetail = () => {
                       className="w-[50%] h-full object-contain"
                       fallbackClassName="flex h-full w-[50%] rounded-[12px] bg-white text-surface-nav"
                       key={index}
-                      src={value}
-                      alt={`${team?.name || "Team"} kit ${index + 1}`}
-                      icon={GiTShirt}
+                      src={value || null}
                       iconClassName="h-14 w-14"
                     />
                   );

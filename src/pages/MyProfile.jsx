@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { updateProfileAPI, uploadAvatarAPI } from "../services/userService";
 import { setMe } from "../stores/features/meSlice";
+import { toast } from "react-toastify";
 
 export const MyProfile = () => {
   const dispatch = useDispatch();
@@ -16,6 +17,7 @@ export const MyProfile = () => {
   const [showPassword] = useState(false);
   const [password] = useState("············");
   const fileRef = useRef();
+  const [error, setError] = useState({ errorFullName: "" });
 
   useEffect(() => {
     if (me !== null)
@@ -40,6 +42,48 @@ export const MyProfile = () => {
   };
 
   const handleSaveChanges = async () => {
+    const avatarFile = fileRef.current.files[0];
+    if (avatarFile) {
+      // Định nghĩa các định dạng cho phép
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/jpg",
+      ];
+      const MAX_SIZE = 300 * 1024; // 300KB
+      // Kiểm tra định dạng
+      if (!allowedTypes.includes(avatarFile.type)) {
+        toast.error(
+          "Ảnh đại diện không đúng định dạng. Chỉ chấp nhận JPG, JPEG, PNG, GIF."
+        );
+        return; // Dừng lại không cho submit
+      }
+      // Kiểm tra dung lượng
+      if (avatarFile.size > MAX_SIZE) {
+        toast.error(
+          `Ảnh đại diện quá lớn (Tối đa 300KB). Hiện tại: ${(
+            avatarFile.size / 1024
+          ).toFixed(0)}KB`
+        );
+        return;
+      }
+    }
+    const onlyAlphaRegex =
+      /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵỷỹ\s]+$/;
+    const nameTrimmed = formData.full_name?.trim();
+    if (!nameTrimmed) {
+      setError({ errorFullName: "Họ và tên không được để trống" });
+      return;
+    } else if (nameTrimmed.length < 3 || nameTrimmed.length > 50) {
+      setError({ errorFullName: "Họ và tên phải từ 3 đến 50 ký tự" });
+      return;
+    } else if (!onlyAlphaRegex.test(nameTrimmed)) {
+      setError({
+        errorFullName: "Họ tên không được chứa số hay ký tự đặc biệt",
+      });
+      return;
+    }
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) return alert("Hết phiên làm việc!");
@@ -67,16 +111,16 @@ export const MyProfile = () => {
     }
   };
 
-  const handleChangePassword = async () => {
-    if (password === "············" || password === "")
-      return alert("Vui lòng nhập mật khẩu mới!");
-    try {
-      console.log("Chức năng đổi mật khẩu đang chờ Backend");
-    } catch (error) {
-      console.error(error);
-      alert("Lỗi đổi mật khẩu!");
-    }
-  };
+  // const handleChangePassword = async () => {
+  //   if (password === "············" || password === "")
+  //     return alert("Vui lòng nhập mật khẩu mới!");
+  //   try {
+  //     console.log("Chức năng đổi mật khẩu đang chờ Backend");
+  //   } catch (error) {
+  //     console.error(error);
+  //     alert("Lỗi đổi mật khẩu!");
+  //   }
+  // };
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
@@ -178,15 +222,19 @@ export const MyProfile = () => {
                 <input
                   type="text"
                   value={formData.full_name}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setFormData((prev) => ({
                       ...prev,
                       full_name: e.target.value,
-                    }))
-                  }
+                    }));
+                    setError({ errorFullName: "" });
+                  }}
                   className="w-full bg-transparent text-[#2c2f32] text-base outline-none"
                 />
               </div>
+              <span className="text-brand-primary text-label-sm">
+                {error.errorFullName}
+              </span>
             </div>
 
             {/* Email */}
@@ -221,10 +269,7 @@ export const MyProfile = () => {
 
             {/* Change Password Button */}
             <div>
-              <button
-                onClick={handleChangePassword}
-                className="px-6 py-2 rounded-lg bg-gradient-to-r from-[#ff0033] to-[#ff6d00] text-white font-bold text-[10px] tracking-widest uppercase hover:opacity-90 transition-all"
-              >
+              <button className="px-6 py-2 rounded-lg bg-gradient-to-r from-[#ff0033] to-[#ff6d00] text-white font-bold text-[10px] tracking-widest uppercase hover:opacity-90 transition-all">
                 CHANGE PASSWORD
               </button>
             </div>
@@ -233,6 +278,7 @@ export const MyProfile = () => {
           {/* Footer Actions */}
           <div className="mt-16 pt-8 border-t border-zinc-100 flex flex-wrap items-center gap-4">
             <button
+              data-umami-event="Update profile button click"
               onClick={handleSaveChanges}
               className="px-10 py-4 rounded-xl bg-gradient-to-r from-[#ff0033] to-[#ff6d00] text-white font-bold text-sm tracking-widest hover:opacity-90"
             >
@@ -240,6 +286,7 @@ export const MyProfile = () => {
             </button>
 
             <button
+              data-umami-event="Cancel update profile button click"
               onClick={() => navigate(-1)}
               className="px-10 py-4 rounded-xl bg-[#e0e2e8] text-[#2c2f32] font-bold text-sm tracking-widest hover:bg-gray-300"
             >
@@ -248,6 +295,7 @@ export const MyProfile = () => {
 
             <div className="ml-auto flex items-center gap-6">
               <button
+                data-umami-event="Logout button click"
                 onClick={handleLogout}
                 className="text-slate-400 font-bold text-xs tracking-widest hover:text-[#BA0022] uppercase transition-colors"
               >

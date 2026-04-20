@@ -1,9 +1,11 @@
 import { axiosClient } from "./axiosClient";
 
 const publicDashboard = {
-  getAllTournaments: () => {
-    const url = "/public/tournament";
-    return axiosClient.get(url);
+  getAllTournaments: async ({ url, dispatch, func }) => {
+    const response = await axiosClient.get(`${url}`);
+    console.log(response);
+    dispatch(func(response?.data || []));
+    return response;
   },
 
   getMatchesByTournament: (tournamentId) => {
@@ -11,9 +13,11 @@ const publicDashboard = {
     return axiosClient.get(url);
   },
 
-  getAllTeams: () => {
-    const url = `/public/teams`;
-    return axiosClient.get(url);
+  getAllTeams: async ({ url, dispatch, func }) => {
+    const response = await axiosClient.get(`${url}`);
+    console.log(response);
+    dispatch(func(response?.data || []));
+    return response;
   },
 
   getMembersByTeam: (teamId) => {

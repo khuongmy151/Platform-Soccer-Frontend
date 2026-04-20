@@ -9,6 +9,7 @@ import { IoClose, IoPersonAddSharp } from "react-icons/io5";
 import { FaUserMinus, FaUsers } from "react-icons/fa";
 import { createPlayer, uploadPlayerAvatar } from "../services/playerService";
 import FormPlayer from "./FormPlayer";
+import validateForm from "../helpers/validateForm";
 
 const UploadIcon = () => (
   <svg
@@ -45,9 +46,13 @@ const FormTeam = ({ ref }) => {
   const playerJerseyRef = useRef();
   const goalkeeperJerseyRef = useRef();
   const formPlayerRef = useRef();
+  const [error, setError] = useState({
+    errorName: "",
+    errorCountry: "",
+    errorDescription: "",
+  });
 
-  // === MEMBER MANAGEMENT STATE ===
-  const [activeTab, setActiveTab] = useState("info"); // "info" | "members"
+  const [activeTab, setActiveTab] = useState("info");
   const [members, setMembers] = useState([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [removingId, setRemovingId] = useState(null);
@@ -75,7 +80,6 @@ const FormTeam = ({ ref }) => {
     if (teamId && teams?.items) {
       const foundTeam = teams.items.find((item) => item.id == teamId);
       if (foundTeam) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsEdit(true);
         setFormTeam({
           id: foundTeam.id || "",
@@ -206,46 +210,82 @@ const FormTeam = ({ ref }) => {
   //Hàm cập nhật team
   const handleUpdateTeam = async (e) => {
     e.preventDefault();
-    if (!formTeam.name || !formTeam.country || !formTeam.description) {
-      alert("Please fill in all required fields");
-      return;
-    }
-    const formData = new FormData();
-    formData.append("name", formTeam.name);
-    formData.append("country", formTeam.country);
-    formData.append("description", formTeam.description);
-    // XỬ LÝ LOGO
-    if (formTeam.logo_url instanceof File) {
-      formData.append("logo", formTeam.logo_url);
-    } else {
-      formData.append("logo_url", formTeam.logo_url);
-    }
-    // XỬ LÝ KITS
-    const oldKits = [];
-    formTeam.kit_url.forEach((kit) => {
-      if (kit instanceof File) {
-        formData.append("kit", kit);
-      } else if (typeof kit === "string" && kit !== "") {
-        oldKits.push(kit);
+    // Kiểm tra xem đã chọn đủ 3 file chưa
+    const logoFile = logoRef.current.files[0];
+    const playerFile = playerJerseyRef.current.files[0];
+    const gkFile = goalkeeperJerseyRef.current.files[0];
+    if (logoFile || playerFile || gkFile) {
+      // Định nghĩa các định dạng cho phép và dung lượng tối đa
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/jpg",
+      ];
+      const MAX_SIZE = 300 * 1024; // 300KB
+      const files = [
+        { file: logoFile, label: "Logo" },
+        { file: playerFile, label: "Áo cầu thủ" },
+        { file: gkFile, label: "Áo thủ môn" },
+      ];
+      // Vòng lặp kiểm tra từng file
+      for (const item of files) {
+        // CHỈ kiểm tra nếu file đó thực sự tồn tại
+        if (item.file) {
+          // Kiểm tra định dạng
+          if (!allowedTypes.includes(item.file.type)) {
+            alert(
+              `${item.label} không đúng định dạng. Chỉ chấp nhận JPEG, PNG, GIF.`
+            );
+            return;
+          }
+          // Kiểm tra dung lượng
+          if (item.file.size > MAX_SIZE) {
+            alert(`${item.label} quá lớn (Tối đa 300KB).`);
+            return;
+          }
+        }
       }
-    });
-    formData.append("kit_url", JSON.stringify(oldKits));
-    try {
-      await teamService.updateTeam({
-        url: `/teams/${teamId}`,
-        data: formData,
+    }
+
+    if (validateForm.validateFormTeam({ formTeam, setError })) {
+      const formData = new FormData();
+      formData.append("name", formTeam.name);
+      formData.append("country", formTeam.country);
+      formData.append("description", formTeam.description);
+      // XỬ LÝ LOGO
+      if (formTeam.logo_url instanceof File) {
+        formData.append("logo", formTeam.logo_url);
+      } else {
+        formData.append("logo_url", formTeam.logo_url);
+      }
+      // XỬ LÝ KITS
+      const oldKits = [];
+      formTeam.kit_url.forEach((kit) => {
+        if (kit instanceof File) {
+          formData.append("kit", kit);
+        } else if (typeof kit === "string" && kit !== "") {
+          oldKits.push(kit);
+        }
       });
-      deleteQueryString();
-      await teamService.getAllTeam({
-        url: "/teams",
-        dispatch,
-        func: setTeams,
-      });
-    } catch (error) {
-      console.log("Error occurred", error);
-      dispatch(updateTeam(formTeam));
-      toast("Server error, temporarily updated on Frontend");
-      deleteQueryString();
+      formData.append("kit_url", JSON.stringify(oldKits));
+      try {
+        await teamService.updateTeam({
+          url: `/teams/${teamId}`,
+          data: formData,
+        });
+        deleteQueryString();
+        await teamService.getAllTeam({
+          url: "/teams",
+          dispatch,
+          func: setTeams,
+        });
+      } catch (error) {
+        console.log("Error occurred", error);
+        dispatch(updateTeam(formTeam));
+        toast("Server error, temporarily updated on Frontend");
+        deleteQueryString();
+      }
     }
   };
 
@@ -282,14 +322,24 @@ const FormTeam = ({ ref }) => {
                     : "text-nav-muted hover:text-surface-nav hover:bg-surface-bg"
                 }`}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
                 Team Info
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab("members")}
+                // onClick={() => setActiveTab("members")}
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-label-sm font-bold uppercase tracking-wider transition-all cursor-pointer ${
                   activeTab === "members"
                     ? "bg-brand-primary text-white shadow-md"
@@ -299,9 +349,13 @@ const FormTeam = ({ ref }) => {
                 <FaUsers className="w-4 h-4" />
                 Members
                 {members.length > 0 && (
-                  <span className={`ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    activeTab === "members" ? "bg-white/20 text-white" : "bg-brand-primary/10 text-brand-primary"
-                  }`}>
+                  <span
+                    className={`ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      activeTab === "members"
+                        ? "bg-white/20 text-white"
+                        : "bg-brand-primary/10 text-brand-primary"
+                    }`}
+                  >
                     {members.length}
                   </span>
                 )}
@@ -312,7 +366,7 @@ const FormTeam = ({ ref }) => {
 
         {/* SCROLLABLE CONTENT */}
         <div className="overflow-y-auto max-h-[calc(92vh-140px)] px-4 pt-4 pb-4 md:px-6 md:pb-6">
-          {/* ========== TAB: TEAM INFO ========== */}
+          {/* TAB: TEAM INFO */}
           {activeTab === "info" && (
             <form
               className="flex flex-col md:flex-row justify-between gap-6"
@@ -335,8 +389,8 @@ const FormTeam = ({ ref }) => {
                           logo_url: e.target.files[0],
                         }))
                       }
-                      className="hidden"
                       accept=".png, .jpg, .jpeg"
+                      className="hidden"
                     />
                     <div
                       onClick={() => logoRef.current?.click()}
@@ -372,7 +426,9 @@ const FormTeam = ({ ref }) => {
                       <div key={index} className="w-1/2 relative font-body">
                         <input
                           type="file"
-                          ref={index === 0 ? playerJerseyRef : goalkeeperJerseyRef}
+                          ref={
+                            index === 0 ? playerJerseyRef : goalkeeperJerseyRef
+                          }
                           onChange={(e) => {
                             const file = e.target.files[0];
                             if (!file) return;
@@ -382,8 +438,8 @@ const FormTeam = ({ ref }) => {
                               return { ...prev, kit_url: newKits };
                             });
                           }}
-                          className="hidden"
                           accept=".png, .jpg, .jpeg"
+                          className="hidden"
                         />
                         <div
                           onClick={() =>
@@ -422,16 +478,19 @@ const FormTeam = ({ ref }) => {
                       title: "Team name",
                       key: "name",
                       placeholder: "E.G., NEON STRIKE FC",
+                      error: error.errorName,
                     },
                     {
                       title: "Nationality",
                       key: "country",
                       placeholder: "Vietnam",
+                      error: error.errorCountry,
                     },
                     {
                       title: "Description",
                       key: "description",
                       placeholder: "Club mission and history...",
+                      error: error.errorDescription,
                     },
                   ].map((item, index) => (
                     <div key={index} className="flex flex-col">
@@ -439,14 +498,25 @@ const FormTeam = ({ ref }) => {
                         {item.title}
                       </label>
                       <input
-                        onChange={(e) =>
-                          setFormTeam({ ...formTeam, [item.key]: e.target.value })
-                        }
+                        onChange={(e) => {
+                          setFormTeam({
+                            ...formTeam,
+                            [item.key]: e.target.value,
+                          });
+                          setError({
+                            errorName: "",
+                            errorCountry: "",
+                            errorDescription: "",
+                          });
+                        }}
                         className="w-full py-2 outline-none border-b-2 border-surface-bg text-body-md text-surface-nav focus:border-brand-primary transition-colors placeholder:text-nav-muted/50"
                         type="text"
                         placeholder={item.placeholder}
                         value={formTeam[item.key]}
                       />
+                      <span className="text-brand-primary text-label-sm">
+                        {item.error}
+                      </span>
                     </div>
                   ))}
 
@@ -487,13 +557,17 @@ const FormTeam = ({ ref }) => {
                 {/* BUTTONS */}
                 <div className="flex gap-4 justify-end items-center mt-8 md:mt-auto">
                   <button
+                    data-umami-event="Cancel edit team button click"
                     onClick={() => deleteQueryString()}
                     type="button"
                     className="text-body-sm md:text-body-md text-nav-muted font-bold cursor-pointer hover:text-surface-nav transition-colors px-4"
                   >
                     CANCEL
                   </button>
-                  <button className="py-2.5 md:py-3 px-8 md:px-10 bg-cta-gradient text-body-sm md:text-body-md text-surface-white font-bold rounded-[8px] hover:scale-105 transition-all shadow-md uppercase">
+                  <button
+                    data-umami-event="Edit team button click"
+                    className="py-2.5 md:py-3 px-8 md:px-10 bg-cta-gradient text-body-sm md:text-body-md text-surface-white font-bold rounded-[8px] hover:scale-105 transition-all shadow-md uppercase"
+                  >
                     Save
                   </button>
                 </div>
@@ -501,7 +575,7 @@ const FormTeam = ({ ref }) => {
             </form>
           )}
 
-          {/* ========== TAB: MEMBERS ========== */}
+          {/* TAB: MEMBERS */}
           {activeTab === "members" && (
             <div className="flex flex-col gap-5">
               {/* CURRENT MEMBERS SECTION */}
@@ -517,7 +591,8 @@ const FormTeam = ({ ref }) => {
                         Current Members
                       </h4>
                       <p className="text-label-sm text-nav-muted">
-                        {members.length} player{members.length !== 1 ? "s" : ""} in this team
+                        {members.length} player{members.length !== 1 ? "s" : ""}{" "}
+                        in this team
                       </p>
                     </div>
                   </div>
@@ -529,8 +604,8 @@ const FormTeam = ({ ref }) => {
                   >
                     {addingMembers ? (
                       <>
-                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                         Adding...
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Adding...
                       </>
                     ) : (
                       <>
@@ -546,7 +621,9 @@ const FormTeam = ({ ref }) => {
                   {loadingMembers ? (
                     <div className="flex items-center justify-center py-10">
                       <div className="w-8 h-8 border-3 border-brand-primary/30 border-t-brand-primary rounded-full animate-spin" />
-                      <span className="ml-3 text-body-md text-nav-muted">Loading members...</span>
+                      <span className="ml-3 text-body-md text-nav-muted">
+                        Loading members...
+                      </span>
                     </div>
                   ) : members.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -571,9 +648,15 @@ const FormTeam = ({ ref }) => {
                           >
                             {/* Avatar */}
                             <div className="w-11 h-11 rounded-lg overflow-hidden bg-surface-nav/10 flex-shrink-0 shadow-sm">
-                              {(member.avatar_url || member.avatarUrl || member.avatar) ? (
+                              {member.avatar_url ||
+                              member.avatarUrl ||
+                              member.avatar ? (
                                 <img
-                                  src={member.avatar_url || member.avatarUrl || member.avatar}
+                                  src={
+                                    member.avatar_url ||
+                                    member.avatarUrl ||
+                                    member.avatar
+                                  }
                                   alt={member.name}
                                   className="w-full h-full object-cover"
                                 />
@@ -589,7 +672,10 @@ const FormTeam = ({ ref }) => {
                                 {member.name || "Unknown"}
                               </p>
                               <p className="text-label-sm text-nav-muted">
-                                {member.main_position || member.mainPosition || member.position || "N/A"}
+                                {member.main_position ||
+                                  member.mainPosition ||
+                                  member.position ||
+                                  "N/A"}
                               </p>
                             </div>
                             {/* Remove button */}
@@ -618,7 +704,11 @@ const FormTeam = ({ ref }) => {
         </div>
       </dialog>
 
-      <FormPlayer ref={formPlayerRef} mode="add" onSubmit={handleCreateNewMember} />
+      <FormPlayer
+        ref={formPlayerRef}
+        mode="add"
+        onSubmit={handleCreateNewMember}
+      />
     </>
   );
 };

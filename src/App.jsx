@@ -7,8 +7,6 @@ import Welcome from "./pages/Welcome";
 import MainLayout from "./pages/MainLayout";
 import DashboardPublic from "./pages/DashboardPublic";
 import MyProfile from "./pages/MyProfile";
-import PlayerManagement from "./pages/PlayerManagement";
-import MemberDetail from "./pages/MemberDetail";
 import TeamManagement from "./pages/TeamManagement";
 import TeamDetail from "./pages/TeamDetail";
 import CreateTeam from "./pages/CreateTeam";
@@ -48,27 +46,28 @@ function App() {
         {/* MAIN LAYOUT */}
         <Route path="/" element={<MainLayout />}>
           {/* PUBLIC: Ai cũng xem được */}
-          <Route path="public/teams" element={<ListTeamPublic />} />
           <Route index element={<DashboardPublic />} />
           <Route
-            path="tournament/:tournamentId"
+            path="public/tournament/:tournamentId"
             element={<TournamentDetail />}
           />
-          <Route path="teams/:teamId" element={<TeamDetail />} />
-          <Route
-            path="/teams/:teamId/members/:memberId"
-            element={<MemberDetail />}
-          />
+          <Route path="public/teams" element={<ListTeamPublic />} />
+          <Route path="public/teams/:teamId" element={<TeamDetail />} />
+
           {/* PRIVATE: Chỉ Organizer có Token mới vào được */}
           <Route element={<ProtectedRoute />}>
             <Route path="my-profile" element={<MyProfile />} />
-            <Route path="players" element={<PlayerManagement />} />
             <Route path="teams" element={<TeamManagement />} />
             <Route path="teams/create" element={<CreateTeam />} />
+            <Route path="teams/:teamId" element={<TeamDetail />} />
             <Route path="matches" element={<MatchManagement />} />
             <Route path="match/create" element={<CreateMatch />} />
             <Route path="match/:matchId" element={<MatchDetail />} />
             <Route path="tournaments" element={<TournamentManagement />} />
+            <Route
+              path="tournament/:tournamentId"
+              element={<TournamentDetail />}
+            />
           </Route>
         </Route>
       </Routes>

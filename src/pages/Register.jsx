@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/logo.svg";
 import { registerAPI } from "../services/userService";
 import { toast } from "react-toastify";
+import validateForm from "../helpers/validateForm";
 
 export const Register = () => {
   const navigate = useNavigate();
@@ -14,29 +15,43 @@ export const Register = () => {
     email: "",
     password: "",
   });
+  const [error, setError] = useState({
+    errorFullName: "",
+    errorEmail: "",
+    errorPassword: "",
+  });
 
   // Hàm xử lý khi gõ vào ô input
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    setError({ errorFullName: "", errorEmail: "", errorPassword: "" });
   };
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    try {
-      const response = await registerAPI(formData);
-
-      if (response && response.success === false) {
-        alert(response.message || "Đăng ký thất bại!");
-        return;
+    if (
+      validateForm.validateFormAuth({
+        fullName: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+        setError,
+      })
+    ) {
+      try {
+        const response = await registerAPI(formData);
+        if (response && response.success === false) {
+          alert(response.message || "Đăng ký thất bại!");
+          return;
+        }
+        toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
+        navigate("/login");
+      } catch (error) {
+        const errorMsg =
+          error.response?.data?.message ||
+          "Đăng ký thất bại. Vui lòng thử lại!";
+        alert(errorMsg);
       }
-
-      toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
-      navigate("/login");
-    } catch (error) {
-      const errorMsg =
-        error.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại!";
-      alert(errorMsg);
     }
   };
 
@@ -76,7 +91,7 @@ export const Register = () => {
         </div>
 
         {/* CỘT PHẢI: FORM ĐĂNG KÝ */}
-        <div className="flex flex-1 flex-col justify-center items-center px-10 bg-white">
+        <div className="flex flex-1 flex-col items-center px-10 bg-white overflow-y-auto">
           <div className="w-full max-w-[440px]">
             <h1 className="text-5xl font-black text-slate-900 mb-2 tracking-tight uppercase">
               Register
@@ -95,13 +110,15 @@ export const Register = () => {
                   <input
                     name="fullName"
                     type="text"
-                    required
                     onChange={handleInputChange}
                     placeholder="Full name"
                     autoComplete="off"
                     className="w-full outline-none text-slate-800 font-semibold placeholder:text-slate-300 bg-transparent"
                   />
                 </div>
+                <span className="text-brand-primary text-label-sm">
+                  {error.errorFullName}
+                </span>
               </div>
 
               {/* Ô Input Email */}
@@ -112,14 +129,15 @@ export const Register = () => {
                 <div className="flex items-center border-b-2 border-slate-200 py-2 group-focus-within:border-red-600 transition-colors">
                   <input
                     name="email"
-                    type="email"
-                    required
                     onChange={handleInputChange}
                     autoComplete="off"
                     placeholder="Email address"
                     className="w-full outline-none text-slate-800 font-semibold placeholder:text-slate-300 bg-transparent"
                   />
                 </div>
+                <span className="text-brand-primary text-label-sm">
+                  {error.errorEmail}
+                </span>
               </div>
 
               {/* Ô Input Password */}
@@ -131,13 +149,15 @@ export const Register = () => {
                   <input
                     name="password"
                     type="password"
-                    required
                     onChange={handleInputChange}
                     autoComplete="new-password"
                     placeholder="Password"
                     className="w-full outline-none text-slate-800 font-semibold placeholder:text-slate-300 bg-transparent"
                   />
                 </div>
+                <span className="text-brand-primary text-label-sm">
+                  {error.errorPassword}
+                </span>
               </div>
 
               {/* NÚT JOIN NOW: GRADIENT ĐỎ CAM */}

@@ -45,7 +45,7 @@ export const teamService = {
     const response = await axiosClient.get(`${url}`);
     return response;
   },
-  // Add members to team (body: { player_id: [1, 2, 3] })
+  // Add members to team
   addTeamMembers: async ({ url, data }) => {
     const response = await axiosClient.post(`${url}`, data);
     toast.success(response?.message || "Members added successfully");

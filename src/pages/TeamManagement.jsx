@@ -47,7 +47,7 @@ const TeamManagement = () => {
   const displayTeams = useMemo(() => {
     if (key)
       return teams?.items?.filter((team) =>
-        team.name.toLowerCase().includes(key.toLowerCase())
+        `${team.name} ${team.country}`.toLowerCase().includes(key.toLowerCase())
       );
     return teams?.items;
   }, [key, teams]);
@@ -143,6 +143,7 @@ const TeamManagement = () => {
           </div>
           {/* Button Add Team */}
           <button
+            data-umami-event="Add team button click"
             onClick={() => navigate("/teams/create")}
             className="flex items-center justify-center h-[56px] px-5 md:px-7 rounded-[16px] bg-cta-gradient hover:scale-[1.03] active:scale-95 transition-all duration-300 shrink-0 shadow-lg shadow-brand-primary/25 cursor-pointer text-white border border-[#ba0022]/20"
           >
