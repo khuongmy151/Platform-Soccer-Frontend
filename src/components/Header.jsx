@@ -122,6 +122,7 @@ function Header() {
 
                 <div className="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-20">
                   <Link
+                    data-umami-event="My profile button click"
                     to="/my-profile"
                     onClick={() => setIsMenuOpen(false)}
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#ff4444] transition-colors"
@@ -129,6 +130,7 @@ function Header() {
                     My Profile
                   </Link>
                   <button
+                    data-umami-event="Logout button click"
                     onClick={handleLogout}
                     className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors border-t border-gray-50"
                   >
@@ -141,6 +143,7 @@ function Header() {
         ) : (
           <Link to="/login">
             <button
+              data-umami-event="Login button click"
               className="px-6 py-2 rounded-full font-bold text-white shadow-md hover:opacity-90 active:scale-95 transition-all"
               style={{
                 backgroundImage: "linear-gradient(135deg, #ff4444, #ff8c00)",

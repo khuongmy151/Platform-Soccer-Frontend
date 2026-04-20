@@ -10,11 +10,9 @@ import PublicTeamCard from "../components/PublicTeamCard";
 const ListTeamPublic = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
   const teams = useSelector((state) => state.teams.items || []);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
-
   // Logic Phân trang
   const [currentPage, setCurrentPage] = useState(1);
   const teamsPerPage = 8;
@@ -23,10 +21,11 @@ const ListTeamPublic = () => {
     const fetchTeam = async () => {
       try {
         setLoading(true);
-        const res = await publicDashboard.getAllTeams();
-        const raw = res?.data || res;
-        const data = Array.isArray(raw) ? raw : raw?.data || [];
-        dispatch(setTeams(data));
+        await publicDashboard.getAllTeams({
+          url: "/public/teams",
+          dispatch,
+          func: setTeams,
+        });
       } catch (err) {
         console.error("Error:", err);
       } finally {
@@ -44,14 +43,14 @@ const ListTeamPublic = () => {
   const filteredTeams = useMemo(() => {
     const lowerSearch = search.toLowerCase();
     return teams.filter((team) =>
-      `${team.name} ${team.country}`.toLowerCase().includes(lowerSearch),
+      `${team.name} ${team.country}`.toLowerCase().includes(lowerSearch)
     );
   }, [teams, search]);
 
   const totalPages = Math.ceil(filteredTeams.length / teamsPerPage);
   const currentTeams = filteredTeams.slice(
     (currentPage - 1) * teamsPerPage,
-    currentPage * teamsPerPage,
+    currentPage * teamsPerPage
   );
 
   // Logic hiển thị tối đa 4 trang với dấu ba chấm (...)
@@ -116,7 +115,7 @@ const ListTeamPublic = () => {
             <PublicTeamCard
               key={team.id}
               team={team}
-              onClick={(id) => navigate(`/teams/${id}`)}
+              onClick={(id) => navigate(`/public/teams/${id}`)}
             />
           ))}
         </div>
@@ -125,8 +124,10 @@ const ListTeamPublic = () => {
         {totalPages > 1 && (
           <div className="mt-12 flex items-center justify-center gap-2">
             <button
-              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-              disabled={currentPage === 1}
+              onClick={() => {
+                if (currentPage === 1) setCurrentPage(totalPages + 1);
+                setCurrentPage((p) => Math.max(p - 1, 1));
+              }}
               className="p-2 rounded-lg border border-gray-200 text-brand-primary disabled:opacity-30 transition-colors hover:bg-gray-100"
             >
               <IoChevronBack size={18} />
@@ -154,8 +155,10 @@ const ListTeamPublic = () => {
             </div>
 
             <button
-              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-              disabled={currentPage === totalPages}
+              onClick={() => {
+                if (currentPage === totalPages) setCurrentPage(0);
+                setCurrentPage((p) => Math.min(p + 1, totalPages));
+              }}
               className="p-2 rounded-lg border border-gray-200 text-brand-primary disabled:opacity-30 transition-colors hover:bg-gray-100"
             >
               <IoChevronForward size={18} />

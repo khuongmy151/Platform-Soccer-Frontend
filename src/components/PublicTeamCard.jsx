@@ -1,11 +1,4 @@
 const PublicTeamCard = ({ team, onClick }) => {
-  const getImage = (url) => {
-    if (!url) return "https://via.placeholder.com/100";
-    if (url.startsWith("blob:")) return "https://via.placeholder.com/100";
-    if (url.startsWith("http")) return decodeURIComponent(url);
-    return `https://backend.cupzone.fun/${url}`;
-  };
-
   return (
     <div
       onClick={() => onClick(team.id)}
@@ -14,18 +7,24 @@ const PublicTeamCard = ({ team, onClick }) => {
                  hover:shadow-xl hover:border-brand-primary/20 hover:-translate-y-1.5"
     >
       {/* Team Logo  */}
-      <div className="w-16 h-16 md:w-20 md:h-20 mb-4 rounded-full bg-surface-card border-[6px] border-surface-bg overflow-hidden shadow-inner 
-                      group-hover:border-brand-primary/10 transition-all duration-500 shrink-0">
+      <div
+        className="w-16 h-16 md:w-20 md:h-20 mb-4 rounded-full bg-surface-card border-[6px] border-surface-bg overflow-hidden shadow-inner 
+                      group-hover:border-brand-primary/10 transition-all duration-500 shrink-0"
+      >
         <img
-          src={getImage(team.logo_url)}
-          alt={team.name}
+          src={
+            team?.logo_url ||
+            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRQNa7zM9iIdR5Dlgzj7b4OJy8sGmsvG2WtcA&s"
+          }
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
       </div>
 
       {/* Team Name */}
-      <h2 className="font-black text-body-md md:text-title-lg text-gray-900 font-display leading-tight line-clamp-2 
-                     min-h-[2.5rem] flex items-center justify-center px-1 group-hover:text-brand-primary transition-colors">
+      <h2
+        className="w-[200px] font-black text-body-md md:text-title-lg text-gray-900 font-display leading-tight 
+             truncate block text-center px-1 group-hover:text-brand-primary transition-colors"
+      >
         {team.name}
       </h2>
 
