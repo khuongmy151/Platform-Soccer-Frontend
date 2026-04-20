@@ -5,6 +5,10 @@ import { setTeams, updateTeam } from "../stores/features/teamSlice";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { PiCoatHangerBold } from "react-icons/pi";
+import { IoClose, IoPersonAddSharp } from "react-icons/io5";
+import { FaUserMinus, FaUsers } from "react-icons/fa";
+import { createPlayer, uploadPlayerAvatar } from "../services/playerService";
+import FormPlayer from "./FormPlayer";
 
 const UploadIcon = () => (
   <svg
@@ -40,6 +44,14 @@ const FormTeam = ({ ref }) => {
   const logoRef = useRef();
   const playerJerseyRef = useRef();
   const goalkeeperJerseyRef = useRef();
+  const formPlayerRef = useRef();
+
+  // === MEMBER MANAGEMENT STATE ===
+  const [activeTab, setActiveTab] = useState("info"); // "info" | "members"
+  const [members, setMembers] = useState([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
+  const [removingId, setRemovingId] = useState(null);
+  const [addingMembers, setAddingMembers] = useState(false);
 
   //Hàm xem trước logo
   const logoPreview = useMemo(() => {
@@ -73,6 +85,7 @@ const FormTeam = ({ ref }) => {
           country: foundTeam.country || "",
           description: foundTeam.description || "",
         });
+        setActiveTab("info");
         ref.current?.showModal();
       }
     } else {
@@ -85,9 +98,101 @@ const FormTeam = ({ ref }) => {
         country: "",
         description: "",
       });
-      ref.current.close();
+      setActiveTab("info");
+      ref.current?.close();
     }
   }, [teamId, teams?.items, ref]);
+
+  // Fetch members khi chuyển sang tab members
+  useEffect(() => {
+    if (activeTab === "members" && teamId) {
+      fetchMembers();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, teamId]);
+
+  const fetchMembers = async () => {
+    setLoadingMembers(true);
+    try {
+      const res = await teamService.getTeamMembers({
+        url: `/teams/${teamId}/members`,
+      });
+      const data = Array.isArray(res) ? res : res?.items || res?.data || [];
+      setMembers(data);
+    } catch (error) {
+      console.error("Error fetching members:", error);
+      setMembers([]);
+    } finally {
+      setLoadingMembers(false);
+    }
+  };
+
+  const handleOpenAddForm = () => {
+    formPlayerRef.current?.showModal();
+  };
+
+  const handleCreateNewMember = async (playerFormData) => {
+    setAddingMembers(true);
+    try {
+      let finalAvatarUrl = "";
+      if (playerFormData.avatar instanceof File) {
+        try {
+          const uploadRes = await uploadPlayerAvatar(playerFormData.avatar);
+          finalAvatarUrl = uploadRes?.url || "";
+        } catch {
+          // ignore upload error locally
+        }
+      } else {
+        finalAvatarUrl = playerFormData.avatar || "";
+      }
+
+      const payload = {
+        name: playerFormData.name,
+        height: playerFormData.height,
+        weight: playerFormData.weight,
+        preferredFoot: playerFormData.preferred_foot,
+        mainPosition: playerFormData.main_position,
+        avatarUrl: finalAvatarUrl,
+      };
+
+      // 1. Create player
+      let createdPlayer;
+      try {
+        createdPlayer = await createPlayer(payload);
+      } catch (err) {
+        toast.error("Failed to create new player in system");
+        throw err;
+      }
+
+      // 2. Add player to team with the correct JSON payload { player_id: [ID] }
+      await teamService.addTeamMembers({
+        url: `/teams/${teamId}/members`,
+        data: { player_id: [createdPlayer?.id || createdPlayer?.data?.id] },
+      });
+
+      await fetchMembers();
+    } catch (error) {
+      console.error("Error creating and adding member:", error);
+    } finally {
+      setAddingMembers(false);
+    }
+  };
+
+  // Xóa 1 thành viên
+  const handleRemoveMember = async (playerId) => {
+    setRemovingId(playerId);
+    try {
+      await teamService.removeTeamMember({
+        url: `/teams/${teamId}/members/${playerId}`,
+      });
+      await fetchMembers();
+    } catch (error) {
+      console.error("Error removing member:", error);
+      toast.error("Failed to remove member");
+    } finally {
+      setRemovingId(null);
+    }
+  };
 
   //Hàm xóa query string trên url
   const deleteQueryString = () => {
@@ -102,7 +207,7 @@ const FormTeam = ({ ref }) => {
   const handleUpdateTeam = async (e) => {
     e.preventDefault();
     if (!formTeam.name || !formTeam.country || !formTeam.description) {
-      alert("Vui lòng điền đầy đủ thông tin");
+      alert("Please fill in all required fields");
       return;
     }
     const formData = new FormData();
@@ -110,25 +215,20 @@ const FormTeam = ({ ref }) => {
     formData.append("country", formTeam.country);
     formData.append("description", formTeam.description);
     // XỬ LÝ LOGO
-    // Nếu logo_url là File object (người dùng mới chọn ảnh)
     if (formTeam.logo_url instanceof File) {
       formData.append("logo", formTeam.logo_url);
     } else {
-      // Nếu là String (link cũ), gửi vào đúng field 'logo_url' để BE nhận lại
       formData.append("logo_url", formTeam.logo_url);
     }
     // XỬ LÝ KITS
     const oldKits = [];
     formTeam.kit_url.forEach((kit) => {
       if (kit instanceof File) {
-        // Nếu là file mới chọn
         formData.append("kit", kit);
       } else if (typeof kit === "string" && kit !== "") {
-        // Nếu là link ảnh cũ
         oldKits.push(kit);
       }
     });
-    // Gửi mảng link cũ dưới dạng string để BE dùng JSON.parse
     formData.append("kit_url", JSON.stringify(oldKits));
     try {
       await teamService.updateTeam({
@@ -142,208 +242,383 @@ const FormTeam = ({ ref }) => {
         func: setTeams,
       });
     } catch (error) {
-      console.log("Có lỗi xảy ra", error);
+      console.log("Error occurred", error);
       dispatch(updateTeam(formTeam));
-      toast("Lỗi xử lý ở server, tạm thời cập nhật ở phía Frontend");
+      toast("Server error, temporarily updated on Frontend");
       deleteQueryString();
     }
   };
+
   return (
     <>
       <dialog
-        className="w-[95%] md:w-[60%] p-4 md:p-6 m-auto bg-surface-bg outline-none backdrop:bg-black/20 backdrop:backdrop-blur-[2px] rounded-[12px] font-display max-h-[90vh] overflow-y-auto"
+        className="w-[95%] md:w-[70%] lg:w-[65%] p-0 m-auto bg-surface-bg outline-none backdrop:bg-black/20 backdrop:backdrop-blur-[2px] rounded-[16px] font-display max-h-[92vh] overflow-hidden"
         ref={ref}
       >
-        {/* TIÊU ĐỀ */}
-        <h3 className="text-headline-sm md:text-headline-md text-brand-primary font-bold text-center italic uppercase">
-          {isEdit ? "Update Team" : "Create Team"}
-        </h3>
+        {/* HEADER */}
+        <div className="sticky top-0 z-20 bg-surface-bg px-4 pt-4 pb-0 md:px-6 md:pt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-headline-sm md:text-headline-md text-brand-primary font-bold italic uppercase">
+              {isEdit ? "Update Team" : "Create Team"}
+            </h3>
+            <button
+              onClick={() => deleteQueryString()}
+              type="button"
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-surface-white text-surface-nav hover:bg-red-50 hover:text-brand-primary transition-all cursor-pointer shadow-sm"
+            >
+              <IoClose className="w-5 h-5" />
+            </button>
+          </div>
 
-        <form
-          className="flex flex-col md:flex-row justify-between gap-6 mt-6"
-          onSubmit={handleUpdateTeam}
-        >
-          {/* CỘT TRÁI: LOGO & JERSEY */}
-          <div className="flex flex-col gap-6 w-full md:w-[55%] select-none">
-            {/* SECTION: TEAM LOGO */}
-            <div className="bg-surface-white p-4 md:p-6 rounded-lg shadow-sm border-b-4 border-brand-primary">
-              <h3 className="text-label-sm text-surface-nav font-bold mb-4 uppercase italic">
-                Team Logo
-              </h3>
-              <div className="flex justify-center items-center h-40 md:h-48">
-                <input
-                  type="file"
-                  ref={logoRef}
-                  onChange={(e) =>
-                    setFormTeam((prev) => ({
-                      ...prev,
-                      logo_url: e.target.files[0],
-                    }))
-                  }
-                  className="hidden"
-                  accept="image/*"
-                />
-                <div
-                  onClick={() => logoRef.current?.click()}
-                  className="relative w-36 h-36 md:w-44 md:h-44 rounded-full border-2 border-dashed border-icon-muted bg-surface-card flex items-center justify-center cursor-pointer overflow-hidden group hover:border-brand-primary transition-all"
-                >
-                  {logoPreview && (
-                    <img
-                      src={logoPreview}
-                      className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-30 transition-opacity"
-                      alt="Logo preview"
-                    />
-                  )}
-                  <div className="relative z-10 flex flex-col items-center text-center p-2">
-                    <UploadIcon />
-                    <span className="text-[10px] md:text-label-sm text-surface-nav font-bold mt-1">
-                      DRAG & DROP LOGO
-                    </span>
-                    <span className="text-[9px] text-nav-muted">
-                      PNG or SVG, Max 5MB
-                    </span>
-                  </div>
-                </div>
-              </div>
+          {/* TAB NAVIGATION - chỉ hiện khi edit */}
+          {isEdit && (
+            <div className="flex gap-1 bg-surface-white rounded-xl p-1 shadow-sm">
+              <button
+                type="button"
+                onClick={() => setActiveTab("info")}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-label-sm font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                  activeTab === "info"
+                    ? "bg-brand-primary text-white shadow-md"
+                    : "text-nav-muted hover:text-surface-nav hover:bg-surface-bg"
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Team Info
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("members")}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-label-sm font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                  activeTab === "members"
+                    ? "bg-brand-primary text-white shadow-md"
+                    : "text-nav-muted hover:text-surface-nav hover:bg-surface-bg"
+                }`}
+              >
+                <FaUsers className="w-4 h-4" />
+                Members
+                {members.length > 0 && (
+                  <span className={`ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    activeTab === "members" ? "bg-white/20 text-white" : "bg-brand-primary/10 text-brand-primary"
+                  }`}>
+                    {members.length}
+                  </span>
+                )}
+              </button>
             </div>
+          )}
+        </div>
 
-            {/* SECTION: TEAM JERSEY */}
-            <div className="bg-surface-white p-4 md:p-6 rounded-lg shadow-sm border-b-4 border-[#A55E26]">
-              <h3 className="text-label-sm text-surface-nav font-bold mb-4 uppercase italic">
-                Team Jersey
-              </h3>
-              <div className="flex flex-row gap-4 h-40 md:h-48">
-                {[0, 1].map((index) => (
-                  <div key={index} className="w-1/2 relative font-body">
+        {/* SCROLLABLE CONTENT */}
+        <div className="overflow-y-auto max-h-[calc(92vh-140px)] px-4 pt-4 pb-4 md:px-6 md:pb-6">
+          {/* ========== TAB: TEAM INFO ========== */}
+          {activeTab === "info" && (
+            <form
+              className="flex flex-col md:flex-row justify-between gap-6"
+              onSubmit={handleUpdateTeam}
+            >
+              {/* LEFT COLUMN: LOGO & JERSEY */}
+              <div className="flex flex-col gap-6 w-full md:w-[55%] select-none">
+                {/* SECTION: TEAM LOGO */}
+                <div className="bg-surface-white p-4 md:p-6 rounded-lg shadow-sm border-b-4 border-brand-primary">
+                  <h3 className="text-label-sm text-surface-nav font-bold mb-4 uppercase italic">
+                    Team Logo
+                  </h3>
+                  <div className="flex justify-center items-center h-40 md:h-48">
                     <input
                       type="file"
-                      ref={index === 0 ? playerJerseyRef : goalkeeperJerseyRef}
-                      onChange={(e) => {
-                        const file = e.target.files[0];
-                        if (!file) return;
-                        setFormTeam((prev) => {
-                          const newKits = [...prev.kit_url];
-                          newKits[index] = file;
-                          return { ...prev, kit_url: newKits };
-                        });
-                      }}
+                      ref={logoRef}
+                      onChange={(e) =>
+                        setFormTeam((prev) => ({
+                          ...prev,
+                          logo_url: e.target.files[0],
+                        }))
+                      }
                       className="hidden"
+                      accept=".png, .jpg, .jpeg"
                     />
                     <div
-                      onClick={() =>
-                        (index === 0
-                          ? playerJerseyRef
-                          : goalkeeperJerseyRef
-                        ).current?.click()
-                      }
-                      className="relative w-full h-full border-2 border-dashed border-icon-muted bg-surface-card rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-brand-primary transition-all"
+                      onClick={() => logoRef.current?.click()}
+                      className="relative w-36 h-36 md:w-44 md:h-44 rounded-full border-2 border-dashed border-icon-muted bg-surface-card flex items-center justify-center cursor-pointer overflow-hidden group hover:border-brand-primary transition-all"
                     >
-                      {jerseyPreview[index] && (
+                      {logoPreview && (
                         <img
-                          src={jerseyPreview[index]}
-                          className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-40 transition-opacity"
-                          alt="Jersey preview"
+                          src={logoPreview}
+                          className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-30 transition-opacity"
+                          alt="Logo preview"
                         />
                       )}
-                      <div className="relative z-10 flex flex-col items-center text-center p-2 md:p-4">
-                        <PiCoatHangerBold className="text-nav-muted w-6 h-6 md:w-8 md:h-8" />
-                        <span className="text-[10px] md:text-label-sm text-surface-nav font-bold mt-2 uppercase leading-tight">
-                          Jersey Design
+                      <div className="relative z-10 flex flex-col items-center text-center p-2">
+                        <UploadIcon />
+                        <span className="text-[10px] md:text-label-sm text-surface-nav font-bold mt-1">
+                          DRAG & DROP LOGO
+                        </span>
+                        <span className="text-[9px] text-nav-muted">
+                          PNG or SVG, Max 5MB
                         </span>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* CỘT PHẢI: INPUT & NOTIFICATIONS */}
-          <div className="flex flex-col w-full md:w-[42%] p-4 md:p-6 bg-surface-white rounded-[12px] shadow-sm font-body">
-            <div className="flex flex-col gap-5 md:gap-6">
-              {[
-                {
-                  title: "Team name",
-                  key: "name",
-                  placeholder: "E.G., NEON STRIKE FC",
-                },
-                {
-                  title: "Nationality",
-                  key: "country",
-                  placeholder: "Vietnam",
-                },
-                {
-                  title: "Description",
-                  key: "description",
-                  placeholder: "Club mission and history...",
-                },
-              ].map((item, index) => (
-                <div key={index} className="flex flex-col">
-                  <label className="text-label-sm text-surface-nav font-bold uppercase italic mb-1">
-                    {item.title}
-                  </label>
-                  <input
-                    onChange={(e) =>
-                      setFormTeam({ ...formTeam, [item.key]: e.target.value })
-                    }
-                    className="w-full py-2 outline-none border-b-2 border-surface-bg text-body-md text-surface-nav focus:border-brand-primary transition-colors placeholder:text-nav-muted/50"
-                    type="text"
-                    placeholder={item.placeholder}
-                    value={formTeam[item.key]}
-                  />
                 </div>
-              ))}
 
-              {/* THÔNG BÁO KIỂU MOBILE */}
-              <div className="flex flex-col gap-3 mt-4">
-                <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-100">
-                  <div className="flex-shrink-0 flex items-center justify-center w-5 h-5 bg-emerald-500 rounded-full text-white">
-                    <svg
-                      className="w-3 h-3"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="3"
-                        d="M5 13l4 4L19 7"
+                {/* SECTION: TEAM JERSEY */}
+                <div className="bg-surface-white p-4 md:p-6 rounded-lg shadow-sm border-b-4 border-[#A55E26]">
+                  <h3 className="text-label-sm text-surface-nav font-bold mb-4 uppercase italic">
+                    Team Jersey
+                  </h3>
+                  <div className="flex flex-row gap-4 h-40 md:h-48">
+                    {[0, 1].map((index) => (
+                      <div key={index} className="w-1/2 relative font-body">
+                        <input
+                          type="file"
+                          ref={index === 0 ? playerJerseyRef : goalkeeperJerseyRef}
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (!file) return;
+                            setFormTeam((prev) => {
+                              const newKits = [...prev.kit_url];
+                              newKits[index] = file;
+                              return { ...prev, kit_url: newKits };
+                            });
+                          }}
+                          className="hidden"
+                          accept=".png, .jpg, .jpeg"
+                        />
+                        <div
+                          onClick={() =>
+                            (index === 0
+                              ? playerJerseyRef
+                              : goalkeeperJerseyRef
+                            ).current?.click()
+                          }
+                          className="relative w-full h-full border-2 border-dashed border-icon-muted bg-surface-card rounded-xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-brand-primary transition-all"
+                        >
+                          {jerseyPreview[index] && (
+                            <img
+                              src={jerseyPreview[index]}
+                              className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-40 transition-opacity"
+                              alt="Jersey preview"
+                            />
+                          )}
+                          <div className="relative z-10 flex flex-col items-center text-center p-2 md:p-4">
+                            <PiCoatHangerBold className="text-nav-muted w-6 h-6 md:w-8 md:h-8" />
+                            <span className="text-[10px] md:text-label-sm text-surface-nav font-bold mt-2 uppercase leading-tight">
+                              Jersey Design
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* RIGHT COLUMN: INPUTS & NOTIFICATIONS */}
+              <div className="flex flex-col w-full md:w-[42%] p-4 md:p-6 bg-surface-white rounded-[12px] shadow-sm font-body">
+                <div className="flex flex-col gap-5 md:gap-6">
+                  {[
+                    {
+                      title: "Team name",
+                      key: "name",
+                      placeholder: "E.G., NEON STRIKE FC",
+                    },
+                    {
+                      title: "Nationality",
+                      key: "country",
+                      placeholder: "Vietnam",
+                    },
+                    {
+                      title: "Description",
+                      key: "description",
+                      placeholder: "Club mission and history...",
+                    },
+                  ].map((item, index) => (
+                    <div key={index} className="flex flex-col">
+                      <label className="text-label-sm text-surface-nav font-bold uppercase italic mb-1">
+                        {item.title}
+                      </label>
+                      <input
+                        onChange={(e) =>
+                          setFormTeam({ ...formTeam, [item.key]: e.target.value })
+                        }
+                        className="w-full py-2 outline-none border-b-2 border-surface-bg text-body-md text-surface-nav focus:border-brand-primary transition-colors placeholder:text-nav-muted/50"
+                        type="text"
+                        placeholder={item.placeholder}
+                        value={formTeam[item.key]}
                       />
-                    </svg>
+                    </div>
+                  ))}
+
+                  {/* STATUS NOTIFICATIONS */}
+                  <div className="flex flex-col gap-3 mt-4">
+                    <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+                      <div className="flex-shrink-0 flex items-center justify-center w-5 h-5 bg-emerald-500 rounded-full text-white">
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="3"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      </div>
+                      <span className="text-[11px] md:text-label-sm font-bold text-emerald-700 uppercase tracking-wide">
+                        Brand Guidelines Applied
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg border border-orange-100">
+                      <div className="flex-shrink-0 flex items-center justify-center w-5 h-5 bg-orange-500 rounded-full text-white font-bold text-[10px]">
+                        i
+                      </div>
+                      <span className="text-[11px] md:text-label-sm font-bold text-orange-700 uppercase tracking-wide">
+                        Real-time Draft Saving
+                      </span>
+                    </div>
                   </div>
-                  <span className="text-[11px] md:text-label-sm font-bold text-emerald-700 uppercase tracking-wide">
-                    Brand Guidelines Applied
-                  </span>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg border border-orange-100">
-                  <div className="flex-shrink-0 flex items-center justify-center w-5 h-5 bg-orange-500 rounded-full text-white font-bold text-[10px]">
-                    i
+                {/* BUTTONS */}
+                <div className="flex gap-4 justify-end items-center mt-8 md:mt-auto">
+                  <button
+                    onClick={() => deleteQueryString()}
+                    type="button"
+                    className="text-body-sm md:text-body-md text-nav-muted font-bold cursor-pointer hover:text-surface-nav transition-colors px-4"
+                  >
+                    CANCEL
+                  </button>
+                  <button className="py-2.5 md:py-3 px-8 md:px-10 bg-cta-gradient text-body-sm md:text-body-md text-surface-white font-bold rounded-[8px] hover:scale-105 transition-all shadow-md uppercase">
+                    Save
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
+
+          {/* ========== TAB: MEMBERS ========== */}
+          {activeTab === "members" && (
+            <div className="flex flex-col gap-5">
+              {/* CURRENT MEMBERS SECTION */}
+              <div className="bg-surface-white rounded-xl shadow-sm overflow-hidden min-h-[300px]">
+                {/* Header with Add Button */}
+                <div className="flex items-center justify-between p-4 md:p-5 border-b border-surface-bg">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-brand-primary/10">
+                      <FaUsers className="w-4 h-4 text-brand-primary" />
+                    </div>
+                    <div>
+                      <h4 className="text-title-sm font-bold text-surface-nav uppercase">
+                        Current Members
+                      </h4>
+                      <p className="text-label-sm text-nav-muted">
+                        {members.length} player{members.length !== 1 ? "s" : ""} in this team
+                      </p>
+                    </div>
                   </div>
-                  <span className="text-[11px] md:text-label-sm font-bold text-orange-700 uppercase tracking-wide">
-                    Real-time Draft Saving
-                  </span>
+                  <button
+                    type="button"
+                    onClick={handleOpenAddForm}
+                    disabled={addingMembers}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-cta-gradient text-white text-label-sm font-bold rounded-xl shadow-md hover:scale-105 hover:shadow-lg transition-all cursor-pointer uppercase tracking-wide disabled:opacity-50"
+                  >
+                    {addingMembers ? (
+                      <>
+                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                         Adding...
+                      </>
+                    ) : (
+                      <>
+                        <IoPersonAddSharp className="w-4 h-4" />
+                        <span className="hidden sm:inline">Add Member</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Members List */}
+                <div className="p-4 md:p-5">
+                  {loadingMembers ? (
+                    <div className="flex items-center justify-center py-10">
+                      <div className="w-8 h-8 border-3 border-brand-primary/30 border-t-brand-primary rounded-full animate-spin" />
+                      <span className="ml-3 text-body-md text-nav-muted">Loading members...</span>
+                    </div>
+                  ) : members.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <div className="w-16 h-16 rounded-full bg-surface-bg flex items-center justify-center mb-4">
+                        <FaUsers className="w-7 h-7 text-nav-muted/50" />
+                      </div>
+                      <p className="text-body-md text-nav-muted font-medium">
+                        No members in this team yet
+                      </p>
+                      <p className="text-label-sm text-nav-muted/70 mt-1">
+                        Click "Add Member" to create a new player for this team
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[500px] overflow-y-auto pr-1">
+                      {members.map((member) => {
+                        const playerId = member.id || member.player_id;
+                        return (
+                          <div
+                            key={playerId}
+                            className="flex items-center gap-3 p-3 rounded-xl bg-surface-bg hover:bg-surface-bg/80 transition-all group"
+                          >
+                            {/* Avatar */}
+                            <div className="w-11 h-11 rounded-lg overflow-hidden bg-surface-nav/10 flex-shrink-0 shadow-sm">
+                              {(member.avatar_url || member.avatarUrl || member.avatar) ? (
+                                <img
+                                  src={member.avatar_url || member.avatarUrl || member.avatar}
+                                  alt={member.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-surface-nav/40 text-label-sm font-bold">
+                                  {member.name?.charAt(0)?.toUpperCase() || "?"}
+                                </div>
+                              )}
+                            </div>
+                            {/* Info */}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-body-sm font-bold text-surface-nav truncate">
+                                {member.name || "Unknown"}
+                              </p>
+                              <p className="text-label-sm text-nav-muted">
+                                {member.main_position || member.mainPosition || member.position || "N/A"}
+                              </p>
+                            </div>
+                            {/* Remove button */}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveMember(playerId)}
+                              disabled={removingId === playerId}
+                              className="flex items-center justify-center w-8 h-8 rounded-lg bg-transparent hover:bg-red-50 text-nav-muted hover:text-red-500 transition-all cursor-pointer opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                              title="Remove member"
+                            >
+                              {removingId === playerId ? (
+                                <div className="w-4 h-4 border-2 border-red-300 border-t-red-500 rounded-full animate-spin" />
+                              ) : (
+                                <FaUserMinus className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-
-            {/* NÚT BẤM */}
-            <div className="flex gap-4 justify-end items-center mt-8 md:mt-auto">
-              <button
-                onClick={() => deleteQueryString()}
-                type="button"
-                className="text-body-sm md:text-body-md text-nav-muted font-bold cursor-pointer hover:text-surface-nav transition-colors px-4"
-              >
-                CANCEL
-              </button>
-              <button className="py-2.5 md:py-3 px-8 md:px-10 bg-cta-gradient text-body-sm md:text-body-md text-surface-white font-bold rounded-[8px] hover:scale-105 transition-all shadow-md uppercase">
-                Save
-              </button>
-            </div>
-          </div>
-        </form>
+          )}
+        </div>
       </dialog>
+
+      <FormPlayer ref={formPlayerRef} mode="add" onSubmit={handleCreateNewMember} />
     </>
   );
 };

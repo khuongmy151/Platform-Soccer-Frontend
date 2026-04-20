@@ -14,7 +14,7 @@ export const teamService = {
       setData(result.data || null);
       return result;
     } catch {
-      console.log("Lỗi mạng");
+      console.log("Network error");
     }
   },
   createTeam: async ({ url, data }) => {
@@ -39,5 +39,22 @@ export const teamService = {
     });
     console.log(response);
     toast.success(response?.message);
+  },
+  // Get team members list
+  getTeamMembers: async ({ url }) => {
+    const response = await axiosClient.get(`${url}`);
+    return response;
+  },
+  // Add members to team (body: { player_id: [1, 2, 3] })
+  addTeamMembers: async ({ url, data }) => {
+    const response = await axiosClient.post(`${url}`, data);
+    toast.success(response?.message || "Members added successfully");
+    return response;
+  },
+  // Remove a member from team
+  removeTeamMember: async ({ url }) => {
+    const response = await axiosClient.delete(`${url}`);
+    toast.success(response?.message || "Member removed successfully");
+    return response;
   },
 };
