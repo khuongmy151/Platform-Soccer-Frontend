@@ -5,9 +5,9 @@ export const tournamentService = {
   getAllTournament: async ({ url, dispatch, func, params }) => {
     try {
       const response = await axiosClient.get(url, { params });
-      const result = response;
+      const result = response.data || [];
       console.log(result);
-      dispatch(func(result || []));
+      dispatch(func(result?.data || result || []));
       return result;
     } catch (error) {
       console.error("API Error:", error);
@@ -18,7 +18,7 @@ export const tournamentService = {
   // Lấy chi tiết 1 giải đấu theo ID (dùng list API rồi filter vì backend không có GET /tournaments/:id)
   getTournamentById: async (id) => {
     const response = await axiosClient.get("/tournaments");
-    const tournaments = Array.isArray(response) ? response : (response.data || []);
+    const tournaments = Array.isArray(response.data) ? response.data : (response.data?.data || []);
     return tournaments.find(t => String(t.id) === String(id)) || null;
   },
 
@@ -37,5 +37,4 @@ export const tournamentService = {
     return await axiosClient.delete(`/tournaments/${id}`);
   }
 };
-
 

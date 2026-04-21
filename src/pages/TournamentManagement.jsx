@@ -3,7 +3,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { tournamentService } from "../services/tournamentService";
 import { setTournaments } from "../stores/features/tournamentSlice";
-import { Upload } from "lucide-react";
+import { Upload, Briefcase } from "lucide-react";
 
 const TournamentManagement = () => {
   const { id } = useParams();
@@ -33,11 +33,12 @@ const TournamentManagement = () => {
   const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
-      await tournamentService.getAllTournament({
+      const data = await tournamentService.getAllTournament({
         url: "/tournaments",
         dispatch,
         func: setTournaments,
       });
+      console.log("GET /tournaments API Response:", data);
     } catch (error) {
       console.error("Fetch data failed:", error);
     } finally {
@@ -60,6 +61,8 @@ const TournamentManagement = () => {
       } else {
         setSelectedTournament(tournaments[0]);
       }
+    } else {
+      setSelectedTournament(null);
     }
   }, [tournaments, id]);
 
@@ -115,12 +118,12 @@ const TournamentManagement = () => {
     try {
       setIsSaving(true);
       await tournamentService.createTournament(formData);
-      alert("Tạo giải đấu thành công!");
+      alert("Tournament created successfully!");
       setShowCreateModal(false);
       fetchData(); // Refresh list
     } catch (err) {
       console.error("Create failed:", err);
-      alert("Lỗi khi tạo giải đấu. Vui lòng thử lại.");
+      alert("Error creating tournament. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -131,12 +134,12 @@ const TournamentManagement = () => {
     try {
       setIsSaving(true);
       await tournamentService.updateTournament(selectedTournament.id, formData);
-      alert("Cập nhật giải đấu thành công!");
+      alert("Tournament updated successfully!");
       setShowEditModal(false);
       fetchData(); // Refresh list
     } catch (err) {
       console.error("Update failed:", err);
-      alert("Lỗi khi cập nhật. Vui lòng thử lại.");
+      alert("Error updating tournament. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -147,11 +150,44 @@ const TournamentManagement = () => {
   };
 
   if (isLoading) {
-    return <div className="text-center py-20">Đang tải...</div>;
+    return <div className="text-center py-20">Loading...</div>;
+  }
+
+  // Show empty state only if loading is done and no tournaments exist
+  if (tournaments.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[600px] w-full">
+        <h1 className="text-4xl font-black text-slate-800 mb-8 tracking-tight">
+          TOURNAMENT
+        </h1>
+        
+        <div className="flex flex-col items-center gap-6 mb-12">
+          <div className="w-32 h-32 bg-blue-100 rounded-full flex items-center justify-center">
+            <Briefcase size={64} className="text-blue-400" />
+          </div>
+          
+          <div className="text-center">
+            <h2 className="text-2xl font-black text-slate-800 mb-2">
+              No tournaments yet
+            </h2>
+            <p className="text-slate-500 text-base">
+              Create a new tournament to get started
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={handleCreate}
+          className="px-8 py-4 rounded-xl font-bold text-white bg-[#c8102e] hover:bg-red-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+        >
+          CREATE TOURNAMENT
+        </button>
+      </div>
+    );
   }
 
   if (!selectedTournament) {
-    return <div className="text-center py-20">Không tìm thấy giải đấu</div>;
+    return <div className="text-center py-20">Loading...</div>;
   }
 
   return (
@@ -234,7 +270,7 @@ const TournamentManagement = () => {
                   navigate(`/matches?tournamentId=${selectedTournament.id}`);
                 } else {
                   console.error("No tournament selected");
-                  alert("Vui lòng chọn một tournament trước!");
+                  alert("Please select a tournament first!");
                 }
               }}
               className="flex-1 py-4 rounded-xl font-bold text-slate-900 bg-gradient-to-r from-red-500 to-yellow-400 hover:from-red-600 hover:to-yellow-500 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
@@ -256,10 +292,10 @@ const TournamentManagement = () => {
           <div className="flex flex-col gap-4 flex-1 overflow-y-auto max-h-[600px]">
             {tournaments.length === 0 ? (
               <p className="text-slate-400 text-center py-8">
-                Không có giải đấu nào
+                No tournaments available
               </p>
             ) : (
-              tournaments.map((tournament) => (
+              tournaments?.map((tournament) => (
                 <div
                   onClick={() => handleSelectTournament(tournament)}
                   key={tournament.id}
