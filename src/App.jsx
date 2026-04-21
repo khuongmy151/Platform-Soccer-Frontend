@@ -13,6 +13,7 @@ import CreateTeam from "./pages/CreateTeam";
 import MatchManagement from "./pages/MatchManagement";
 import MatchDetail from "./pages/MatchDetail";
 import CreateMatch from "./pages/CreateMatch";
+import MatchList from "./pages/MatchList";
 import TournamentManagement from "./pages/TournamentManagement";
 import TournamentDetail from "./pages/TournamentDetail";
 import ProtectedRoute from "./pages/ProtectedRoute";
@@ -63,6 +64,7 @@ function App() {
             <Route path="matches" element={<MatchManagement />} />
             <Route path="match/create" element={<CreateMatch />} />
             <Route path="match/:matchId" element={<MatchDetail />} />
+            <Route path="match-list/:matchId" element={<MatchList />} />
             <Route path="tournaments" element={<TournamentManagement />} />
             <Route
               path="tournament/:tournamentId"

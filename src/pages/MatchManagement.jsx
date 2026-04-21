@@ -3,121 +3,544 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import matchService from "../services/matchService";
 import { setMatches } from "../stores/features/matchSlice";
-const Badge = ({ children, color, dot }) => {
-  const colorMap = {
-    gray: "bg-gray-200 text-gray-500",
-    orange: "bg-orange-100 text-orange-600",
-    green: "bg-green-400 text-white",
-    red: "bg-red-400 text-white",
-  };
+
+/* ─────────────────────────────── helpers ─────────────────────────────── */
+
+const ShieldIcon = ({ size = 32, color = "#d1d5db" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="1.5"
+  >
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+  </svg>
+);
+
+const PinIcon = () => (
+  <svg
+    width="13"
+    height="13"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+    <circle cx="12" cy="10" r="3" />
+  </svg>
+);
+
+const ChevronDown = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+  >
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+);
+
+/* ─────────────────────────────── Badge ─────────────────────────────── */
+
+const STATUS_STYLES = {
+  // ── Đúng DB ENUM ──
+  SCHEDULED:    { bg: "#f3f4f6", color: "#6b7280", dot: null },
+  FIRST_HALF:   { bg: "#fff7ed", color: "#ea580c", dot: "#ef4444" },
+  HALF_TIME:    { bg: "#fef3c7", color: "#d97706", dot: null },
+  SECOND_HALF:  { bg: "#fff7ed", color: "#ea580c", dot: "#ef4444" },
+  FINISHED:     { bg: "#22c55e", color: "#ffffff", dot: null },
+  // ── Dự phòng cho mock data cũ ──
+  "LIVE NOW":   { bg: "#fff7ed", color: "#ea580c", dot: "#ef4444" },
+  CANCELLED:    { bg: "#f97316", color: "#ffffff", dot: null },
+};
+
+const Badge = ({ status }) => {
+  const style = STATUS_STYLES[status] || STATUS_STYLES["SCHEDULED"];
   return (
-    <div
-      className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 w-max ${colorMap[color]}`}
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 5,
+        background: style.bg,
+        color: style.color,
+        borderRadius: 999,
+        padding: "4px 10px",
+        fontSize: 9,
+        fontWeight: 800,
+        letterSpacing: "0.12em",
+        textTransform: "uppercase",
+      }}
     >
-      {dot && (
-        <div
-          className={`w-1.5 h-1.5 rounded-full bg-${dot}-500 animate-pulse`}
+      {style.dot && (
+        <span
+          style={{
+            width: 7,
+            height: 7,
+            borderRadius: "50%",
+            background: style.dot,
+            animation: "pulse 1.5s infinite",
+            display: "inline-block",
+            flexShrink: 0,
+          }}
         />
       )}
-      {children}
-    </div>
+      {status}
+    </span>
   );
 };
 
-const MatchCard = ({
-  status,
-  rawStatus,
-  timeTopInfo,
-  teamA,
-  teamB,
-  bottomArea,
-  extraClasses = "",
-}) => {
+/* ─────────────────────────────── TeamLogo ─────────────────────────────── */
+
+const TeamLogo = ({ dim = 64 }) => (
+  <div
+    style={{
+      width: dim,
+      height: dim,
+      borderRadius: 16,
+      background: "#f9fafb",
+      border: "2px solid #f3f4f6",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    }}
+  >
+    <ShieldIcon size={26} color="#d1d5db" />
+  </div>
+);
+
+/* ─────────────────────────────── MatchCard ─────────────────────────────── */
+
+const MatchCard = ({ match, onStart, onCancel, onUpdate, onView }) => {
+  const { status } = match;
+
+  /* ---- date / time ---- */
+  let dateStr = match.date || "OCT 24, 2024";
+  let timeStr = match.time || "19:30 GMT";
+  if (match.startTime) {
+    const d = new Date(match.startTime);
+    if (!isNaN(d)) {
+      dateStr = d
+        .toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
+        .toUpperCase();
+      timeStr = d.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+    }
+  }
+
+  // Hỗ trợ cả camelCase (score.home) lẫn snake_case (home_score) từ backend
+  const homeScore =
+    match.score != null
+      ? match.score.home
+      : match.home_score !== undefined
+      ? match.home_score
+      : match.homeTeam?.score;
+  const awayScore =
+    match.score != null
+      ? match.score.away
+      : match.away_score !== undefined
+      ? match.away_score
+      : match.awayTeam?.score;
+
+  const isCancelled = status === "CANCELLED";
+  // Live = bất kỳ trạng thái đang thi đấu theo DB ENUM
+  const isLive =
+    status === "FIRST_HALF" ||
+    status === "HALF_TIME" ||
+    status === "SECOND_HALF" ||
+    status === "LIVE NOW"; // backward compat mock
+  const isFinished = status === "FINISHED";
+  const isScheduled = !isLive && !isFinished && !isCancelled;
+
+  const showScore = isFinished || isLive || homeScore !== undefined;
+
+  const arena = match.venue?.name || match.arena || "";
+
+  /* ── score label ── */
+  let scoreLabel = "SCORE";
+  if (isFinished) scoreLabel = "COMPLETED";
+  else if (isLive) scoreLabel = "LIVE";
+
   return (
     <div
-      className={`bg-[var(--color-surface-white)] rounded-[2rem] p-6 lg:p-8 flex flex-col gap-4 font-[var(--font-body)] ${extraClasses}`}
-      style={{ boxShadow: "0 12px 40px rgba(0,0,0,0.03)" }}
+      style={{
+        background: "#ffffff",
+        borderRadius: 24,
+        padding: "24px 28px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 0,
+        boxShadow: "0 4px 24px rgba(0,0,0,0.05)",
+        position: "relative",
+        overflow: "hidden",
+      }}
     >
-      {/* HEADER */}
-      <div className="flex justify-between items-start">
-        {status}
-        <div className="text-right">{timeTopInfo}</div>
+      {/* ── Header row ── */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          marginBottom: 20,
+        }}
+      >
+        <Badge status={status} />
+        <div style={{ textAlign: "right" }}>
+          <p
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              color: isLive ? "#f97316" : "#9ca3af",
+              margin: 0,
+              marginBottom: 2,
+              textTransform: "uppercase",
+            }}
+          >
+            {dateStr}
+          </p>
+          <p
+            style={{
+              fontSize: 16,
+              fontWeight: 900,
+              color: isCancelled ? "#ef4444" : "#1f2937",
+              margin: 0,
+              letterSpacing: "-0.01em",
+            }}
+          >
+            {timeStr}
+          </p>
+        </div>
       </div>
 
-      {/* TEAMS */}
-      <div className="flex items-center justify-around">
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-[70px] h-[70px] rounded-2xl bg-gray-50 flex items-center justify-center text-gray-300 border-2 border-gray-100">
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            >
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
-          </div>
-          <h3 className="font-black text-gray-800 text-sm tracking-wide text-center font-[var(--font-display)] mt-2">
-            {teamA.name}
-          </h3>
+      {/* ── Teams row ── */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 8,
+          marginBottom: 20,
+        }}
+      >
+        {/* Home team */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 8,
+            flex: 1,
+          }}
+        >
+          <TeamLogo dim={isCancelled ? 52 : 64} />
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 900,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              color: isCancelled ? "#9ca3af" : "#1f2937",
+              textAlign: "center",
+            }}
+          >
+            {match.homeTeam?.name || "TEAM A"}
+          </span>
         </div>
 
-        <div className="flex flex-col items-center">
-          {rawStatus === "FINISHED" ||
-          rawStatus === "LIVE NOW" ||
-          teamA.score !== undefined ? (
-            <div className="flex flex-col items-center">
-              <span className="font-black text-4xl text-gray-900 tracking-widest font-[var(--font-display)]">
-                {teamA.score ?? 0} <span className="text-gray-400 mx-1">-</span>{" "}
-                {teamB.score ?? 0}
+        {/* Middle: score or VS */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 4,
+            flex: "0 0 auto",
+            minWidth: 80,
+          }}
+        >
+          {showScore ? (
+            <>
+              <span
+                style={{
+                  fontSize: isLive ? 38 : 32,
+                  fontWeight: 900,
+                  color: "#1f2937",
+                  letterSpacing: "0.05em",
+                  lineHeight: 1,
+                }}
+              >
+                {homeScore ?? 0} - {awayScore ?? 0}
               </span>
               <span
-                className={`text-[10px] font-bold tracking-[0.2em] uppercase mt-2 ${
-                  rawStatus === "FINISHED"
-                    ? "text-green-600"
-                    : "text-orange-500"
-                }`}
+                style={{
+                  fontSize: 9,
+                  fontWeight: 700,
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  color: isFinished ? "#16a34a" : "#f97316",
+                  marginTop: 4,
+                }}
               >
-                {rawStatus === "FINISHED"
-                  ? "COMPLETED"
-                  : rawStatus === "LIVE NOW"
-                  ? "LIVE"
-                  : teamA.statusLabel || "SCORE"}
+                {scoreLabel}
               </span>
-            </div>
+            </>
           ) : (
-            <span className="font-black text-3xl text-gray-200 font-[var(--font-display)]">
+            <span
+              style={{
+                fontSize: 24,
+                fontWeight: 900,
+                color: isCancelled ? "#d1d5db" : "#d1d5db",
+                letterSpacing: "0.1em",
+              }}
+            >
               VS
             </span>
           )}
         </div>
 
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-[70px] h-[70px] rounded-2xl bg-gray-50 flex items-center justify-center text-gray-300 border-2 border-gray-100">
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            >
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
-          </div>
-          <h3 className="font-black text-gray-800 text-sm tracking-wide text-center font-[var(--font-display)] mt-2">
-            {teamB.name}
-          </h3>
+        {/* Away team */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 8,
+            flex: 1,
+          }}
+        >
+          <TeamLogo dim={isCancelled ? 52 : 64} />
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 900,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              color: isCancelled ? "#9ca3af" : "#1f2937",
+              textAlign: "center",
+            }}
+          >
+            {match.awayTeam?.name || "TEAM B"}
+          </span>
         </div>
       </div>
 
-      {/* FOOTER AREA */}
-      <div className="mt-4">{bottomArea}</div>
+      {/* ── Venue ── */}
+      {arena && !isCancelled && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 5,
+            color: "#9ca3af",
+            fontSize: 10,
+            fontWeight: 600,
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            marginBottom: 16,
+          }}
+        >
+          <PinIcon />
+          {arena}
+        </div>
+      )}
+
+      {/* ── Cancellation reason ── */}
+      {isCancelled && match.reason && (
+        <div
+          style={{
+            background: "#fff7ed",
+            border: "1px solid #fed7aa",
+            borderRadius: 12,
+            padding: "12px 14px",
+            marginBottom: 0,
+          }}
+        >
+          <p
+            style={{
+              fontSize: 9,
+              fontWeight: 800,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: "#ea580c",
+              margin: "0 0 6px",
+            }}
+          >
+            Reason for cancellation
+          </p>
+          <p
+            style={{
+              fontSize: 12,
+              color: "#6b7280",
+              margin: 0,
+              lineHeight: 1.6,
+            }}
+          >
+            {match.reason}
+          </p>
+        </div>
+      )}
+
+      {/* ── Action buttons ── */}
+      {isScheduled && (
+        <div style={{ display: "flex", gap: 12 }}>
+          <button
+            onClick={() => onStart(match.id)}
+            style={{
+              flex: 2,
+              padding: "13px 0",
+              borderRadius: 12,
+              border: "none",
+              cursor: "pointer",
+              fontWeight: 900,
+              fontSize: 11,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: "#fff",
+              background: "linear-gradient(135deg, #ef4444 0%, #f59e0b 100%)",
+              boxShadow: "0 6px 20px rgba(239,68,68,0.35)",
+              transition: "opacity 0.15s",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = 0.88)}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = 1)}
+          >
+            START MATCH
+          </button>
+          <button
+            onClick={() => onCancel(match.id)}
+            style={{
+              flex: 1,
+              padding: "13px 0",
+              borderRadius: 12,
+              border: "2px solid #ef4444",
+              cursor: "pointer",
+              fontWeight: 900,
+              fontSize: 11,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: "#ef4444",
+              background: "transparent",
+              transition: "background 0.15s",
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.background = "#fef2f2")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.background = "transparent")
+            }
+          >
+            CANCEL
+          </button>
+        </div>
+      )}
+
+      {isLive && (
+        <div style={{ display: "flex", gap: 12 }}>
+          {/* VIEW MATCH DETAILS – giữ nút nhưng chưa liên kết trang */}
+          <button
+            onClick={() => onView(match.id)}
+            style={{
+              flex: 1,
+              padding: "13px 0",
+              borderRadius: 12,
+              border: "none",
+              cursor: "pointer",
+              fontWeight: 900,
+              fontSize: 11,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "#fff",
+              background: "#b91c1c",
+              transition: "opacity 0.15s",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = 0.88)}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = 1)}
+          >
+            VIEW MATCH DETAILS
+          </button>
+          <button
+            onClick={() => onUpdate(match.id)}
+            style={{
+              flex: "0 0 auto",
+              padding: "13px 20px",
+              borderRadius: 12,
+              border: "none",
+              cursor: "pointer",
+              fontWeight: 900,
+              fontSize: 11,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "#fff",
+              background: "#1f2937",
+              transition: "opacity 0.15s",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = 0.82)}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = 1)}
+          >
+            UPDATE
+          </button>
+        </div>
+      )}
+
+      {isFinished && (
+        <div style={{ display: "flex", gap: 12 }}>
+          <button
+            style={{
+              flex: 1,
+              padding: "12px 0",
+              borderRadius: 12,
+              border: "1.5px solid #e5e7eb",
+              cursor: "not-allowed",
+              fontWeight: 800,
+              fontSize: 10,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "#6b7280",
+              background: "#f9fafb",
+              opacity: 0.8,
+            }}
+          >
+            MATCH STATS
+          </button>
+          <button
+            style={{
+              flex: 1,
+              padding: "12px 0",
+              borderRadius: 12,
+              border: "1.5px solid #e5e7eb",
+              cursor: "not-allowed",
+              fontWeight: 800,
+              fontSize: 10,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "#6b7280",
+              background: "#f9fafb",
+              opacity: 0.8,
+            }}
+          >
+            HIGHLIGHTS
+          </button>
+        </div>
+      )}
     </div>
   );
 };
+
+/* ─────────────────────────────── Page ─────────────────────────────── */
 
 export default function MatchManagement() {
   const navigate = useNavigate();
@@ -138,7 +561,7 @@ export default function MatchManagement() {
     },
     {
       id: "mock2",
-      status: "LIVE NOW",
+      status: "FIRST_HALF",  // DB ENUM đúng thay cho "LIVE NOW"
       date: "72' MINS",
       time: "Match Live",
       homeTeam: { name: "TEAM CRIMSON", score: 3 },
@@ -150,7 +573,7 @@ export default function MatchManagement() {
       status: "FINISHED",
       date: "OCT 22, 2024",
       time: "FT Score",
-      homeTeam: { name: "TEAM ECHO", score: 2, statusLabel: "COMPLETED" },
+      homeTeam: { name: "TEAM ECHO", score: 2 },
       awayTeam: { name: "TEAM FOXTROT", score: 1 },
       arena: "OLD TRAFFORD, MANCHESTER",
     },
@@ -161,13 +584,12 @@ export default function MatchManagement() {
       time: "N/A",
       homeTeam: { name: "TEAM GOLF" },
       awayTeam: { name: "TEAM HOTEL" },
-      arena: "CANCELLED",
+      arena: "",
       reason:
         "Unfavorable weather conditions and pitch flooding. Re-scheduling pending.",
     },
   ]);
 
-  // Gọi API [GET /matches] thông qua Service Architecture
   useEffect(() => {
     matchService.getAllMatches({
       url: "/matches",
@@ -179,20 +601,19 @@ export default function MatchManagement() {
   const handleStartMatch = async (matchId) => {
     if (String(matchId).startsWith("mock")) {
       setMockMatches((prev) =>
-        prev.map((m) => (m.id === matchId ? { ...m, status: "LIVE NOW" } : m))
+        prev.map((m) =>
+          m.id === matchId ? { ...m, status: "LIVE NOW" } : m
+        )
       );
       return;
     }
     try {
+      // Gửi "FIRST_HALF" – đúng với DB ENUM (SCHEDULED|FIRST_HALF|HALF_TIME|SECOND_HALF|FINISHED)
       await matchService.updateMatchStatus({
         url: `/matches/${matchId}/status`,
-        data: { status: "LIVE NOW" },
+        data: { status: "FIRST_HALF" },
       });
-      matchService.getAllMatches({
-        url: "/matches",
-        dispatch,
-        func: setMatches,
-      });
+      matchService.getAllMatches({ url: "/matches", dispatch, func: setMatches });
     } catch (err) {
       console.error(err);
     }
@@ -213,194 +634,134 @@ export default function MatchManagement() {
       );
       return;
     }
-    try {
-      await matchService.updateMatchStatus({
-        url: `/matches/${matchId}/status`,
-        data: {
-          status: "CANCELLED",
-          reason: "Hủy lịch thi đấu do sự cố bất khả kháng.",
-        },
-      });
-      matchService.getAllMatches({
-        url: "/matches",
-        dispatch,
-        func: setMatches,
-      });
-    } catch (err) {
-      console.error(err);
-    }
+    // "CANCELLED" không có trong DB ENUM → chỉ cập nhật UI local, không gọi API
+    alert("Chức năng hủy trận chưa được hỗ trợ bởi server (CANCELLED không có trong DB ENUM).");
   };
 
   const displayMatches =
     matches.length > 0 ? [...matches].reverse() : mockMatches;
 
   return (
-    <div className="flex flex-col h-full font-[var(--font-body)]">
-      <div className="flex justify-between items-center mb-8 shrink-0">
-        <h1 className="text-4xl md:text-5xl font-black text-[#2e2e2e] tracking-tight font-[var(--font-display)]">
+    <div
+      style={{
+        fontFamily: "var(--font-body, 'Inter', sans-serif)",
+        minHeight: "100%",
+        padding: "0 0 32px",
+      }}
+    >
+      {/* ── Top bar ── */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 32,
+        }}
+      >
+        <h1
+          style={{
+            fontSize: "clamp(2rem, 4vw, 3rem)",
+            fontWeight: 900,
+            color: "#1f2937",
+            margin: 0,
+            letterSpacing: "-0.02em",
+          }}
+        >
           Match List
         </h1>
+
         <button
           onClick={() =>
             navigate(`/match/create?tournamentId=${tournamentId || ""}`)
           }
-          className="bg-[var(--color-brand-primary)] text-white px-6 py-3 rounded-xl text-xs font-black tracking-widest hover:opacity-90 transition-opacity shadow-md"
+          style={{
+            padding: "12px 22px",
+            borderRadius: 10,
+            border: "none",
+            cursor: "pointer",
+            fontWeight: 900,
+            fontSize: 11,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            color: "#fff",
+            background: "linear-gradient(135deg, #ef4444 0%, #f59e0b 100%)",
+            boxShadow: "0 6px 20px rgba(239,68,68,0.35)",
+            transition: "opacity 0.15s, transform 0.1s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.opacity = 0.9;
+            e.currentTarget.style.transform = "translateY(-1px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.opacity = 1;
+            e.currentTarget.style.transform = "translateY(0)";
+          }}
         >
-          + NEW MATCH
+          CREATE MATCH
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 relative">
-        {displayMatches.map((m) => {
-          // Bóc tách ngày tháng từ chuỗi ISO startTime (nếu có, không thì dùng Mockup Data cũ m.date)
-          let dateStr = m.date || "OCT 24";
-          let timeStr = m.time || "19:30";
-
-          if (m.startTime) {
-            const startDate = new Date(m.startTime);
-            if (!isNaN(startDate)) {
-              dateStr = startDate
-                .toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })
-                .toUpperCase();
-              timeStr = startDate.toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: false,
-              });
-            }
-          }
-
-          // Lấy score
-          const homeScore = m.score ? m.score.home : m.homeTeam?.score;
-          const awayScore = m.score ? m.score.away : m.awayTeam?.score;
-
-          return (
-            <MatchCard
-              key={m.id}
-              rawStatus={m.status}
-              status={
-                <Badge
-                  color={
-                    m.status === "LIVE NOW"
-                      ? "orange"
-                      : m.status === "FINISHED"
-                      ? "green"
-                      : m.status === "CANCELLED"
-                      ? "red"
-                      : "gray"
-                  }
-                  dot={m.status === "LIVE NOW" ? "red" : null}
-                >
-                  {m.status}
-                </Badge>
-              }
-              timeTopInfo={
-                <>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">
-                    {dateStr}
-                  </p>
-                  <p className="text-lg font-black text-gray-800">{timeStr}</p>
-                </>
-              }
-              teamA={{
-                ...m.homeTeam,
-                name: m.homeTeam?.name || "TEAM A",
-                score: homeScore,
-              }}
-              teamB={{
-                ...m.awayTeam,
-                name: m.awayTeam?.name || "TEAM B",
-                score: awayScore,
-              }}
-              bottomArea={
-                <>
-                  <div className="flex items-center gap-2 text-gray-400 text-xs mt-2 font-semibold mb-5 uppercase tracking-wide">
-                    <svg
-                      width="15"
-                      height="15"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                      <circle cx="12" cy="10" r="3" />
-                    </svg>
-                    {m.venue?.name || m.arena || "STADIUM"}
-                  </div>
-                  {m.status === "CANCELLED" && m.reason && (
-                    <div className="mt-5 bg-orange-50/70 rounded-xl p-5 border border-orange-100">
-                      <p className="text-[10px] font-black tracking-widest text-[var(--color-brand-primary)] uppercase mb-2">
-                        Reason for cancellation
-                      </p>
-                      <p className="text-sm text-gray-500 font-medium leading-relaxed">
-                        {m.reason}
-                      </p>
-                    </div>
-                  )}
-                  {(!m.status || m.status === "SCHEDULED") && (
-                    <div className="flex gap-4 mt-2">
-                      <button
-                        onClick={() => handleStartMatch(m.id)}
-                        className="flex-[2] py-3.5 rounded-xl text-white font-black text-xs tracking-widest uppercase bg-[linear-gradient(135deg,#ff4444,#ff8c00)] shadow-xl shadow-orange-500/30"
-                      >
-                        START MATCH
-                      </button>
-                      <button
-                        onClick={() => handleCancelMatch(m.id)}
-                        className="flex-1 py-3.5 rounded-xl border-[2.5px] border-[var(--color-brand-primary)] text-[var(--color-brand-primary)] font-black text-xs tracking-widest uppercase hover:bg-red-50 transition-colors"
-                      >
-                        CANCEL
-                      </button>
-                    </div>
-                  )}
-                  {m.status === "LIVE NOW" && (
-                    <div className="mt-2">
-                      <button
-                        onClick={() => navigate(`/match/${m.id}`)}
-                        className="w-full py-3.5 rounded-xl text-white font-black text-xs tracking-widest uppercase bg-[#2e2e2e] hover:bg-[#1a1a1a] transition-colors shadow-lg"
-                      >
-                        VIEW MATCH DETAILS
-                      </button>
-                    </div>
-                  )}
-                  {m.status === "FINISHED" && (
-                    <div className="flex gap-4 mt-2">
-                      <button className="flex-1 py-3.5 rounded-xl bg-gray-100 text-gray-600 font-black text-xs tracking-widest uppercase hover:bg-gray-200 transition-colors cursor-not-allowed opacity-70">
-                        MATCH STATS
-                      </button>
-                      <button className="flex-1 py-3.5 rounded-xl bg-gray-100 text-gray-600 font-black text-xs tracking-widest uppercase hover:bg-gray-200 transition-colors cursor-not-allowed opacity-70">
-                        HIGHLIGHTS
-                      </button>
-                    </div>
-                  )}
-                </>
-              }
-            />
-          );
-        })}
+      {/* ── Grid ── */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
+          gap: 24,
+        }}
+      >
+        {displayMatches.map((m) => (
+          <MatchCard
+            key={m.id}
+            match={m}
+            onStart={handleStartMatch}
+            onCancel={handleCancelMatch}
+            onUpdate={(id) => navigate(`/match/${id}`)}
+            onView={(id) => navigate(`/match-list/${id}`)}
+          />
+        ))}
       </div>
 
-      <div className="flex justify-center mt-8">
-        <button className="bg-white flex items-center gap-2 px-8 py-3.5 rounded-full text-[var(--color-brand-dark)] font-black text-xs tracking-widest shadow-sm border border-gray-200 hover:shadow-md hover:bg-gray-50 transition-all active:scale-95">
-          LOAD MORE MATCHES
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-          >
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
+      {/* ── Load more ── */}
+      <div style={{ display: "flex", justifyContent: "center", marginTop: 36 }}>
+        <button
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "12px 28px",
+            borderRadius: 999,
+            border: "1.5px solid #e5e7eb",
+            background: "#ffffff",
+            cursor: "pointer",
+            fontWeight: 800,
+            fontSize: 11,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: "#374151",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+            transition: "box-shadow 0.15s, background 0.15s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.10)";
+            e.currentTarget.style.background = "#f9fafb";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.05)";
+            e.currentTarget.style.background = "#ffffff";
+          }}
+        >
+          Load More Matches
+          <ChevronDown />
         </button>
       </div>
+
+      {/* pulse keyframe */}
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
+      `}</style>
     </div>
   );
 }

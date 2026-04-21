@@ -162,13 +162,14 @@ export default function MatchPage() {
 
         if (response) {
           console.log("Đã lấy được dữ liệu:", response);
-          if (response.status === "FINISHED") {
-            setFinished(true); // Khoá vĩnh viễn nút chỉnh sửa Tỉ số
-          }
-          if (response.homeScore !== undefined)
-            setHomeScore(response.homeScore);
-          if (response.awayScore !== undefined)
-            setAwayScore(response.awayScore);
+          // Khoá UI khi trận đã kết thúc
+          if (response.status === "FINISHED") setFinished(true);
+
+          // Hỗ trợ cả camelCase (homeScore) lẫn snake_case (home_score) từ backend
+          const hs = response.homeScore ?? response.home_score;
+          const as = response.awayScore ?? response.away_score;
+          if (hs !== undefined) setHomeScore(hs);
+          if (as !== undefined) setAwayScore(as);
         }
       } catch (error) {
         console.error("Lỗi lấy dữ liệu từ Backend:", error);
@@ -189,10 +190,9 @@ export default function MatchPage() {
         data: { homeScore, awayScore },
       });
 
-      await matchService.submitMatchStats({
-        url: `/matches/${matchId}/stats`,
-        data: { homeYellow, awayYellow, homeRed, awayRed },
-      });
+      // submitMatchStats bị tắt: endpoint /stats đã bị gạch ngang
+      // và DB không có cột cho thẻ vàng/đỏ
+      // await matchService.submitMatchStats({ ... });
 
       setShowConfirm(false);
       setFinished(true);
