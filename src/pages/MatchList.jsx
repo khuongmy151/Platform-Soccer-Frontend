@@ -21,7 +21,7 @@ const StatBlock = ({ label, value, color = "#1f2937" }) => (
   </div>
 );
 
-const CardStatRow = ({ team1Val, team2Val, icon, label, iconBg }) => (
+const CardStatRow = ({ team1Val, team2Val, label, iconBg }) => (
   <div style={{
     background: "#ffffff",
     borderRadius: 24,
@@ -54,7 +54,7 @@ const CardStatRow = ({ team1Val, team2Val, icon, label, iconBg }) => (
 
 export default function MatchList() {
   const navigate = useNavigate();
-  const { matchId } = useParams();
+  useParams();
 
   // Mock data theo hình
   const matchData = {
