@@ -175,20 +175,14 @@ export default function CreateMatch() {
         pad(Math.abs(offset) % 60);
 
       const newMatchData = {
-        tournamentId: tournamentId ? parseInt(tournamentId) : 1, // Lấy từ URL hoặc default là 1
-        title: matchTitle,
-        homeTeamId: teamA, // Lúc này teamA sẽ đang lưu ID thay vì Name
-        awayTeamId: teamB,
-        startTime: isoWithTimezone,
-        venue: {
-          name: arena,
-          city: "Unknown City",
-          country: "Unknown Country",
-        },
-        round: "Round 1",
-        notes: notes,
-        refereeName: "TBD",
-        status: "SCHEDULED",
+        // Chỉ gửi các field có trong DB schema:
+        // tournament_id, home_team_id, away_team_id, start_time, match_round, status
+        tournamentId: tournamentId ? parseInt(tournamentId) : 1,
+        homeTeamId: teamA,   // maps → home_team_id
+        awayTeamId: teamB,   // maps → away_team_id
+        startTime: isoWithTimezone, // maps → start_time
+        matchRound: arena,   // dùng tên sân làm match_round tạm thời
+        status: "SCHEDULED", // đúng với DB ENUM
       };
 
       const response = await matchService.createMatch({

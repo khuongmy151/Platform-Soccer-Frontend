@@ -22,7 +22,7 @@ const PublicTeamCard = ({ team, onClick }) => {
 
       {/* Team Name */}
       <h2
-        className="w-[200px] font-black text-body-md md:text-title-lg text-gray-900 font-display leading-tight 
+        className="w-[100px] md:w-[150px] font-black text-body-md md:text-title-lg text-gray-900 font-display leading-tight 
              truncate block text-center px-1 group-hover:text-brand-primary transition-colors"
       >
         {team.name}
