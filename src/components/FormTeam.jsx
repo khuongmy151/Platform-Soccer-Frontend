@@ -296,7 +296,7 @@ const FormTeam = ({ ref }) => {
         ref={ref}
       >
         {/* HEADER */}
-        <div className="sticky top-0 z-20 bg-surface-bg px-4 pt-4 pb-0 md:px-6 md:pt-6">
+        <div className="sticky top-0 z-20 bg-surface-bg px-4 pt-4 pb-0 lg:px-6 lg:pt-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-headline-sm md:text-headline-md text-brand-primary font-bold italic uppercase">
               {isEdit ? "Update Team" : "Create Team"}
@@ -369,11 +369,11 @@ const FormTeam = ({ ref }) => {
           {/* TAB: TEAM INFO */}
           {activeTab === "info" && (
             <form
-              className="flex flex-col md:flex-row justify-between gap-6"
+              className="flex flex-col lg:flex-row justify-between gap-6"
               onSubmit={handleUpdateTeam}
             >
               {/* LEFT COLUMN: LOGO & JERSEY */}
-              <div className="flex flex-col gap-6 w-full md:w-[55%] select-none">
+              <div className="flex flex-col gap-6 w-full lg:w-[55%] select-none">
                 {/* SECTION: TEAM LOGO */}
                 <div className="bg-surface-white p-4 md:p-6 rounded-lg shadow-sm border-b-4 border-brand-primary">
                   <h3 className="text-label-sm text-surface-nav font-bold mb-4 uppercase italic">
@@ -471,7 +471,7 @@ const FormTeam = ({ ref }) => {
               </div>
 
               {/* RIGHT COLUMN: INPUTS & NOTIFICATIONS */}
-              <div className="flex flex-col w-full md:w-[42%] p-4 md:p-6 bg-surface-white rounded-[12px] shadow-sm font-body">
+              <div className="flex flex-col w-full lg:w-[42%] p-4 md:p-6 bg-surface-white rounded-[12px] shadow-sm font-body">
                 <div className="flex flex-col gap-5 md:gap-6">
                   {[
                     {

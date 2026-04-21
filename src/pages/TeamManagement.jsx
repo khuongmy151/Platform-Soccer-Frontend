@@ -126,9 +126,12 @@ const TeamManagement = () => {
         {/* SEARCH + BUTTON ADD TEAM */}
         <div className="flex items-center justify-between w-[90%] mx-auto mb-6 gap-4 mt-2">
           {/* Search Input Container */}
-          <div className="flex items-center flex-1 h-[56px] bg-surface-white rounded-[16px] px-5 shadow-sm border border-header-line transition-all hover:border-brand-primary/50 focus-within:border-brand-primary focus-within:shadow-md">
+          <div className="flex items-center w-[75%] md:flex-1 h-[56px] bg-surface-white rounded-[16px] px-5 shadow-sm border border-header-line transition-all hover:border-brand-primary/50 focus-within:border-brand-primary focus-within:shadow-md">
             <IoFilter className="hidden md:block w-5 h-5 text-icon-muted" />
-            <FaSearch className="md:hidden text-icon-muted text-lg shrink-0" />
+            <FaSearch
+              onClick={handleSearch}
+              className="md:hidden text-icon-muted text-lg shrink-0"
+            />
             <input
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -145,7 +148,7 @@ const TeamManagement = () => {
           <button
             data-umami-event="Add team button click"
             onClick={() => navigate("/teams/create")}
-            className="flex items-center justify-center h-[56px] px-5 md:px-7 rounded-[16px] bg-cta-gradient hover:scale-[1.03] active:scale-95 transition-all duration-300 shrink-0 shadow-lg shadow-brand-primary/25 cursor-pointer text-white border border-[#ba0022]/20"
+            className="flex items-center justify-center h-[56px] px-3 md:px-7 rounded-[16px] bg-cta-gradient hover:scale-[1.03] active:scale-95 transition-all duration-300 shrink-0 shadow-lg shadow-brand-primary/25 cursor-pointer text-white border border-[#ba0022]/20"
           >
             <IoIosAdd className="text-[28px] shrink-0" />
             <span className="hidden md:block text-body-lg font-bold ml-1.5 tracking-wide uppercase mt-[2px]">
