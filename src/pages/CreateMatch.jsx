@@ -111,7 +111,7 @@ export default function CreateMatch() {
         setTeamList(data);
       } catch (err) {
         console.warn(
-          "Backend trắng, tự động thêm 3 đội mẫu vào cho bạn test:",
+          "Backend is empty, automatically adding 3 sample teams for testing:",
           err.message
         );
         setTeamList([
@@ -127,17 +127,15 @@ export default function CreateMatch() {
   // Bắt lỗi Validation
   const validateForm = () => {
     let newErrors = {};
-    if (!teamA) newErrors.teamA = "Vui lòng chọn Đội chủ nhà";
-    if (!teamB) newErrors.teamB = "Vui lòng chọn Đội khách";
+    if (!teamA) newErrors.teamA = "Please select a Home Team";
+    if (!teamB) newErrors.teamB = "Please select an Away Team";
     if (teamA && teamB && teamA === teamB)
-      newErrors.teamB = "Đội khách không được trùng Đội nhà";
+      newErrors.teamB = "Away Team cannot be the same as Home Team";
     if (!matchTitle.trim())
-      newErrors.matchTitle = "Tên trận đấu không được để trống";
-    if (!arena) newErrors.arena = "Vui lòng chọn sân thi đấu";
-    if (!kickoffDate)
-      newErrors.kickoffDate = "Vui lòng chọn ngày đá / Date Picker";
-    if (!kickoffTime)
-      newErrors.kickoffTime = "Vui lòng chọn giờ đá / Time Picker";
+      newErrors.matchTitle = "Match title cannot be empty";
+    if (!arena) newErrors.arena = "Please select a stadium/arena";
+    if (!kickoffDate) newErrors.kickoffDate = "Please select a kickoff date";
+    if (!kickoffTime) newErrors.kickoffTime = "Please select a kickoff time";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -151,9 +149,7 @@ export default function CreateMatch() {
 
     try {
       // 1. Chuyển đổi Date + Time thành định dạng ISO 8601 (có Timezone cục bộ)
-      // Giả sử lấy timezone local hiện tại
       const localDateObj = new Date(`${kickoffDate}T${kickoffTime}:00`);
-      // Đổ timezone bù giờ vào cho chuẩn với Backend
       const offset = -localDateObj.getTimezoneOffset();
       const sign = offset >= 0 ? "+" : "-";
       const pad = (num) => String(num).padStart(2, "0");
@@ -176,26 +172,25 @@ export default function CreateMatch() {
 
       const newMatchData = {
         // Chỉ gửi các field có trong DB schema:
-        // tournament_id, home_team_id, away_team_id, start_time, match_round, status
         tournamentId: tournamentId ? parseInt(tournamentId) : 1,
-        homeTeamId: teamA,   // maps → home_team_id
-        awayTeamId: teamB,   // maps → away_team_id
-        startTime: isoWithTimezone, // maps → start_time
-        matchRound: arena,   // dùng tên sân làm match_round tạm thời
-        status: "SCHEDULED", // đúng với DB ENUM
+        homeTeamId: teamA,
+        awayTeamId: teamB,
+        startTime: isoWithTimezone,
+        matchRound: arena,
+        status: "SCHEDULED",
       };
 
       const response = await matchService.createMatch({
         url: "/matches",
         data: newMatchData,
       });
-      console.log("Response Tạo trận:", response);
-      alert("Tạo trận đấu thành công (API POST matches)!");
+      console.log("Create Match Response:", response);
+      alert("Match created successfully!");
       navigate("/matches"); // Quay về danh sách sau khi tạo xong
     } catch (error) {
-      console.error("Lỗi khi tạo trận:", error);
+      console.error("Error creating match:", error);
       alert(
-        "Lỗi kết nối Backend. Hãy đảm bảo Server đang mở và không bị chặn CORS!"
+        "Backend connection error. Please ensure the server is running and not blocked by CORS!"
       );
     }
   };
@@ -410,7 +405,7 @@ export default function CreateMatch() {
             CREATE MATCH
           </button>
           <button
-            onClick={() => navigate("/matches")}
+            onClick={() => navigate(-1)}
             className="px-10 py-3 rounded-xl border-2 border-gray-200 text-gray-500 font-black text-[11px] tracking-widest uppercase hover:bg-gray-50 transition-colors"
           >
             CANCEL

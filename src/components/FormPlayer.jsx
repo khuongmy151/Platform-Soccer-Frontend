@@ -35,6 +35,7 @@ const FormPlayer = ({ ref, mode = "add", player = null, onSubmit }) => {
     derivePlayer(isEdit, player)
   );
 
+  // Sync state when props change
   if (prevKey !== sourceKey) {
     setPrevKey(sourceKey);
     setFormPlayer(derivePlayer(isEdit, player));
@@ -131,7 +132,7 @@ const FormPlayer = ({ ref, mode = "add", player = null, onSubmit }) => {
                 type="text"
                 value={formPlayer.name}
                 onChange={(e) => handleChange("name", e.target.value)}
-                placeholder="NgocBich"
+                placeholder="Enter player name"
                 className="w-full px-3 py-2 bg-surface-bg/60 outline-none border-b-2 border-transparent text-body-md text-surface-nav focus:border-brand-primary transition-colors rounded-t-[4px]"
               />
             </div>
@@ -145,7 +146,7 @@ const FormPlayer = ({ ref, mode = "add", player = null, onSubmit }) => {
                   type="number"
                   value={formPlayer.height}
                   onChange={(e) => handleChange("height", e.target.value)}
-                  placeholder="185"
+                  placeholder="e.g. 185"
                   className="w-full px-3 py-2 bg-surface-bg/60 outline-none border-b-2 border-transparent text-body-md text-surface-nav focus:border-brand-primary transition-colors rounded-t-[4px]"
                 />
               </div>
@@ -157,7 +158,7 @@ const FormPlayer = ({ ref, mode = "add", player = null, onSubmit }) => {
                   type="number"
                   value={formPlayer.weight}
                   onChange={(e) => handleChange("weight", e.target.value)}
-                  placeholder="78"
+                  placeholder="e.g. 78"
                   className="w-full px-3 py-2 bg-surface-bg/60 outline-none border-b-2 border-transparent text-body-md text-surface-nav focus:border-brand-primary transition-colors rounded-t-[4px]"
                 />
               </div>

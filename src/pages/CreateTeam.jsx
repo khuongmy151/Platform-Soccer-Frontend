@@ -59,7 +59,7 @@ const CreateTeam = () => {
     const playerFile = playerJersey.current.files[0];
     const gkFile = goalkeeperJersey.current.files[0];
     if (!logoFile || !playerFile || !gkFile) {
-      toast.warning("Vui lòng chọn đầy đủ 3 ảnh");
+      toast.warning("Please upload all 3 required images");
       return;
     }
     // Định nghĩa các định dạng cho phép và dung lượng tối đa
@@ -67,21 +67,21 @@ const CreateTeam = () => {
     const MAX_SIZE = 300 * 1024; // 300KB
     const files = [
       { file: logoFile, label: "Logo" },
-      { file: playerFile, label: "Áo cầu thủ" },
-      { file: gkFile, label: "Áo thủ môn" },
+      { file: playerFile, label: "Player Jersey" },
+      { file: gkFile, label: "Goalkeeper Jersey" },
     ];
     // Vòng lặp kiểm tra từng file
     for (const item of files) {
       // Kiểm tra định dạng
       if (!allowedTypes.includes(item.file.type)) {
         toast.error(
-          `${item.label} không đúng định dạng. Chỉ chấp nhận JPEG, PNG, GIF.`
+          `${item.label} invalid format. Only JPEG, PNG, GIF are accepted.`
         );
         return;
       }
       // Kiểm tra dung lượng
       if (item.file.size > MAX_SIZE) {
-        toast.error(`${item.label} quá lớn (Tối đa 300KB).`);
+        toast.error(`${item.label} is too large (Maximum 300KB).`);
         return;
       }
     }
@@ -103,11 +103,11 @@ const CreateTeam = () => {
       } catch (error) {
         console.error(error);
         const fallbackTeam = {
-          ...formData,
+          ...form, // Using 'form' state instead of raw FormData object for Redux
           id: Date.now(),
         };
         dispatch(addTeam(fallbackTeam));
-        alert("Không kết nối được backend, đã lưu tạm ở local list.");
+        alert("Could not connect to backend, saved temporarily to local list.");
         navigate("/teams");
       } finally {
         setIsSubmitting(false);
@@ -119,12 +119,7 @@ const CreateTeam = () => {
     <div className="mx-auto w-full max-w-[1120px] pb-44 md:pb-0">
       <div className="mb-6 md:mb-8">
         <h1 className="text-[38px] leading-[1.05] md:text-display-md font-extrabold tracking-tight text-surface-panel uppercase">
-          <span className="md:hidden">
-            Create <span className="text-brand-primary">Team</span>
-          </span>
-          <span className="hidden md:inline">
-            Create <span className="text-brand-primary">Team</span>
-          </span>
+          Create <span className="text-brand-primary">Team</span>
         </h1>
       </div>
 
@@ -254,7 +249,7 @@ const CreateTeam = () => {
                   setForm((prev) => ({ ...prev, name: e.target.value }));
                   setError((prev) => ({ ...prev, errorName: "" }));
                 }}
-                placeholder="E.g., Neon Strike FC"
+                placeholder="E.G., Neon Strike FC"
                 className="w-full border-b border-gray-400 md:border-b-2 bg-transparent py-2 text-[30px] md:text-xl text-surface-panel uppercase outline-none placeholder:text-gray-300"
               />
               <span className="text-brand-primary text-label-sm">
@@ -296,21 +291,6 @@ const CreateTeam = () => {
               <span className="text-brand-primary text-label-sm">
                 {error.errorDescription}
               </span>
-            </div>
-
-            <div className="space-y-3 pt-1 md:pt-2">
-              <div className="flex items-center gap-3 rounded-lg md:rounded-xl bg-green-100 p-3 md:p-4 text-green-800">
-                <HiOutlineShieldCheck className="text-base md:text-xl" />
-                <p className="text-[8px] md:text-label-lg font-bold uppercase tracking-wide">
-                  Brand guidelines applied
-                </p>
-              </div>
-              <div className="flex items-center gap-3 rounded-lg md:rounded-xl bg-orange-100 p-3 md:p-4 text-orange-800">
-                <IoInformationCircleOutline className="text-base md:text-xl" />
-                <p className="text-[8px] md:text-label-lg font-bold uppercase tracking-wide">
-                  Real-time draft saving
-                </p>
-              </div>
             </div>
           </div>
         </div>

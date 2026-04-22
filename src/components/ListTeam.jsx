@@ -12,13 +12,14 @@ const ListTeam = ({
     return (
       <div className="flex gap-2 items-center w-[20%] mt-3 mx-auto">
         <FaCircleNotch className="animate-spin" />
-        <p>Đang tải dữ liệu team...</p>
+        <p>Loading...</p>
       </div>
     );
+
   return (
     <>
       <div className="w-[90%] mt-4 mx-auto pb-10">
-        {/* GIAO DIỆN TABLE: Chỉ hiện trên màn hình md trở lên (>= 768px) */}
+        {/* DESKTOP TABLE VIEW: Visible on screens md and up (>= 768px) */}
         <div className="hidden md:block bg-surface-white rounded-[20px] shadow-sm border border-header-line overflow-hidden">
           <table className="w-full border-collapse">
             <thead className="h-[55px] bg-surface-bg uppercase text-label-sm tracking-wider text-nav-muted font-bold border-b border-header-line">
@@ -92,16 +93,17 @@ const ListTeam = ({
               ) : (
                 <tr>
                   <td colSpan={4} className="py-10 text-center">
-                    Không tìm thấy kết quả
+                    No result
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
-        {/* GIAO DIỆN MOBILE/SM: Chỉ hiện khi màn hình < 768px */}
+
+        {/* MOBILE LIST VIEW: Visible on screens < 768px */}
         <div className="md:hidden flex flex-col w-full px-1">
-          {/* TIÊU ĐỀ */}
+          {/* HEADER */}
           <div className="flex items-center gap-2 mb-4 ml-1">
             <div className="w-[4px] h-5 bg-red-600 rounded-full"></div>
             <h2 className="text-surface-nav font-bold text-title-sm uppercase tracking-wider">
@@ -150,8 +152,8 @@ const ListTeam = ({
                 </div>
               ))
             ) : (
-              <div className="text-center bg-surface-bg">
-                <p className="text-body-lg">Không tìm thấy kết quả</p>
+              <div className="text-center bg-surface-bg py-6">
+                <p className="text-body-lg">No result</p>
               </div>
             )}
           </div>
@@ -160,4 +162,5 @@ const ListTeam = ({
     </>
   );
 };
+
 export default ListTeam;

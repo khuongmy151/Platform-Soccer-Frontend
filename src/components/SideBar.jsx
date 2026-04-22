@@ -21,9 +21,9 @@ const itemClassMobile = ({ isActive }) =>
   ].join(" ");
 
 const items = [
-  { to: "/", end: true, label: "DASHBOARD", Icon: TbLayoutDashboard }, // Đổi label uppercase cho giống mẫu
+  { to: "/", end: true, label: "DASHBOARD", Icon: TbLayoutDashboard },
   { to: "/teams", label: "TEAMS", Icon: MdGroups },
-  { to: "/tournaments", label: "TOURNAMENT", Icon: IoTrophyOutline },
+  { to: "/tournaments", label: "TOURNAMENTS", Icon: IoTrophyOutline }, // Đã thêm 'S' cho chuẩn số nhiều
 ];
 
 function SideBar() {
@@ -32,7 +32,7 @@ function SideBar() {
       {/* SIDEBAR DESKTOP: Hiện từ màn hình md trở lên */}
       <aside
         className="hidden md:flex sticky top-6 z-10 w-[64px] shrink-0 flex-col gap-5 rounded-[1.35rem] bg-surface-card px-2.5 py-5 shadow-sm ring-1 ring-black/5 h-fit"
-        aria-label="Sidebar Desktop"
+        aria-label="Desktop Sidebar"
       >
         {items.map(({ to, end, label, Icon }) => (
           <NavLink

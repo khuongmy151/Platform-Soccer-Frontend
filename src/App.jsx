@@ -11,11 +11,11 @@ import TeamManagement from "./pages/TeamManagement";
 import TeamDetail from "./pages/TeamDetail";
 import CreateTeam from "./pages/CreateTeam";
 import MatchManagement from "./pages/MatchManagement";
-import MatchDetail from "./pages/MatchDetail";
+import UpdateMatch from "./pages/UpdateMatch";
 import CreateMatch from "./pages/CreateMatch";
-import MatchList from "./pages/MatchList";
+import MatchDetail from "./pages/MatchDetail";
 import TournamentManagement from "./pages/TournamentManagement";
-import TournamentDetail from "./pages/TournamentDetail";
+
 import ProtectedRoute from "./pages/ProtectedRoute";
 import { useEffect } from "react";
 import { getMe } from "./services/userService";
@@ -48,10 +48,6 @@ function App() {
         <Route path="/" element={<MainLayout />}>
           {/* PUBLIC: Ai cũng xem được */}
           <Route index element={<DashboardPublic />} />
-          <Route
-            path="public/tournament/:tournamentId"
-            element={<TournamentDetail />}
-          />
           <Route path="public/teams" element={<ListTeamPublic />} />
           <Route path="public/teams/:teamId" element={<TeamDetail />} />
 
@@ -61,15 +57,14 @@ function App() {
             <Route path="teams" element={<TeamManagement />} />
             <Route path="teams/create" element={<CreateTeam />} />
             <Route path="teams/:teamId" element={<TeamDetail />} />
-            <Route path="matches" element={<MatchManagement />} />
-            <Route path="match/create" element={<CreateMatch />} />
-            <Route path="match/:matchId" element={<MatchDetail />} />
-            <Route path="match-list/:matchId" element={<MatchList />} />
-            <Route path="tournaments" element={<TournamentManagement />} />
+            <Route path="matches/:tournamentId" element={<MatchManagement />} />
             <Route
-              path="tournament/:tournamentId"
-              element={<TournamentDetail />}
+              path="match/:tournamentId/create"
+              element={<CreateMatch />}
             />
+            <Route path="match/:matchId/update" element={<UpdateMatch />} />
+            <Route path="match/:matchId" element={<MatchDetail />} />
+            <Route path="tournaments" element={<TournamentManagement />} />
           </Route>
         </Route>
       </Routes>

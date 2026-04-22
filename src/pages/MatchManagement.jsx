@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import matchService from "../services/matchService";
 import { setMatches } from "../stores/features/matchSlice";
@@ -50,15 +50,15 @@ const ChevronDown = () => (
 /* ─────────────────────────────── Badge ─────────────────────────────── */
 
 const STATUS_STYLES = {
-  // ── Đúng DB ENUM ──
-  SCHEDULED:    { bg: "#f3f4f6", color: "#6b7280", dot: null },
-  FIRST_HALF:   { bg: "#fff7ed", color: "#ea580c", dot: "#ef4444" },
-  HALF_TIME:    { bg: "#fef3c7", color: "#d97706", dot: null },
-  SECOND_HALF:  { bg: "#fff7ed", color: "#ea580c", dot: "#ef4444" },
-  FINISHED:     { bg: "#22c55e", color: "#ffffff", dot: null },
-  // ── Dự phòng cho mock data cũ ──
-  "LIVE NOW":   { bg: "#fff7ed", color: "#ea580c", dot: "#ef4444" },
-  CANCELLED:    { bg: "#f97316", color: "#ffffff", dot: null },
+  // ── Database ENUM matches ──
+  SCHEDULED: { bg: "#f3f4f6", color: "#6b7280", dot: null },
+  FIRST_HALF: { bg: "#fff7ed", color: "#ea580c", dot: "#ef4444" },
+  HALF_TIME: { bg: "#fef3c7", color: "#d97706", dot: null },
+  SECOND_HALF: { bg: "#fff7ed", color: "#ea580c", dot: "#ef4444" },
+  FINISHED: { bg: "#22c55e", color: "#ffffff", dot: null },
+  // ── Fallback for old mock data ──
+  "LIVE NOW": { bg: "#fff7ed", color: "#ea580c", dot: "#ef4444" },
+  CANCELLED: { bg: "#f97316", color: "#ffffff", dot: null },
 };
 
 const Badge = ({ status }) => {
@@ -142,7 +142,7 @@ const MatchCard = ({ match, onStart, onCancel, onUpdate, onView }) => {
     }
   }
 
-  // Hỗ trợ cả camelCase (score.home) lẫn snake_case (home_score) từ backend
+  // Supports both camelCase and snake_case from backend
   const homeScore =
     match.score != null
       ? match.score.home
@@ -157,12 +157,12 @@ const MatchCard = ({ match, onStart, onCancel, onUpdate, onView }) => {
       : match.awayTeam?.score;
 
   const isCancelled = status === "CANCELLED";
-  // Live = bất kỳ trạng thái đang thi đấu theo DB ENUM
+  // Live matches according to DB ENUM
   const isLive =
     status === "FIRST_HALF" ||
     status === "HALF_TIME" ||
     status === "SECOND_HALF" ||
-    status === "LIVE NOW"; // backward compat mock
+    status === "LIVE NOW";
   const isFinished = status === "FINISHED";
   const isScheduled = !isLive && !isFinished && !isCancelled;
 
@@ -304,7 +304,7 @@ const MatchCard = ({ match, onStart, onCancel, onUpdate, onView }) => {
               style={{
                 fontSize: 24,
                 fontWeight: 900,
-                color: isCancelled ? "#d1d5db" : "#d1d5db",
+                color: "#d1d5db",
                 letterSpacing: "0.1em",
               }}
             >
@@ -436,9 +436,7 @@ const MatchCard = ({ match, onStart, onCancel, onUpdate, onView }) => {
               background: "transparent",
               transition: "background 0.15s",
             }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.background = "#fef2f2")
-            }
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#fef2f2")}
             onMouseLeave={(e) =>
               (e.currentTarget.style.background = "transparent")
             }
@@ -450,7 +448,6 @@ const MatchCard = ({ match, onStart, onCancel, onUpdate, onView }) => {
 
       {isLive && (
         <div style={{ display: "flex", gap: 12 }}>
-          {/* VIEW MATCH DETAILS – giữ nút nhưng chưa liên kết trang */}
           <button
             onClick={() => onView(match.id)}
             style={{
@@ -544,8 +541,7 @@ const MatchCard = ({ match, onStart, onCancel, onUpdate, onView }) => {
 
 export default function MatchManagement() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const tournamentId = searchParams.get("tournamentId");
+  const { tournamentId } = useParams();
   const dispatch = useDispatch();
   const matches = useSelector((state) => state.matches?.items || []);
 
@@ -561,7 +557,7 @@ export default function MatchManagement() {
     },
     {
       id: "mock2",
-      status: "FIRST_HALF",  // DB ENUM đúng thay cho "LIVE NOW"
+      status: "FIRST_HALF",
       date: "72' MINS",
       time: "Match Live",
       homeTeam: { name: "TEAM CRIMSON", score: 3 },
@@ -601,19 +597,21 @@ export default function MatchManagement() {
   const handleStartMatch = async (matchId) => {
     if (String(matchId).startsWith("mock")) {
       setMockMatches((prev) =>
-        prev.map((m) =>
-          m.id === matchId ? { ...m, status: "LIVE NOW" } : m
-        )
+        prev.map((m) => (m.id === matchId ? { ...m, status: "LIVE NOW" } : m))
       );
       return;
     }
     try {
-      // Gửi "FIRST_HALF" – đúng với DB ENUM (SCHEDULED|FIRST_HALF|HALF_TIME|SECOND_HALF|FINISHED)
+      // Send "FIRST_HALF" – compatible with DB ENUM (SCHEDULED|FIRST_HALF|HALF_TIME|SECOND_HALF|FINISHED)
       await matchService.updateMatchStatus({
         url: `/matches/${matchId}/status`,
         data: { status: "FIRST_HALF" },
       });
-      matchService.getAllMatches({ url: "/matches", dispatch, func: setMatches });
+      matchService.getAllMatches({
+        url: "/matches",
+        dispatch,
+        func: setMatches,
+      });
     } catch (err) {
       console.error(err);
     }
@@ -627,15 +625,18 @@ export default function MatchManagement() {
             ? {
                 ...m,
                 status: "CANCELLED",
-                reason: "Hủy lịch thi đấu do sự cố bất khả kháng.",
+                reason:
+                  "Match schedule cancelled due to unforeseen circumstances.",
               }
             : m
         )
       );
       return;
     }
-    // "CANCELLED" không có trong DB ENUM → chỉ cập nhật UI local, không gọi API
-    alert("Chức năng hủy trận chưa được hỗ trợ bởi server (CANCELLED không có trong DB ENUM).");
+    // "CANCELLED" not present in DB ENUM → only update local UI, do not call API
+    alert(
+      "Match cancellation is not yet supported by the server (CANCELLED is not in DB ENUM)."
+    );
   };
 
   const displayMatches =
@@ -671,9 +672,7 @@ export default function MatchManagement() {
         </h1>
 
         <button
-          onClick={() =>
-            navigate(`/match/create?tournamentId=${tournamentId || ""}`)
-          }
+          onClick={() => navigate(`/match/${tournamentId}/create`)}
           style={{
             padding: "12px 22px",
             borderRadius: 10,
@@ -715,8 +714,8 @@ export default function MatchManagement() {
             match={m}
             onStart={handleStartMatch}
             onCancel={handleCancelMatch}
-            onUpdate={(id) => navigate(`/match/${id}`)}
-            onView={(id) => navigate(`/match-list/${id}`)}
+            onUpdate={(id) => navigate(`/match/${id}/update`)}
+            onView={(id) => navigate(`/match/${id}`)}
           />
         ))}
       </div>

@@ -44,7 +44,6 @@ export const MyProfile = () => {
   const handleSaveChanges = async () => {
     const avatarFile = fileRef.current.files[0];
     if (avatarFile) {
-      // Định nghĩa các định dạng cho phép
       const allowedTypes = [
         "image/jpeg",
         "image/png",
@@ -52,47 +51,53 @@ export const MyProfile = () => {
         "image/jpg",
       ];
       const MAX_SIZE = 300 * 1024; // 300KB
-      // Kiểm tra định dạng
+
       if (!allowedTypes.includes(avatarFile.type)) {
         toast.error(
-          "Ảnh đại diện không đúng định dạng. Chỉ chấp nhận JPG, JPEG, PNG, GIF."
+          "Invalid avatar format. Only JPG, JPEG, PNG, and GIF are accepted."
         );
-        return; // Dừng lại không cho submit
+        return;
       }
-      // Kiểm tra dung lượng
+
       if (avatarFile.size > MAX_SIZE) {
         toast.error(
-          `Ảnh đại diện quá lớn (Tối đa 300KB). Hiện tại: ${(
+          `Avatar file is too large (Max 300KB). Current size: ${(
             avatarFile.size / 1024
           ).toFixed(0)}KB`
         );
         return;
       }
     }
+
     const onlyAlphaRegex =
       /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵỷỹ\s]+$/;
     const nameTrimmed = formData.full_name?.trim();
+
     if (!nameTrimmed) {
-      setError({ errorFullName: "Họ và tên không được để trống" });
+      setError({ errorFullName: "Full name cannot be empty" });
       return;
     } else if (nameTrimmed.length < 3 || nameTrimmed.length > 50) {
-      setError({ errorFullName: "Họ và tên phải từ 3 đến 50 ký tự" });
+      setError({
+        errorFullName: "Full name must be between 3 and 50 characters",
+      });
       return;
     } else if (!onlyAlphaRegex.test(nameTrimmed)) {
       setError({
-        errorFullName: "Họ tên không được chứa số hay ký tự đặc biệt",
+        errorFullName: "Full name cannot contain numbers or special characters",
       });
       return;
     }
+
     try {
       const token = localStorage.getItem("accessToken");
-      if (!token) return alert("Hết phiên làm việc!");
+      if (!token) return alert("Session expired!");
+
       if (fileRef.current.files[0]) {
         try {
           const response = await uploadAvatarAPI(formData.avatar, token);
-          console.log("Upload thành công:", response);
+          console.log("Upload successful:", response);
         } catch (error) {
-          console.error("Có lỗi xảy ra:", error);
+          console.error("Upload error:", error);
         }
       }
 
@@ -104,52 +109,41 @@ export const MyProfile = () => {
       dispatch(setMe(response));
       navigate("/");
     } catch (error) {
-      console.error("Lỗi khi lưu:", error);
+      console.error("Save error:", error);
       alert(
-        error.response?.data?.message || "Có lỗi xảy ra khi lưu thông tin!"
+        error.response?.data?.message ||
+          "An error occurred while saving your information!"
       );
     }
   };
 
-  // const handleChangePassword = async () => {
-  //   if (password === "············" || password === "")
-  //     return alert("Vui lòng nhập mật khẩu mới!");
-  //   try {
-  //     console.log("Chức năng đổi mật khẩu đang chờ Backend");
-  //   } catch (error) {
-  //     console.error(error);
-  //     alert("Lỗi đổi mật khẩu!");
-  //   }
-  // };
-
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
-    localStorage.removeItem("userEmail"); // Xóa luôn email khi đăng xuất
+    localStorage.removeItem("userEmail");
     navigate("/login");
   };
 
   const handleDeleteAccount = async () => {
     const isConfirm = window.confirm(
-      "Bạn có chắc chắn muốn xóa tài khoản không?"
+      "Are you sure you want to delete your account?"
     );
     if (!isConfirm) return;
     try {
-      console.log("Chức năng xóa tài khoản đang chờ Backend");
+      console.log("Account deletion feature is pending Backend implementation");
     } catch (error) {
       console.error(error);
-      alert("Lỗi xóa tài khoản!");
+      alert("Error deleting account!");
     }
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-[#f5f6fa] p-4">
-      {/* Container chính: Thay vì dùng absolute cứng, dùng max-width và mx-auto */}
       <div className="flex flex-col w-full max-w-[1100px] bg-white rounded-3xl overflow-hidden shadow-[0px_32px_64px_#ba00220a] relative">
         {/* Header Background Section */}
         <div className="relative w-full h-[120px] bg-[#eff1f5]">
           <div className="absolute inset-0 opacity-10 [background:radial-gradient(50%_50%_at_26%_55%,rgba(255,0,51,1)_0%,rgba(255,0,51,0)_60%)]" />
 
-          {/* Avatar & Name Bar: Dùng absolute để đè lên phần giao giữa header và body */}
+          {/* Avatar & Name Bar */}
           <div className="absolute left-8 -bottom-16 flex items-end gap-6 w-[calc(100%_-_64px)]">
             <div className="relative">
               <div
@@ -184,7 +178,7 @@ export const MyProfile = () => {
                     />
                   </svg>
                   <span className="text-white text-[10px] font-bold uppercase">
-                    Thay đổi ảnh
+                    Change Photo
                   </span>
                 </div>
                 <input
@@ -210,7 +204,7 @@ export const MyProfile = () => {
           </div>
         </div>
 
-        {/* Body Section: Dùng padding thay vì absolute top để đẩy nội dung xuống */}
+        {/* Body Section */}
         <div className="pt-24 pb-12 px-8 w-full">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10 items-end">
             {/* Full Name */}

@@ -18,13 +18,14 @@ const validateForm = {
     if (fullName !== undefined) {
       const nameTrimmed = fullName?.trim();
       if (!nameTrimmed) {
-        errors.errorFullName = "Họ và tên không được để trống";
+        errors.errorFullName = "Full name is required";
         isValid = false;
       } else if (nameTrimmed.length < 3 || nameTrimmed.length > 50) {
-        errors.errorFullName = "Họ và tên phải từ 3 đến 50 ký tự";
+        errors.errorFullName = "Full name must be between 3 and 50 characters";
         isValid = false;
       } else if (!onlyAlphaRegex.test(nameTrimmed)) {
-        errors.errorFullName = "Họ tên không được chứa số hay ký tự đặc biệt";
+        errors.errorFullName =
+          "Full name cannot contain numbers or special characters";
         isValid = false;
       }
     }
@@ -32,19 +33,19 @@ const validateForm = {
     // 2. Validate Email
     const emailTrimmed = email?.trim();
     if (!emailTrimmed) {
-      errors.errorEmail = "Email không được để trống";
+      errors.errorEmail = "Email is required";
       isValid = false;
     } else if (!emailRegex.test(emailTrimmed)) {
-      errors.errorEmail = "Email không đúng định dạng";
+      errors.errorEmail = "Invalid email format";
       isValid = false;
     }
 
     // 3. Validate Password
     if (!password) {
-      errors.errorPassword = "Mật khẩu không được để trống";
+      errors.errorPassword = "Password is required";
       isValid = false;
     } else if (password.length < 6) {
-      errors.errorPassword = "Mật khẩu tối thiểu 6 ký tự";
+      errors.errorPassword = "Password must be at least 6 characters";
       isValid = false;
     }
 
@@ -73,40 +74,42 @@ const validateForm = {
     // Validate Tên đội bóng
     const name = formTeam.name?.trim();
     if (!name) {
-      errors.errorName = "Tên đội bóng không được để trống";
+      errors.errorName = "Team name is required";
       isValid = false;
     } else if (name.length < 3 || name.length > 50) {
-      errors.errorName = "Tên đội bóng phải từ 3 đến 50 ký tự";
+      errors.errorName = "Team name must be between 3 and 50 characters";
       isValid = false;
     } else if (!alphaNumericRegex.test(name)) {
-      errors.errorName = "Tên không được chứa ký tự đặc biệt (@, #, $...)";
+      errors.errorName =
+        "Team name cannot contain special characters (@, #, $...)";
       isValid = false;
     }
 
     // Validate Quốc gia
     const country = formTeam.country?.trim();
     if (!country) {
-      errors.errorCountry = "Vui lòng nhập Quốc gia";
+      errors.errorCountry = "Nationality is required";
       isValid = false;
     } else if (country.length < 3 || country.length > 50) {
-      errors.errorCountry = "Quốc gia phải từ 3 đến 50 ký tự";
+      errors.errorCountry = "Nationality must be between 3 and 50 characters";
       isValid = false;
     } else if (!onlyAlphaRegex.test(country)) {
       errors.errorCountry =
-        "Quốc gia chỉ được chứa chữ cái, không chứa số hay ký tự đặc biệt";
+        "Nationality can only contain letters, no numbers or special characters";
       isValid = false;
     }
 
     // Validate Mô tả
     const desc = formTeam.description?.trim();
     if (!desc) {
-      errors.errorDescription = "Vui lòng nhập mô tả";
+      errors.errorDescription = "Description is required";
       isValid = false;
     } else if (desc.length < 3 || desc.length > 50) {
-      errors.errorDescription = "Mô tả phải từ 3 đến 50 ký tự";
+      errors.errorDescription =
+        "Description must be between 3 and 50 characters";
       isValid = false;
     } else if (!alphaNumericRegex.test(desc)) {
-      errors.errorDescription = "Mô tả không được chứa ký tự đặc biệt";
+      errors.errorDescription = "Description cannot contain special characters";
       isValid = false;
     }
 

@@ -35,7 +35,7 @@ const TeamManagement = () => {
           func: setTeams,
         });
       } catch (error) {
-        console.log(error);
+        console.error("Error fetching teams:", error);
       } finally {
         setIsLoading(false);
       }
@@ -85,9 +85,9 @@ const TeamManagement = () => {
       await teamService.getAllTeam({ url: "/teams", dispatch, func: setTeams });
       confirmDialog.current.close();
     } catch (error) {
-      console.log(error);
+      console.error("Delete error:", error);
       dispatch(deleteTeam(teamWithId?.id));
-      toast.success("Lỗi xử lý ở server, tạm thời xóa ở phía Frontend");
+      toast.success("Server error, temporarily removed from Frontend");
       confirmDialog.current.close();
     }
   };
@@ -166,7 +166,7 @@ const TeamManagement = () => {
         {/* MODAL FORM */}
         <FormTeam ref={formDialog} />
         <ConfirmDialog
-          message="Bạn có muốn xóa đội bóng này không?"
+          message="Are you sure you want to delete this team?"
           ref={confirmDialog}
           handleConfirm={handleDeleteTeam}
         />
