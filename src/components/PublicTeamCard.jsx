@@ -6,10 +6,10 @@ const PublicTeamCard = ({ team, onClick }) => {
                  transition-all duration-300 cursor-pointer group flex flex-col items-center h-full
                  hover:shadow-xl hover:border-brand-primary/20 hover:-translate-y-1.5"
     >
-      {/* Team Logo  */}
+      {/* Team Logo */}
       <div
         className="w-16 h-16 md:w-20 md:h-20 mb-4 rounded-full bg-surface-card border-[6px] border-surface-bg overflow-hidden shadow-inner 
-                      group-hover:border-brand-primary/10 transition-all duration-500 shrink-0"
+                     group-hover:border-brand-primary/10 transition-all duration-500 shrink-0"
       >
         <img
           src={
@@ -17,13 +17,14 @@ const PublicTeamCard = ({ team, onClick }) => {
             "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRQNa7zM9iIdR5Dlgzj7b4OJy8sGmsvG2WtcA&s"
           }
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          alt={`${team.name} logo`}
         />
       </div>
 
       {/* Team Name */}
       <h2
         className="w-[100px] md:w-[150px] font-black text-body-md md:text-title-lg text-gray-900 font-display leading-tight 
-             truncate block text-center px-1 group-hover:text-brand-primary transition-colors"
+              truncate block text-center px-1 group-hover:text-brand-primary transition-colors"
       >
         {team.name}
       </h2>

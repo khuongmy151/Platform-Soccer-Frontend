@@ -41,15 +41,15 @@ export const Register = () => {
       try {
         const response = await registerAPI(formData);
         if (response && response.success === false) {
-          alert(response.message || "Đăng ký thất bại!");
+          alert(response.message || "Registration failed!");
           return;
         }
-        toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
+        toast.success("Registration successful! Please login.");
         navigate("/login");
       } catch (error) {
         const errorMsg =
           error.response?.data?.message ||
-          "Đăng ký thất bại. Vui lòng thử lại!";
+          "Registration failed. Please try again!";
         alert(errorMsg);
       }
     }
@@ -92,7 +92,7 @@ export const Register = () => {
 
         {/* CỘT PHẢI: FORM ĐĂNG KÝ */}
         <div className="flex flex-1 flex-col items-center px-10 bg-white overflow-y-auto">
-          <div className="w-full max-w-[440px]">
+          <div className="w-full max-w-[440px] pt-20 pb-10">
             <h1 className="text-5xl font-black text-slate-900 mb-2 tracking-tight uppercase">
               Register
             </h1>

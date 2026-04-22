@@ -1,12 +1,12 @@
 import { useDispatch, useSelector } from "react-redux";
-import { useState } from "react"; // Thêm useState
+import { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import {
   IoNotificationsOutline,
   IoSettingsOutline,
   IoMenuOutline,
   IoCloseOutline,
-} from "react-icons/io5"; // Thêm icon menu
+} from "react-icons/io5";
 import logoSvg from "../assets/logo.svg";
 import { setIsLogin } from "../stores/features/authSlice";
 import { toast } from "react-toastify";
@@ -24,14 +24,14 @@ function Header() {
   const dispatch = useDispatch();
   const isLogin = useSelector((state) => state.auth.isLogin);
   const me = useSelector((state) => state.me.item);
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // State quản lý menu mobile
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleLogout = () => {
     setIsMenuOpen(false);
     localStorage.removeItem("accessToken");
-    localStorage.removeItem("userEmail"); // Xóa luôn email khi đăng xuất
+    localStorage.removeItem("userEmail");
     dispatch(setIsLogin(false));
-    toast.success("Đăng xuất thành công");
+    toast.success("Logout successfully");
     setTimeout(() => {
       navigate("/");
     }, 1000);
@@ -41,7 +41,6 @@ function Header() {
     <header className="sticky top-0 z-50 flex shrink-0 items-center justify-between gap-6 border-b border-header-line bg-surface-white px-4 py-3 shadow-[0_1px_3px_rgba(15,23,42,0.06)] sm:px-8 sm:py-4">
       {/* LEFT: Menu Toggle (Mobile) & Logo */}
       <div className="flex items-center gap-3 sm:gap-6 lg:gap-10">
-        {/* Nút 3 gạch cho Mobile */}
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           className="flex size-10 items-center justify-center rounded-xl text-brand-primary transition-colors hover:bg-surface-card md:hidden"
@@ -56,7 +55,7 @@ function Header() {
         <Link
           to="/"
           className="flex shrink-0 items-center gap-2 no-underline sm:gap-3"
-          aria-label="Soccer Platform — Trang chủ"
+          aria-label="Soccer Platform — Home"
         >
           <img
             src={logoSvg}
@@ -69,7 +68,8 @@ function Header() {
             </p>
           </div>
         </Link>
-        {/* Desktop Nav: Chỉ hiện Team/Tournament khi đã Login */}
+
+        {/* Desktop Nav */}
         <nav className="hidden min-w-0 items-center gap-6 overflow-x-auto md:flex lg:gap-8">
           <NavLink to="/" end className={navClass}>
             Dashboard
@@ -96,7 +96,6 @@ function Header() {
 
         {isLogin ? (
           <div className="relative">
-            {/* Avatar - Bấm để toggle menu */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="shrink-0 rounded-full ring-2 ring-pink-100 hover:ring-[#ff4444] transition-all p-0.5 block focus:outline-none"
@@ -111,10 +110,8 @@ function Header() {
               />
             </button>
 
-            {/* Dropdown Menu */}
             {isMenuOpen && (
               <>
-                {/* Lớp phủ để bấm ra ngoài là đóng menu */}
                 <div
                   className="fixed inset-0 z-10"
                   onClick={() => setIsMenuOpen(false)}
@@ -159,7 +156,6 @@ function Header() {
       {isMenuOpen && (
         <div className="absolute left-0 top-[100%] w-full border-b border-header-line bg-surface-white px-4 py-4 shadow-xl md:hidden animate-in fade-in slide-in-from-top-2 duration-300">
           <nav className="flex flex-col gap-2">
-            {/* Luôn hiện Dashboard */}
             <NavLink
               to="/"
               end
@@ -175,7 +171,6 @@ function Header() {
               Dashboard
             </NavLink>
 
-            {/* Mobile: Chỉ hiện Team/Tournament khi isLogin = true */}
             {isLogin && (
               <>
                 <NavLink

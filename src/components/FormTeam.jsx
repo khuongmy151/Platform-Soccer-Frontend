@@ -58,7 +58,7 @@ const FormTeam = ({ ref }) => {
   const [removingId, setRemovingId] = useState(null);
   const [addingMembers, setAddingMembers] = useState(false);
 
-  //Hàm xem trước logo
+  // Logo preview handler
   const logoPreview = useMemo(() => {
     if (!formTeam.logo_url) return null;
     return typeof formTeam.logo_url === "object"
@@ -66,7 +66,7 @@ const FormTeam = ({ ref }) => {
       : formTeam.logo_url;
   }, [formTeam.logo_url]);
 
-  //Hàm xem trước ảnh áo
+  // Jersey preview handler
   const jerseyPreview = useMemo(() => {
     if (!formTeam.kit_url || formTeam.kit_url.length === 0) return [];
     return formTeam.kit_url.map((value) => {
@@ -75,7 +75,7 @@ const FormTeam = ({ ref }) => {
     });
   }, [formTeam.kit_url]);
 
-  //Hàm set dữ liệu cho Form
+  // Set initial form data
   useEffect(() => {
     if (teamId && teams?.items) {
       const foundTeam = teams.items.find((item) => item.id == teamId);
@@ -107,7 +107,7 @@ const FormTeam = ({ ref }) => {
     }
   }, [teamId, teams?.items, ref]);
 
-  // Fetch members khi chuyển sang tab members
+  // Fetch members when switching to members tab
   useEffect(() => {
     if (activeTab === "members" && teamId) {
       fetchMembers();
@@ -168,7 +168,7 @@ const FormTeam = ({ ref }) => {
         throw err;
       }
 
-      // 2. Add player to team with the correct JSON payload { player_id: [ID] }
+      // 2. Add player to team
       await teamService.addTeamMembers({
         url: `/teams/${teamId}/members`,
         data: { player_id: [createdPlayer?.id || createdPlayer?.data?.id] },
@@ -182,7 +182,6 @@ const FormTeam = ({ ref }) => {
     }
   };
 
-  // Xóa 1 thành viên
   const handleRemoveMember = async (playerId) => {
     setRemovingId(playerId);
     try {
@@ -198,7 +197,6 @@ const FormTeam = ({ ref }) => {
     }
   };
 
-  //Hàm xóa query string trên url
   const deleteQueryString = () => {
     setSearchParams((prev) => {
       const params = new URLSearchParams(prev);
@@ -207,15 +205,13 @@ const FormTeam = ({ ref }) => {
     });
   };
 
-  //Hàm cập nhật team
   const handleUpdateTeam = async (e) => {
     e.preventDefault();
-    // Kiểm tra xem đã chọn đủ 3 file chưa
     const logoFile = logoRef.current.files[0];
     const playerFile = playerJerseyRef.current.files[0];
     const gkFile = goalkeeperJerseyRef.current.files[0];
+
     if (logoFile || playerFile || gkFile) {
-      // Định nghĩa các định dạng cho phép và dung lượng tối đa
       const allowedTypes = [
         "image/jpeg",
         "image/png",
@@ -225,23 +221,20 @@ const FormTeam = ({ ref }) => {
       const MAX_SIZE = 300 * 1024; // 300KB
       const files = [
         { file: logoFile, label: "Logo" },
-        { file: playerFile, label: "Áo cầu thủ" },
-        { file: gkFile, label: "Áo thủ môn" },
+        { file: playerFile, label: "Player Jersey" },
+        { file: gkFile, label: "Goalkeeper Jersey" },
       ];
-      // Vòng lặp kiểm tra từng file
+
       for (const item of files) {
-        // CHỈ kiểm tra nếu file đó thực sự tồn tại
         if (item.file) {
-          // Kiểm tra định dạng
           if (!allowedTypes.includes(item.file.type)) {
             alert(
-              `${item.label} không đúng định dạng. Chỉ chấp nhận JPEG, PNG, GIF.`
+              `${item.label} invalid format. Only JPEG, PNG, GIF are accepted.`
             );
             return;
           }
-          // Kiểm tra dung lượng
           if (item.file.size > MAX_SIZE) {
-            alert(`${item.label} quá lớn (Tối đa 300KB).`);
+            alert(`${item.label} is too large (Max 300KB).`);
             return;
           }
         }
@@ -253,13 +246,13 @@ const FormTeam = ({ ref }) => {
       formData.append("name", formTeam.name);
       formData.append("country", formTeam.country);
       formData.append("description", formTeam.description);
-      // XỬ LÝ LOGO
+
       if (formTeam.logo_url instanceof File) {
         formData.append("logo", formTeam.logo_url);
       } else {
         formData.append("logo_url", formTeam.logo_url);
       }
-      // XỬ LÝ KITS
+
       const oldKits = [];
       formTeam.kit_url.forEach((kit) => {
         if (kit instanceof File) {
@@ -269,6 +262,7 @@ const FormTeam = ({ ref }) => {
         }
       });
       formData.append("kit_url", JSON.stringify(oldKits));
+
       try {
         await teamService.updateTeam({
           url: `/teams/${teamId}`,
@@ -281,7 +275,7 @@ const FormTeam = ({ ref }) => {
           func: setTeams,
         });
       } catch (error) {
-        console.log("Error occurred", error);
+        console.error("Error occurred", error);
         dispatch(updateTeam(formTeam));
         toast("Server error, temporarily updated on Frontend");
         deleteQueryString();
@@ -310,7 +304,7 @@ const FormTeam = ({ ref }) => {
             </button>
           </div>
 
-          {/* TAB NAVIGATION - chỉ hiện khi edit */}
+          {/* TAB NAVIGATION */}
           {isEdit && (
             <div className="flex gap-1 bg-surface-white rounded-xl p-1 shadow-sm">
               <button
@@ -339,7 +333,7 @@ const FormTeam = ({ ref }) => {
               </button>
               <button
                 type="button"
-                // onClick={() => setActiveTab("members")}
+                onClick={() => setActiveTab("members")}
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-label-sm font-bold uppercase tracking-wider transition-all cursor-pointer ${
                   activeTab === "members"
                     ? "bg-brand-primary text-white shadow-md"
@@ -366,7 +360,6 @@ const FormTeam = ({ ref }) => {
 
         {/* SCROLLABLE CONTENT */}
         <div className="overflow-y-auto max-h-[calc(92vh-140px)] px-4 pt-4 pb-4 md:px-6 md:pb-6">
-          {/* TAB: TEAM INFO */}
           {activeTab === "info" && (
             <form
               className="flex flex-col lg:flex-row justify-between gap-6"
@@ -374,7 +367,6 @@ const FormTeam = ({ ref }) => {
             >
               {/* LEFT COLUMN: LOGO & JERSEY */}
               <div className="flex flex-col gap-6 w-full lg:w-[55%] select-none">
-                {/* SECTION: TEAM LOGO */}
                 <div className="bg-surface-white p-4 md:p-6 rounded-lg shadow-sm border-b-4 border-brand-primary">
                   <h3 className="text-label-sm text-surface-nav font-bold mb-4 uppercase italic">
                     Team Logo
@@ -416,7 +408,6 @@ const FormTeam = ({ ref }) => {
                   </div>
                 </div>
 
-                {/* SECTION: TEAM JERSEY */}
                 <div className="bg-surface-white p-4 md:p-6 rounded-lg shadow-sm border-b-4 border-[#A55E26]">
                   <h3 className="text-label-sm text-surface-nav font-bold mb-4 uppercase italic">
                     Team Jersey
@@ -470,7 +461,6 @@ const FormTeam = ({ ref }) => {
                 </div>
               </div>
 
-              {/* RIGHT COLUMN: INPUTS & NOTIFICATIONS */}
               <div className="flex flex-col w-full lg:w-[42%] p-4 md:p-6 bg-surface-white rounded-[12px] shadow-sm font-body">
                 <div className="flex flex-col gap-5 md:gap-6">
                   {[
@@ -519,55 +509,17 @@ const FormTeam = ({ ref }) => {
                       </span>
                     </div>
                   ))}
-
-                  {/* STATUS NOTIFICATIONS */}
-                  <div className="flex flex-col gap-3 mt-4">
-                    <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-100">
-                      <div className="flex-shrink-0 flex items-center justify-center w-5 h-5 bg-emerald-500 rounded-full text-white">
-                        <svg
-                          className="w-3 h-3"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="3"
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      </div>
-                      <span className="text-[11px] md:text-label-sm font-bold text-emerald-700 uppercase tracking-wide">
-                        Brand Guidelines Applied
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg border border-orange-100">
-                      <div className="flex-shrink-0 flex items-center justify-center w-5 h-5 bg-orange-500 rounded-full text-white font-bold text-[10px]">
-                        i
-                      </div>
-                      <span className="text-[11px] md:text-label-sm font-bold text-orange-700 uppercase tracking-wide">
-                        Real-time Draft Saving
-                      </span>
-                    </div>
-                  </div>
                 </div>
 
-                {/* BUTTONS */}
                 <div className="flex gap-4 justify-end items-center mt-8 md:mt-auto">
                   <button
-                    data-umami-event="Cancel edit team button click"
                     onClick={() => deleteQueryString()}
                     type="button"
                     className="text-body-sm md:text-body-md text-nav-muted font-bold cursor-pointer hover:text-surface-nav transition-colors px-4"
                   >
                     CANCEL
                   </button>
-                  <button
-                    data-umami-event="Edit team button click"
-                    className="py-2.5 md:py-3 px-8 md:px-10 bg-cta-gradient text-body-sm md:text-body-md text-surface-white font-bold rounded-[8px] hover:scale-105 transition-all shadow-md uppercase"
-                  >
+                  <button className="py-2.5 md:py-3 px-8 md:px-10 bg-cta-gradient text-body-sm md:text-body-md text-surface-white font-bold rounded-[8px] hover:scale-105 transition-all shadow-md uppercase">
                     Save
                   </button>
                 </div>
@@ -575,12 +527,9 @@ const FormTeam = ({ ref }) => {
             </form>
           )}
 
-          {/* TAB: MEMBERS */}
           {activeTab === "members" && (
             <div className="flex flex-col gap-5">
-              {/* CURRENT MEMBERS SECTION */}
               <div className="bg-surface-white rounded-xl shadow-sm overflow-hidden min-h-[300px]">
-                {/* Header with Add Button */}
                 <div className="flex items-center justify-between p-4 md:p-5 border-b border-surface-bg">
                   <div className="flex items-center gap-3">
                     <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-brand-primary/10">
@@ -616,7 +565,6 @@ const FormTeam = ({ ref }) => {
                   </button>
                 </div>
 
-                {/* Members List */}
                 <div className="p-4 md:p-5">
                   {loadingMembers ? (
                     <div className="flex items-center justify-center py-10">
@@ -646,7 +594,6 @@ const FormTeam = ({ ref }) => {
                             key={playerId}
                             className="flex items-center gap-3 p-3 rounded-xl bg-surface-bg hover:bg-surface-bg/80 transition-all group"
                           >
-                            {/* Avatar */}
                             <div className="w-11 h-11 rounded-lg overflow-hidden bg-surface-nav/10 flex-shrink-0 shadow-sm">
                               {member.avatar_url ||
                               member.avatarUrl ||
@@ -666,7 +613,6 @@ const FormTeam = ({ ref }) => {
                                 </div>
                               )}
                             </div>
-                            {/* Info */}
                             <div className="flex-1 min-w-0">
                               <p className="text-body-sm font-bold text-surface-nav truncate">
                                 {member.name || "Unknown"}
@@ -678,7 +624,6 @@ const FormTeam = ({ ref }) => {
                                   "N/A"}
                               </p>
                             </div>
-                            {/* Remove button */}
                             <button
                               type="button"
                               onClick={() => handleRemoveMember(playerId)}

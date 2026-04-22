@@ -1,369 +1,472 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import matchService from "../services/matchService";
+import React from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
-/* ─── SHARED UI COMPONENTS (Match) ────────────────────────────── */
-function TeamLogo({ letter, bgColor = "#1a1a2e", size = 80 }) {
-  return (
-    <div style={{ width: size, height: size }} className="relative mx-auto">
-      <div
-        className="absolute inset-0 rounded-full"
-        style={{
-          background: "white",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-        }}
-      />
-      <div
-        className="absolute inset-1.5 rounded-full flex items-center justify-center"
-        style={{ background: bgColor }}
-      >
-        <span
-          className="text-white font-black text-2xl"
-          style={{ fontSize: size * 0.3 }}
-        >
-          {letter}
-        </span>
-      </div>
-    </div>
-  );
-}
+/* ─────────────────────────────── Components ─────────────────────────────── */
 
-function Stepper({ value, onChange, min = 0 }) {
-  return (
-    <div
-      className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3"
-      style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}
-    >
-      <button
-        onClick={() => onChange(Math.max(min, value - 1))}
-        className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-lg transition-colors active:scale-95"
-        style={{ lineHeight: 1 }}
-      >
-        −
-      </button>
-      <span className="text-5xl font-black text-gray-900 min-w-[2ch] text-center leading-none">
-        {value}
-      </span>
-      <button
-        onClick={() => onChange(value + 1)}
-        className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-lg transition-colors active:scale-95"
-        style={{ lineHeight: 1 }}
-      >
-        +
-      </button>
-    </div>
-  );
-}
-
-function MiniStepper({ value, onChange, emoji }) {
-  return (
-    <div
-      className="flex-1 bg-white rounded-2xl px-3 py-3 flex flex-col items-center gap-2"
-      style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.06)" }}
-    >
-      <div className="flex items-center gap-1.5">
-        <span className="text-lg">{emoji}</span>
-        <span className="font-bold text-gray-800 text-lg">{value}</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => onChange(Math.max(0, value - 1))}
-          className="w-6 h-6 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 text-sm font-bold transition-colors active:scale-95"
-        >
-          −
-        </button>
-        <button
-          onClick={() => onChange(value + 1)}
-          className="w-6 h-6 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 text-sm font-bold transition-colors active:scale-95"
-        >
-          +
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function TeamCard({
-  team,
-  score,
-  onScore,
-  yellowCards,
-  onYellow,
-  redCards,
-  onRed,
-}) {
-  return (
-    <div
-      className="flex-1 rounded-3xl overflow-hidden"
+const StatBlock = ({ label, value, color = "#1f2937" }) => (
+  <div
+    style={{
+      background: "#ffffff",
+      borderRadius: 20,
+      padding: "24px",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      flex: 1,
+      boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
+      borderBottom: label === "SHOTS ON GOAL" ? "3px solid #c8102e" : "none",
+    }}
+  >
+    <span
       style={{
-        background:
-          "linear-gradient(170deg, #fde8e8 0%, #fdf0f0 45%, #f7f7fc 100%)",
-        boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
-        minWidth: 0,
+        fontSize: 10,
+        fontWeight: 800,
+        color: "#9ca3af",
+        letterSpacing: "0.1em",
+        textTransform: "uppercase",
+        marginBottom: 8,
       }}
     >
-      <div className="px-6 pt-6 pb-4 flex flex-col items-center gap-3">
-        <TeamLogo letter={team.letter} bgColor={team.color} size={72} />
-        <h2 className="font-black text-xl tracking-wider text-gray-900 text-center">
-          {team.name}
-        </h2>
-        <Stepper value={score} onChange={onScore} />
-        <p className="text-[11px] font-semibold tracking-[0.15em] uppercase text-gray-400">
-          Match Score
-        </p>
-      </div>
-      <div className="mx-5 border-t border-gray-200/70" />
-      <div className="px-5 py-5 flex gap-3">
-        <MiniStepper value={yellowCards} onChange={onYellow} emoji="🟨" />
-        <MiniStepper value={redCards} onChange={onRed} emoji="🟥" />
-      </div>
-    </div>
-  );
-}
+      {label}
+    </span>
+    <span style={{ fontSize: 32, fontWeight: 900, color: color }}>{value}</span>
+  </div>
+);
 
-function StatBox({ label, value }) {
-  return (
-    <div className="flex-1 rounded-2xl flex flex-col items-center justify-center py-3 px-4 bg-surface-card shadow-inner">
-      <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-gray-400 mb-1">
-        {label}
+const CardStatRow = ({ team1Val, team2Val, label, iconBg }) => (
+  <div
+    style={{
+      background: "#ffffff",
+      borderRadius: 24,
+      padding: "24px 32px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      flex: 1,
+      boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
+      gap: 20,
+    }}
+  >
+    <div style={{ textAlign: "center" }}>
+      <span style={{ fontSize: 24, fontWeight: 900, color: "#1f2937" }}>
+        {team1Val}
+      </span>
+      <p
+        style={{
+          fontSize: 9,
+          fontWeight: 700,
+          color: "#d1d5db",
+          margin: 0,
+          marginTop: 4,
+        }}
+      >
+        TEAM 1
       </p>
-      <p className="text-4xl font-black text-gray-900">{value}</p>
     </div>
-  );
-}
 
-/* ─── THE MATCH COMPONENT ───────────────────────────────────────── */
-export default function MatchPage() {
-  const { matchId } = useParams();
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 4,
+      }}
+    >
+      <div
+        style={{
+          width: 32,
+          height: 44,
+          borderRadius: 4,
+          background: iconBg,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+        }}
+      />
+      <span
+        style={{
+          fontSize: 9,
+          fontWeight: 900,
+          color: "#1f2937",
+          letterSpacing: "0.05em",
+        }}
+      >
+        {label}
+      </span>
+    </div>
+
+    <div style={{ textAlign: "center" }}>
+      <span style={{ fontSize: 24, fontWeight: 900, color: "#1f2937" }}>
+        {team2Val}
+      </span>
+      <p
+        style={{
+          fontSize: 9,
+          fontWeight: 700,
+          color: "#d1d5db",
+          margin: 0,
+          marginTop: 4,
+        }}
+      >
+        TEAM 2
+      </p>
+    </div>
+  </div>
+);
+
+/* ─────────────────────────────── Main Page ─────────────────────────────── */
+
+export default function MatchList() {
   const navigate = useNavigate();
+  useParams();
 
-  const [finished, setFinished] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-
-  // NOTE: Thay đổi các giá trị khởi tạo này thành data lấy từ API
-  const [homeScore, setHomeScore] = useState(2);
-  const [awayScore, setAwayScore] = useState(1);
-  const [homeYellow, setHomeYellow] = useState(3);
-  const [homeRed, setHomeRed] = useState(0);
-  const [awayYellow, setAwayYellow] = useState(2);
-  const [awayRed, setAwayRed] = useState(1);
-
-  const totalGoals = homeScore + awayScore;
-  const totalYellow = homeYellow + awayYellow;
-  const totalRed = homeRed + awayRed;
-
-  useEffect(() => {
-    const fetchMatchDetails = async () => {
-      if (!matchId) return;
-      try {
-        const response = await matchService.getMatchDetail({
-          url: `/matches/${matchId}`,
-        });
-
-        if (response) {
-          console.log("Đã lấy được dữ liệu:", response);
-          // Khoá UI khi trận đã kết thúc
-          if (response.status === "FINISHED") setFinished(true);
-
-          // Hỗ trợ cả camelCase (homeScore) lẫn snake_case (home_score) từ backend
-          const hs = response.homeScore ?? response.home_score;
-          const as = response.awayScore ?? response.away_score;
-          if (hs !== undefined) setHomeScore(hs);
-          if (as !== undefined) setAwayScore(as);
-        }
-      } catch (error) {
-        console.error("Lỗi lấy dữ liệu từ Backend:", error);
-      }
-    };
-    fetchMatchDetails();
-  }, [matchId]);
-
-  const handleFinish = async () => {
-    try {
-      await matchService.updateMatchStatus({
-        url: `/matches/${matchId}/status`,
-        data: { status: "FINISHED" },
-      });
-
-      await matchService.submitMatchResult({
-        url: `/matches/${matchId}/result`,
-        data: { homeScore, awayScore },
-      });
-
-      // submitMatchStats bị tắt: endpoint /stats đã bị gạch ngang
-      // và DB không có cột cho thẻ vàng/đỏ
-      // await matchService.submitMatchStats({ ... });
-
-      setShowConfirm(false);
-      setFinished(true);
-    } catch (error) {
-      console.error("Lỗi khi kết thúc trận đấu", error);
-      alert(
-        "Kết nối đến Backend bị lỗi! \nVui lòng bật Server Backend trên port 8080 hoặc sửa lại link trong file."
-      );
-    }
+  // Mock data theo hình
+  const matchData = {
+    homeTeam: "RED DRAGONS",
+    awayTeam: "SKY EAGLES",
+    scoreHome: 2,
+    scoreAway: 1,
+    date: "AUG 24, 2024",
+    time: "20:45 CET",
+    arena: "METROPOLIS ARENA",
+    yellowHome: 3,
+    yellowAway: 2,
+    redHome: 0,
+    redAway: 1,
+    totalShots: 18,
+    shotsOnGoal: 7,
+    passAccuracy: "82%",
   };
 
   return (
-    <div className="h-full pb-10 font-[var(--font-body)]">
-      <div className="flex items-center gap-4 mb-4">
-        <button
-          onClick={() => navigate("/matches")}
-          className="text-gray-500 hover:bg-gray-100 p-2 rounded-xl transition-colors"
+    <div
+      style={{
+        paddingBottom: 60,
+        fontFamily: "var(--font-body, 'Inter', sans-serif)",
+      }}
+    >
+      <h1
+        style={{
+          fontSize: 40,
+          fontWeight: 900,
+          color: "#1f2937",
+          marginBottom: 32,
+          letterSpacing: "-0.02em",
+        }}
+      >
+        MATCH
+      </h1>
+
+      {/* ── Main Score Card ── */}
+      <div
+        style={{
+          background: "#ffffff",
+          borderRadius: 32,
+          overflow: "hidden",
+          boxShadow: "0 10px 40px rgba(0,0,0,0.04)",
+          marginBottom: 40,
+        }}
+      >
+        <div
+          style={{
+            height: 240,
+            background:
+              "linear-gradient(rgba(0,0,0,0.05), rgba(0,0,0,0.1)), url('https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=1000') center/cover",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "0 80px",
+            position: "relative",
+          }}
         >
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+          {/* Home */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 16,
+            }}
           >
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <h1 className="text-2xl font-black tracking-wide text-gray-900">
-          MATCH #{matchId}
-        </h1>
-      </div>
-      {finished ? (
-        <div className="flex flex-col items-center justify-center gap-6 py-16">
-          <div className="text-6xl">🏆</div>
-          <h2 className="text-3xl font-black text-gray-900">
-            Trận Đấu Kết Thúc!
-          </h2>
-          <div className="flex items-center gap-8 text-center mt-3">
-            <div>
-              <p className="text-gray-500 font-semibold text-sm">TITANS FC</p>
-              <p className="text-6xl font-black text-gray-900">{homeScore}</p>
-            </div>
-            <p className="text-3xl font-black text-brand-primary">VS</p>
-            <div>
-              <p className="text-gray-500 font-semibold text-sm">
-                STORM UNITED
-              </p>
-              <p className="text-6xl font-black text-gray-900">{awayScore}</p>
-            </div>
-          </div>
-          <button
-            onClick={() => navigate("/matches")}
-            className="mt-4 px-10 py-3 rounded-full font-bold text-sm tracking-widest text-white transition-all hover:opacity-90 active:scale-95 bg-[linear-gradient(160deg,#1a0000,#c8102e)] shadow-[0_6px_24px_rgba(200,16,46,0.4)]"
-          >
-            TRỞ VỀ DANH SÁCH
-          </button>
-        </div>
-      ) : (
-        <>
-          <div className="flex items-stretch gap-6">
-            <TeamCard
-              team={{
-                name: "TITANS FC",
-                letter: "A",
-                color: "var(--color-surface-nav)",
+            <div
+              style={{
+                width: 100,
+                height: 100,
+                background: "#fff",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyCenter: "center",
+                border: "8px solid rgba(255,255,255,0.3)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
               }}
-              score={homeScore}
-              onScore={setHomeScore}
-              yellowCards={homeYellow}
-              onYellow={setHomeYellow}
-              redCards={homeRed}
-              onRed={setHomeRed}
-            />
-            <div className="flex items-center justify-center px-2">
-              <span className="font-black text-4xl select-none text-brand-primary drop-shadow-md">
-                VS
+            >
+              <span
+                style={{
+                  fontSize: 48,
+                  fontWeight: 900,
+                  color: "#c8102e",
+                  width: "100%",
+                  textAlign: "center",
+                }}
+              >
+                A
               </span>
             </div>
-            <TeamCard
-              team={{
-                name: "STORM UNITED",
-                letter: "B",
-                color: "var(--color-brand-primary)",
+            <span
+              style={{
+                color: "#1f2937",
+                fontWeight: 900,
+                fontSize: 13,
+                letterSpacing: "0.05em",
               }}
-              score={awayScore}
-              onScore={setAwayScore}
-              yellowCards={awayYellow}
-              onYellow={setAwayYellow}
-              redCards={awayRed}
-              onRed={setAwayRed}
-            />
-          </div>
-          <div className="flex gap-4 mt-4">
-            <StatBox label="Total Goals" value={totalGoals} />
-            <StatBox label="Yellow Cards" value={totalYellow} />
-            <StatBox label="Red Cards" value={totalRed} />
-          </div>
-          <div className="flex justify-center mt-6">
-            <button
-              onClick={() => setShowConfirm(true)}
-              className="px-14 py-4 rounded-full font-black text-sm tracking-[0.15em] uppercase text-white transition-all hover:opacity-90 active:scale-95 bg-[linear-gradient(160deg,#1a0000,#c8102e)] shadow-[0_8px_28px_rgba(200,16,46,0.45)]"
             >
-              Finish Match
-            </button>
+              {matchData.homeTeam}
+            </span>
           </div>
-        </>
-      )}
 
-      {showConfirm && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{
-            background: "rgba(0,0,0,0.35)",
-            backdropFilter: "blur(4px)",
-          }}
-          onClick={() => setShowConfirm(false)}
-        >
+          {/* Score & Status */}
           <div
-            className="bg-white rounded-3xl p-6 max-w-sm w-full mx-4 flex flex-col gap-4"
-            style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
-            onClick={(e) => e.stopPropagation()}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 12,
+            }}
           >
-            <div className="text-center">
-              <span className="text-5xl">🏁</span>
-              <h2 className="font-black text-xl mt-3 text-gray-900">
-                Kết thúc trận đấu?
-              </h2>
-              <p className="text-gray-400 text-sm mt-2">
-                Kết quả sẽ được lưu và trạng thái chuyển sang{" "}
-                <strong>FINISHED</strong>.
-              </p>
-            </div>
-            <div
-              className="flex items-center justify-around rounded-2xl py-4 px-6"
-              style={{ background: "#f5f6fa" }}
+            <span
+              style={{
+                background: "#ff4d4d",
+                color: "#fff",
+                padding: "4px 16px",
+                borderRadius: 99,
+                fontSize: 10,
+                fontWeight: 900,
+                letterSpacing: "0.1em",
+              }}
             >
-              <div className="text-center">
-                <p className="text-xs font-bold text-gray-400 tracking-wider">
-                  TITANS FC
-                </p>
-                <p className="text-4xl font-black text-gray-900">{homeScore}</p>
-              </div>
-              <span className="text-xl font-black text-red-400">—</span>
-              <div className="text-center">
-                <p className="text-xs font-bold text-gray-400 tracking-wider">
-                  STORM UNITED
-                </p>
-                <p className="text-4xl font-black text-gray-900">{awayScore}</p>
-              </div>
+              FINISHED
+            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+              <span style={{ fontSize: 72, fontWeight: 900, color: "#c8102e" }}>
+                {matchData.scoreHome}
+              </span>
+              <span style={{ fontSize: 40, fontWeight: 900, color: "#d1d5db" }}>
+                -
+              </span>
+              <span style={{ fontSize: 72, fontWeight: 900, color: "#1f2937" }}>
+                {matchData.scoreAway}
+              </span>
             </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowConfirm(false)}
-                className="flex-1 py-3 rounded-2xl border-2 border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleFinish}
-                className="flex-1 py-3 rounded-2xl text-white font-black text-sm tracking-wide transition-all hover:opacity-90 active:scale-95 bg-[linear-gradient(160deg,#1a0000,#c8102e)] shadow-[0_4px_16px_rgba(200,16,46,0.4)]"
-              >
-                Xác Nhận
-              </button>
+          </div>
+
+          {/* Away */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 16,
+            }}
+          >
+            <div
+              style={{
+                width: 100,
+                height: 100,
+                background: "#000",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyCenter: "center",
+                overflow: "hidden",
+                border: "8px solid rgba(255,255,255,0.3)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
+              }}
+            >
+              <img
+                src="https://api.dicebear.com/7.x/identicon/svg?seed=SkyEagles&backgroundColor=000000"
+                alt="logo"
+                style={{ width: "60%", margin: "0 auto" }}
+              />
             </div>
+            <span
+              style={{
+                color: "#1f2937",
+                fontWeight: 900,
+                fontSize: 13,
+                letterSpacing: "0.05em",
+              }}
+            >
+              {matchData.awayTeam}
+            </span>
           </div>
         </div>
-      )}
+
+        {/* Bottom Info Row */}
+        <div
+          style={{
+            background: "#f9fafb",
+            padding: "16px 40px",
+            display: "flex",
+            justifyContent: "center",
+            gap: 40,
+            borderTop: "1px solid #f3f4f6",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              fontSize: 11,
+              fontWeight: 700,
+              color: "#4b5563",
+            }}
+          >
+            📅{" "}
+            <span style={{ textTransform: "uppercase" }}>{matchData.date}</span>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              fontSize: 11,
+              fontWeight: 700,
+              color: "#4b5563",
+            }}
+          >
+            ⏳{" "}
+            <span style={{ textTransform: "uppercase" }}>{matchData.time}</span>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              fontSize: 11,
+              fontWeight: 700,
+              color: "#4b5563",
+            }}
+          >
+            📍{" "}
+            <span style={{ textTransform: "uppercase" }}>
+              {matchData.arena}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Cards Section ── */}
+      <div style={{ marginBottom: 40 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            marginBottom: 20,
+          }}
+        >
+          <div
+            style={{
+              width: 4,
+              height: 24,
+              background: "#c8102e",
+              borderRadius: 4,
+            }}
+          />
+          <h2
+            style={{
+              fontSize: 18,
+              fontWeight: 900,
+              color: "#1f2937",
+              margin: 0,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+            }}
+          >
+            Thẻ
+          </h2>
+        </div>
+        <div style={{ display: "flex", gap: 24 }}>
+          <CardStatRow
+            label="YELLOW"
+            iconBg="#ffff00"
+            team1Val={matchData.yellowHome}
+            team2Val={matchData.yellowAway}
+          />
+          <CardStatRow
+            label="RED"
+            iconBg="#ff0000"
+            team1Val={matchData.redHome}
+            team2Val={matchData.redAway}
+          />
+        </div>
+      </div>
+
+      {/* ── Overview Section ── */}
+      <div style={{ marginBottom: 48 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            marginBottom: 20,
+          }}
+        >
+          <div
+            style={{
+              width: 4,
+              height: 24,
+              background: "#c8102e",
+              borderRadius: 4,
+            }}
+          />
+          <h2
+            style={{
+              fontSize: 18,
+              fontWeight: 900,
+              color: "#1f2937",
+              margin: 0,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+            }}
+          >
+            Tổng quát
+          </h2>
+        </div>
+        <div style={{ display: "flex", gap: 24 }}>
+          <StatBlock label="TOTAL SHOTS" value={matchData.totalShots} />
+          <StatBlock
+            label="SHOTS ON GOAL"
+            value={matchData.shotsOnGoal}
+            color="#c8102e"
+          />
+          <StatBlock label="PASS ACCURACY" value={matchData.passAccuracy} />
+        </div>
+      </div>
+
+      {/* ── Back Button ── */}
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <button
+          onClick={() => navigate(-1)}
+          style={{
+            padding: "16px 60px",
+            background: "#d1d5db",
+            color: "#1f2937",
+            border: "none",
+            borderRadius: 12,
+            fontSize: 14,
+            fontWeight: 900,
+            letterSpacing: "0.1em",
+            cursor: "pointer",
+            transition: "background 0.2s",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "#9ca3af")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "#d1d5db")}
+        >
+          BACK
+        </button>
+      </div>
     </div>
   );
 }
