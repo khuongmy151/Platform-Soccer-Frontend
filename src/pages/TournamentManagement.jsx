@@ -99,24 +99,29 @@ const TournamentManagement = () => {
       id: crypto.randomUUID(), // Tạo chuỗi ID duy nhất dạng "550e8400-e29b..."
       createdAt: new Date().toISOString(),
     };
+    toast.warning("Backend error - Temporarily saved to browser");
 
-    try {
-      setIsSaving(true);
-      // Gọi service (vẫn để đây để khi BE xong thì tự chạy)
-      await tournamentService.createTournament(newTournament);
-      setShowCreate(false);
-      fetchData();
-    } catch {
-      // 2. Nếu BE lỗi, thông báo và ép dữ liệu vào Redux
-      toast.warning("Backend error - Temporarily saved to browser");
+    // Dispatch action tạo mới với dữ liệu đã có ID
+    dispatch(createTournament(newTournament));
 
-      // Dispatch action tạo mới với dữ liệu đã có ID
-      dispatch(createTournament(newTournament));
+    setShowCreate(false);
+    // try {
+    //   setIsSaving(true);
+    //   // Gọi service (vẫn để đây để khi BE xong thì tự chạy)
+    //   await tournamentService.createTournament(newTournament);
+    //   setShowCreate(false);
+    //   fetchData();
+    // } catch {
+    //   // 2. Nếu BE lỗi, thông báo và ép dữ liệu vào Redux
+    //   toast.warning("Backend error - Temporarily saved to browser");
 
-      setShowCreate(false);
-    } finally {
-      setIsSaving(false);
-    }
+    //   // Dispatch action tạo mới với dữ liệu đã có ID
+    //   dispatch(createTournament(newTournament));
+
+    //   setShowCreate(false);
+    // } finally {
+    //   setIsSaving(false);
+    // }
   };
 
   const handleUpdateSubmit = async (e) => {
