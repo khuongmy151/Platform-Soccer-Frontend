@@ -120,6 +120,104 @@ const validateForm = {
 
     return isValid;
   },
+
+  validateFormTournament: ({ formData, setError }) => {
+    // Reset toàn bộ lỗi trước khi kiểm tra
+    setError({
+      errorName: "",
+      errorFormat: "",
+      errorStartDate: "",
+      errorEndDate: "",
+      errorDescription: "",
+      errorLogoUrl: "",
+    });
+
+    const alphaNumericRegex =
+      /^[a-zA-Z0-9ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵỷỹ\s\-()]+$/;
+
+    let isValid = true;
+    let errors = {};
+
+    // 1. Validate Tournament Name
+    const name = formData.name?.trim();
+    if (!name) {
+      errors.errorName = "Tournament name is required";
+      isValid = false;
+    } else if (name.length < 3 || name.length > 100) {
+      errors.errorName = "Tournament name must be between 3 and 100 characters";
+      isValid = false;
+    } else if (!alphaNumericRegex.test(name)) {
+      errors.errorName =
+        "Tournament name can only contain letters, numbers, spaces, hyphens and parentheses";
+      isValid = false;
+    }
+
+    // 2. Validate Format
+    const format = formData.format?.trim();
+    if (!format) {
+      errors.errorFormat = "Tournament format is required";
+      isValid = false;
+    } else if (!["LEAGUE", "KNOCKOUT", "GROUP_STAGE"].includes(format)) {
+      errors.errorFormat = "Invalid tournament format selected";
+      isValid = false;
+    }
+
+    // 3. Validate Start Date
+    const startDate = formData.start_date?.trim();
+    if (!startDate) {
+      errors.errorStartDate = "Start date is required";
+      isValid = false;
+    } else {
+      const startDateObj = new Date(startDate);
+      if (isNaN(startDateObj.getTime())) {
+        errors.errorStartDate = "Invalid start date format";
+        isValid = false;
+      }
+    }
+
+    // 4. Validate End Date
+    const endDate = formData.end_date?.trim();
+    if (!endDate) {
+      errors.errorEndDate = "End date is required";
+      isValid = false;
+    } else {
+      const endDateObj = new Date(endDate);
+      if (isNaN(endDateObj.getTime())) {
+        errors.errorEndDate = "Invalid end date format";
+        isValid = false;
+      }
+    }
+
+    // 5. Validate End Date is after Start Date
+    if (startDate && endDate && !errors.errorStartDate && !errors.errorEndDate) {
+      const startDateObj = new Date(startDate);
+      const endDateObj = new Date(endDate);
+      if (endDateObj <= startDateObj) {
+        errors.errorEndDate = "End date must be after start date";
+        isValid = false;
+      }
+    }
+
+    // 6. Validate Description
+    const description = formData.description?.trim();
+    if (!description) {
+      errors.errorDescription = "Description is required";
+      isValid = false;
+    } else if (description.length < 10 || description.length > 500) {
+      errors.errorDescription =
+        "Description must be between 10 and 500 characters";
+      isValid = false;
+    }
+
+    // 7. Logo is now optional (file upload) - no validation needed unless you want to enforce it
+
+    // Nếu có lỗi, cập nhật một lần duy nhất vào State
+    if (!isValid) {
+      setError((prev) => ({ ...prev, ...errors }));
+    }
+
+    return isValid;
+  },
 };
 
 export default validateForm;
