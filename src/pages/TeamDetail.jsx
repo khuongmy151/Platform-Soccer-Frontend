@@ -17,7 +17,8 @@ const formatStatLabel = (key) => key.replaceAll("_", " ").toUpperCase();
 
 const unwrapData = (response) => {
   const data = response?.data ?? response;
-  return data?.data ?? data?.members ?? data?.member ?? data;
+  const members = data?.data ?? data?.members ?? data?.member ?? data;
+  return Array.isArray(members) ? members : [];
 };
 
 const normalizeMember = (member) => {

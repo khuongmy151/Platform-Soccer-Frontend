@@ -13,7 +13,7 @@ import { toast } from "react-toastify";
 
 const unwrapData = (response) => {
   const data = response?.data ?? response;
-  return data?.data ?? data?.member ?? data?.player ?? data;
+  return data?.data ?? data?.member ?? data?.player ?? data ?? null;
 };
 
 const normalizeMember = (member) => {
@@ -78,7 +78,8 @@ const MemberDetail = () => {
         const response = await teamService.getTeamMemberById({
           url: `/teams/${teamId}/members/${memberId}`,
         });
-        setMemberWithId(normalizeMember(unwrapData(response)));
+        const member = unwrapData(response);
+        setMemberWithId(member ? normalizeMember(member) : null);
       } catch (error) {
         console.error("Error fetching member detail:", error);
         toast.error("Failed to load member detail");

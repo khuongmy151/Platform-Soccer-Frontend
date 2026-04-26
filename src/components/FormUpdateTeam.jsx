@@ -28,7 +28,8 @@ const UploadIcon = () => (
 
 const unwrapMembers = (response) => {
   const data = response?.data ?? response;
-  return data?.data ?? data?.members ?? data?.items ?? data;
+  const members = data?.data ?? data?.members ?? data?.items ?? data;
+  return Array.isArray(members) ? members : [];
 };
 
 const FormUpdateTeam = ({ ref }) => {
