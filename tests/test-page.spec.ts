@@ -5,9 +5,6 @@ const UMAMI_ENDPOINT = '/api/send';
 
 test.setTimeout(60000);
 
-// ===============================
-// HELPERS
-// ===============================
 async function waitForTracking(page: Page): Promise<Request> {
     return await page.waitForRequest(req =>
         req.url().includes(UMAMI_ENDPOINT)

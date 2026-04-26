@@ -5,9 +5,6 @@ const UMAMI_ENDPOINT = '/api/send';
 
 test.setTimeout(60000);
 
-// ===============================
-// HELPERS
-// ===============================
 function trackStats(page: Page) {
     let total = 0;
     let success = 0;
