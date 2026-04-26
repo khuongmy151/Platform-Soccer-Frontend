@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import { tournamentService } from "../services/tournamentService";
@@ -10,6 +10,7 @@ import {
 } from "../stores/features/tournamentSlice";
 
 import TournamentForm from "../components/TournamentForm";
+import ConfirmDialog from "../components/ConfirmDialog";
 import { Briefcase } from "lucide-react";
 import { toast } from "react-toastify";
 
@@ -37,6 +38,7 @@ const TournamentManagement = () => {
   });
 
   const [editFormData, setEditFormData] = useState(null);
+  const confirmDialog = useRef();
 
   const fetchData = useCallback(async () => {
     try {
@@ -68,12 +70,28 @@ const TournamentManagement = () => {
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
-    const [year, month, day] = dateString.split("-");
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "N/A";
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   };
 
+  // Chuyển ISO date thành YYYY-MM-DD cho input[type="date"]
+  const toDateInputValue = (dateStr) => {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toISOString().split("T")[0];
+  };
+
   const openEditModal = () => {
-    setEditFormData({ ...selectedTournament });
+    setEditFormData({
+      ...selectedTournament,
+      start_date: toDateInputValue(selectedTournament?.start_date),
+      end_date: toDateInputValue(selectedTournament?.end_date),
+    });
     setShowEdit(true);
   };
 
@@ -93,59 +111,87 @@ const TournamentManagement = () => {
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
 
-    // 1. Tạo ID ngẫu nhiên ngay tại đây
-    const newTournament = {
-      ...createFormData,
-      id: crypto.randomUUID(), // Tạo chuỗi ID duy nhất dạng "550e8400-e29b..."
-      createdAt: new Date().toISOString(),
-    };
-    toast.warning("Backend error - Temporarily saved to browser");
+    try {
+      setIsSaving(true);
 
-    // Dispatch action tạo mới với dữ liệu đã có ID
-    dispatch(createTournament(newTournament));
+      // Gọi API tạo tournament qua backend
+      await tournamentService.createTournament({
+        name: createFormData.name,
+        description: createFormData.description,
+        format: createFormData.format,
+        start_date: createFormData.start_date,
+        end_date: createFormData.end_date,
+        logo_url: createFormData.logo_url || "",
+      });
 
-    setShowCreate(false);
-    // try {
-    //   setIsSaving(true);
-    //   // Gọi service (vẫn để đây để khi BE xong thì tự chạy)
-    //   await tournamentService.createTournament(newTournament);
-    //   setShowCreate(false);
-    //   fetchData();
-    // } catch {
-    //   // 2. Nếu BE lỗi, thông báo và ép dữ liệu vào Redux
-    //   toast.warning("Backend error - Temporarily saved to browser");
+      toast.success("Tournament created successfully!");
 
-    //   // Dispatch action tạo mới với dữ liệu đã có ID
-    //   dispatch(createTournament(newTournament));
+      setShowCreate(false);
+      // Fetch lại danh sách từ server để đồng bộ
+      fetchData();
+    } catch {
+      // Nếu BE lỗi, lưu tạm vào Redux
+      toast.warning("Backend error - Temporarily saved to browser");
 
-    //   setShowCreate(false);
-    // } finally {
-    //   setIsSaving(false);
-    // }
+      const newTournament = {
+        ...createFormData,
+        id: crypto.randomUUID(),
+        createdAt: new Date().toISOString(),
+      };
+      dispatch(createTournament(newTournament));
+      setShowCreate(false);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
 
-    // Đảm bảo dữ liệu update mang theo đúng ID cũ của nó
-    const updatedData = {
-      ...editFormData,
-      id: selectedTournament.id,
-    };
+    // Chỉ gửi các field thực sự thay đổi để tránh lỗi validation từ backend
+    const allowedFields = ["name", "description", "format", "start_date", "end_date", "logo_url", "status"];
+    const changedData = {};
+
+    for (const field of allowedFields) {
+      const originalValue = field.includes("date")
+        ? toDateInputValue(selectedTournament?.[field])
+        : selectedTournament?.[field];
+
+      if (editFormData[field] !== undefined && editFormData[field] !== originalValue) {
+        changedData[field] = editFormData[field];
+      }
+    }
+
+    // Nếu không có gì thay đổi
+    if (Object.keys(changedData).length === 0) {
+      toast.info("No changes detected");
+      setShowEdit(false);
+      return;
+    }
+
+    // Nếu thay đổi format/date mà status không phải UPCOMING → cần gửi status hiện tại để BE validate
+    if ((changedData.format || changedData.start_date || changedData.end_date) && !changedData.status) {
+      changedData.status = selectedTournament?.status;
+    }
 
     try {
       setIsSaving(true);
       await tournamentService.updateTournament(
-        `/tournament/${selectedTournament?.id}`,
-        updatedData
+        selectedTournament?.id,
+        changedData
       );
+      toast.success("Tournament updated successfully!");
       setShowEdit(false);
       fetchData();
-    } catch {
-      toast.warning("Backend error - Temporarily updated on Frontend");
+    } catch (error) {
+      const errorMsg = error?.response?.data?.message || "Backend error";
+      toast.warning(errorMsg);
 
-      // Dispatch action update vào Redux
-      dispatch(updateTournament(updatedData));
+      // Fallback: Dispatch action update vào Redux
+      dispatch(updateTournament({
+        ...editFormData,
+        id: selectedTournament.id,
+      }));
 
       setShowEdit(false);
     } finally {
@@ -153,16 +199,11 @@ const TournamentManagement = () => {
     }
   };
 
-  const handleDelete = async () => {
-    // 1. Xác nhận với người dùng
-    if (
-      !window.confirm(
-        `Are you sure you want to delete the tournament "${selectedTournament?.name}"?`
-      )
-    ) {
-      return;
-    }
+  const handleOpenConfirmDialog = () => {
+    confirmDialog.current?.showModal();
+  };
 
+  const handleDelete = async () => {
     const idToDelete = selectedTournament.id;
 
     try {
@@ -171,26 +212,32 @@ const TournamentManagement = () => {
       await tournamentService.deleteTournament(idToDelete);
 
       toast.success("Tournament deleted successfully");
+      confirmDialog.current?.close();
 
-      // 3. Reset selectedTournament về null trước khi fetch lại để tránh lỗi render
+      // 3. Reset selectedTournament về null trước khi fetch lại
       setSelectedTournament(null);
       fetchData();
-    } catch {
-      // 4. Nếu BE lỗi (hoặc chưa có hàm delete), xử lý tạm thời ở FE
-      toast.warning(
-        "Backend not supported - Temporarily removed from Frontend"
-      );
+    } catch (error) {
+      const errorMsg = error?.response?.data?.message;
+      const statusCode = error?.response?.status;
 
-      // LƯU Ý: Phải import action deleteTournament từ slice của bạn
-      // Giả sử action trong slice của bạn là deleteTournament
-      dispatch(deleteTournament(idToDelete));
-
-      // Tự động chọn giải đấu đầu tiên còn lại nếu có
-      if (tournaments.length > 1) {
-        const nextSelected = tournaments.find((t) => t.id !== idToDelete);
-        setSelectedTournament(nextSelected);
+      if (statusCode && errorMsg) {
+        // Backend trả lỗi cụ thể (403, 404, 409...)
+        toast.error(errorMsg);
       } else {
-        setSelectedTournament(null);
+        // Lỗi mạng hoặc không kết nối được BE → xóa tạm trên FE
+        toast.warning("Backend not available - Temporarily removed from browser");
+        confirmDialog.current?.close();
+
+        dispatch(deleteTournament(idToDelete));
+
+        // Tự động chọn giải đấu đầu tiên còn lại
+        if (tournaments.length > 1) {
+          const nextSelected = tournaments.find((t) => t.id !== idToDelete);
+          setSelectedTournament(nextSelected);
+        } else {
+          setSelectedTournament(null);
+        }
       }
     } finally {
       setIsLoading(false);
@@ -248,8 +295,8 @@ const TournamentManagement = () => {
     <>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
         {/* Cột trái - Chi tiết Tournament */}
-        <div className="lg:col-span-7 flex flex-col items-center lg:items-start">
-          <div className="w-64 h-64 bg-[#1a202c] rounded-[2rem] shadow-xl mb-6 overflow-hidden flex-shrink-0">
+        <div className="lg:col-span-7 flex flex-col items-center">
+          <div className="w-64 h-64 bg-[#1a202c] rounded-[2rem] shadow-xl mb-6 overflow-hidden flex-shrink-0 mx-auto">
             <img
               src={
                 selectedTournament?.logo_url ||
@@ -322,7 +369,7 @@ const TournamentManagement = () => {
               LIST MATCH
             </button>
             <button
-              onClick={handleDelete}
+              onClick={handleOpenConfirmDialog}
               className="flex-1 py-4 rounded-xl font-bold text-slate-700 bg-slate-200 hover:bg-slate-300 transition-all"
             >
               REMOVE
@@ -409,6 +456,13 @@ const TournamentManagement = () => {
           submitLabel="UPDATE"
         />
       )}
+
+      {/* CONFIRM DIALOG */}
+      <ConfirmDialog
+        message={`Are you sure you want to delete the tournament "${selectedTournament?.name}"?`}
+        ref={confirmDialog}
+        handleConfirm={handleDelete}
+      />
     </>
   );
 };

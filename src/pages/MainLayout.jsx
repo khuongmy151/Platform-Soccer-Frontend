@@ -6,8 +6,8 @@ import { useSelector } from "react-redux";
 function MainLayout() {
   const isLogin = useSelector((state) => state.auth.isLogin);
   return (
-    <div className="min-h-screen bg-surface-bg font-body">
-      <div className="mx-auto flex min-h-screen max-w-[1600px] flex-col px-0 md:px-4 md:py-6">
+    <div className="flex min-h-screen w-full flex-col">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden w-full bg-surface-white">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:rounded-3xl border-none md:border md:border-header-line bg-surface-white md:shadow-md">
           <Header />
           <div className="flex min-h-0 flex-1 flex-col md:flex-row">

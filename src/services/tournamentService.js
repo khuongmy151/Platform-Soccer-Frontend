@@ -26,16 +26,16 @@ export const tournamentService = {
 
   // Tạo giải đấu mới
   createTournament: async (data) => {
-    return await axiosClient.post("/tournaments", data);
+    return await axiosClient.post("/tournaments/create", data);
   },
 
   // Cập nhật giải đấu
-  updateTournament: async (url, data) => {
-    return await axiosClient.put(`${url}`, data);
+  updateTournament: async (id, data) => {
+    return await axiosClient.put(`/tournaments/${id}/update`, data);
   },
 
   // Xóa giải đấu
   deleteTournament: async (id) => {
-    return await axiosClient.delete(`/tournaments/${id}`);
+    return await axiosClient.delete(`/tournaments/${id}/delete`);
   },
 };
