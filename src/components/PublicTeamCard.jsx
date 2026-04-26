@@ -2,13 +2,13 @@ const PublicTeamCard = ({ team, onClick }) => {
   return (
     <div
       onClick={() => onClick(team.id)}
-      className="bg-surface-white rounded-2xl p-5 md:p-6 text-center relative shadow-sm border border-gray-100 
+      className="bg-surface-white rounded-2xl p-4 md:p-6 text-center relative shadow-sm border border-gray-100 
                  transition-all duration-300 cursor-pointer group flex flex-col items-center h-full
                  hover:shadow-xl hover:border-brand-primary/20 hover:-translate-y-1.5"
     >
       {/* Team Logo */}
       <div
-        className="w-16 h-16 md:w-20 md:h-20 mb-4 rounded-full bg-surface-card border-[6px] border-surface-bg overflow-hidden shadow-inner 
+        className="w-14 h-14 md:w-20 md:h-20 mb-4 rounded-full bg-surface-card border-[6px] border-surface-bg overflow-hidden shadow-inner 
                      group-hover:border-brand-primary/10 transition-all duration-500 shrink-0"
       >
         <img
@@ -23,8 +23,8 @@ const PublicTeamCard = ({ team, onClick }) => {
 
       {/* Team Name */}
       <h2
-        className="w-[100px] md:w-[150px] font-black text-body-md md:text-title-lg text-gray-900 font-display leading-tight 
-              truncate block text-center px-1 group-hover:text-brand-primary transition-colors"
+        className="w-full max-w-[120px] md:max-w-[150px] font-black text-body-md md:text-title-lg text-gray-900 font-display leading-tight 
+              truncate block text-center px-1 group-hover:text-brand-primary transition-colors mx-auto"
       >
         {team.name}
       </h2>
@@ -35,7 +35,7 @@ const PublicTeamCard = ({ team, onClick }) => {
       </p>
 
       {/* Player count */}
-      <div className="mt-auto pt-4 w-full border-t border-gray-50 flex justify-center items-center gap-2">
+      <div className="mt-auto pt-3 md:pt-4 w-full border-t border-gray-50 flex justify-center items-center gap-2 md:pb-4">
         <span className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse"></span>
         <p className="text-[10px] font-black text-gray-500 uppercase tracking-tighter">
           {team.total_players || 0} Players

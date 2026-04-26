@@ -22,6 +22,7 @@ import { getMe } from "./services/userService";
 import { setMe } from "./stores/features/meSlice";
 import { setIsLogin } from "./stores/features/authSlice";
 import ListTeamPublic from "./pages/ListTeamPublic";
+import TournamentDetail from "./pages/TournamentDetail";
 
 function App() {
   const dispatch = useDispatch();
@@ -48,6 +49,7 @@ function App() {
         <Route path="/" element={<MainLayout />}>
           {/* PUBLIC: Ai cũng xem được */}
           <Route index element={<DashboardPublic />} />
+          <Route path="public/tournaments/:tournamentId" element={<TournamentDetail />} />
           <Route path="public/teams" element={<ListTeamPublic />} />
           <Route path="public/teams/:teamId" element={<TeamDetail />} />
 
