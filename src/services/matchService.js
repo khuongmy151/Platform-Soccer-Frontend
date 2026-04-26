@@ -6,6 +6,7 @@ const matchService = {
       const result = await axiosClient.get(`${url}`, { params });
       // Lấy mảng dữ liệu thật (vì API mới bọc trong result.data)
       const dataToDispatch = result.data !== undefined ? result.data : result;
+      console.log(result);
       dispatch(func(dataToDispatch || []));
       return result;
     } catch (error) {
@@ -13,7 +14,7 @@ const matchService = {
       throw error;
     }
   },
-  
+
   getMatchDetail: async ({ url, params }) => {
     try {
       const result = await axiosClient.get(`${url}`, { params });
@@ -72,7 +73,7 @@ const matchService = {
       console.error(error);
       throw error;
     }
-  }
+  },
 };
 
 export default matchService;

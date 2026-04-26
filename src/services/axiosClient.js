@@ -1,7 +1,7 @@
 import axios from "axios";
 // File cấu hình axios dùng chung cho toàn bộ dự án
 export const axiosClient = axios.create({
-  baseURL: "https://backend.cupzone.fun/", //Đường dẫn backend tạm thời để trống
+  baseURL: "https://backend.cupzone.fun/",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json", // Chỉ định định dạng dữ liệu gửi đi
@@ -15,7 +15,6 @@ axiosClient.interceptors.request.use(
     return config;
   },
   (error) => {
-    // Các status lỗi khác nhau sẽ xử lý sau
     return Promise.reject(error);
   }
 );
@@ -24,6 +23,7 @@ axiosClient.interceptors.response.use(
     return response.data;
   },
   (error) => {
+    // Các status lỗi khác nhau sẽ xử lý sau
     return Promise.reject(error);
   }
 );

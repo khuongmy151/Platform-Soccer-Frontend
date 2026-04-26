@@ -3,8 +3,7 @@ import { useEffect, useState } from "react";
 import { teamService } from "../services/teamService";
 import { players as mockPlayers } from "../mock_data";
 import { MdGroup, MdSportsSoccer } from "react-icons/md";
-import { FaArrowLeft, FaTimes, FaUserCircle } from "react-icons/fa";
-import { GiTShirt } from "react-icons/gi";
+import { FaArrowLeft, FaUserCircle } from "react-icons/fa";
 
 const STATUS_STYLES = {
   FIT: "bg-emerald-100 text-emerald-700",

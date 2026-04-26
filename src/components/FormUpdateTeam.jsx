@@ -1,15 +1,15 @@
-import { useDispatch, useSelector } from "react-redux";
 import { useSearchParams } from "react-router-dom";
-import { teamService } from "../services/teamService";
-import { setTeams, updateTeam } from "../stores/features/teamSlice";
+import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { teamService } from "../services/teamService";
+import { createPlayer, uploadPlayerAvatar } from "../services/playerService";
+import { setTeams, updateTeam } from "../stores/features/teamSlice";
+import validateForm from "../helpers/validateForm";
 import { toast } from "react-toastify";
 import { PiCoatHangerBold } from "react-icons/pi";
 import { IoClose, IoPersonAddSharp } from "react-icons/io5";
 import { FaUserMinus, FaUsers } from "react-icons/fa";
-import { createPlayer, uploadPlayerAvatar } from "../services/playerService";
 import FormPlayer from "./FormPlayer";
-import validateForm from "../helpers/validateForm";
 
 const UploadIcon = () => (
   <svg
@@ -27,12 +27,12 @@ const UploadIcon = () => (
   </svg>
 );
 
-const FormTeam = ({ ref }) => {
-  const [_, setSearchParams] = useSearchParams();
+const FormUpdateTeam = ({ ref }) => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const teamId = searchParams.get("teamId");
   const dispatch = useDispatch();
   const teams = useSelector((state) => state.teams);
-  const [searchParams] = useSearchParams();
-  const teamId = searchParams.get("teamId");
+
   const [formTeam, setFormTeam] = useState({
     id: "",
     logo_url: "",
@@ -41,7 +41,6 @@ const FormTeam = ({ ref }) => {
     country: "",
     description: "",
   });
-  const [isEdit, setIsEdit] = useState(false);
   const logoRef = useRef();
   const playerJerseyRef = useRef();
   const goalkeeperJerseyRef = useRef();
@@ -57,6 +56,15 @@ const FormTeam = ({ ref }) => {
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [removingId, setRemovingId] = useState(null);
   const [addingMembers, setAddingMembers] = useState(false);
+
+  //Hàm xóa query String trên URL
+  const deleteQueryString = () => {
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      if (params.has("teamId")) params.delete("teamId");
+      return params;
+    });
+  };
 
   // Logo preview handler
   const logoPreview = useMemo(() => {
@@ -80,7 +88,6 @@ const FormTeam = ({ ref }) => {
     if (teamId && teams?.items) {
       const foundTeam = teams.items.find((item) => item.id == teamId);
       if (foundTeam) {
-        setIsEdit(true);
         setFormTeam({
           id: foundTeam.id || "",
           logo_url: foundTeam.logo_url || null,
@@ -93,7 +100,6 @@ const FormTeam = ({ ref }) => {
         ref.current?.showModal();
       }
     } else {
-      setIsEdit(false);
       setFormTeam({
         id: "",
         logo_url: null,
@@ -106,6 +112,85 @@ const FormTeam = ({ ref }) => {
       ref.current?.close();
     }
   }, [teamId, teams?.items, ref]);
+
+  //Hàm Update team
+  const handleUpdateTeam = async (e) => {
+    e.preventDefault();
+    const logoFile = logoRef.current.files[0];
+    const playerFile = playerJerseyRef.current.files[0];
+    const gkFile = goalkeeperJerseyRef.current.files[0];
+
+    if (logoFile || playerFile || gkFile) {
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/jpg",
+      ];
+      const MAX_SIZE = 300 * 1024; // 300KB
+      const files = [
+        { file: logoFile, label: "Logo" },
+        { file: playerFile, label: "Player Jersey" },
+        { file: gkFile, label: "Goalkeeper Jersey" },
+      ];
+
+      for (const item of files) {
+        if (item.file) {
+          if (!allowedTypes.includes(item.file.type)) {
+            alert(
+              `${item.label} invalid format. Only JPEG, PNG, GIF are accepted.`
+            );
+            return;
+          }
+          if (item.file.size > MAX_SIZE) {
+            alert(`${item.label} is too large (Max 300KB).`);
+            return;
+          }
+        }
+      }
+    }
+
+    if (validateForm.validateFormTeam({ formTeam, setError })) {
+      const formData = new FormData();
+      formData.append("name", formTeam.name);
+      formData.append("country", formTeam.country);
+      formData.append("description", formTeam.description);
+
+      if (formTeam.logo_url instanceof File) {
+        formData.append("logo", formTeam.logo_url);
+      } else {
+        formData.append("logo_url", formTeam.logo_url);
+      }
+
+      const oldKits = [];
+      formTeam.kit_url.forEach((kit) => {
+        if (kit instanceof File) {
+          formData.append("kit", kit);
+        } else if (typeof kit === "string" && kit !== "") {
+          oldKits.push(kit);
+        }
+      });
+      formData.append("kit_url", JSON.stringify(oldKits));
+
+      try {
+        await teamService.updateTeam({
+          url: `/teams/${teamId}`,
+          data: formData,
+        });
+        deleteQueryString();
+        await teamService.getAllTeam({
+          url: "/teams",
+          dispatch,
+          func: setTeams,
+        });
+      } catch (error) {
+        console.error("Error occurred", error);
+        dispatch(updateTeam(formTeam));
+        toast("Server error, temporarily updated on Frontend");
+        deleteQueryString();
+      }
+    }
+  };
 
   // Fetch members when switching to members tab
   useEffect(() => {
@@ -197,92 +282,6 @@ const FormTeam = ({ ref }) => {
     }
   };
 
-  const deleteQueryString = () => {
-    setSearchParams((prev) => {
-      const params = new URLSearchParams(prev);
-      if (params.has("teamId")) params.delete("teamId");
-      return params;
-    });
-  };
-
-  const handleUpdateTeam = async (e) => {
-    e.preventDefault();
-    const logoFile = logoRef.current.files[0];
-    const playerFile = playerJerseyRef.current.files[0];
-    const gkFile = goalkeeperJerseyRef.current.files[0];
-
-    if (logoFile || playerFile || gkFile) {
-      const allowedTypes = [
-        "image/jpeg",
-        "image/png",
-        "image/gif",
-        "image/jpg",
-      ];
-      const MAX_SIZE = 300 * 1024; // 300KB
-      const files = [
-        { file: logoFile, label: "Logo" },
-        { file: playerFile, label: "Player Jersey" },
-        { file: gkFile, label: "Goalkeeper Jersey" },
-      ];
-
-      for (const item of files) {
-        if (item.file) {
-          if (!allowedTypes.includes(item.file.type)) {
-            alert(
-              `${item.label} invalid format. Only JPEG, PNG, GIF are accepted.`
-            );
-            return;
-          }
-          if (item.file.size > MAX_SIZE) {
-            alert(`${item.label} is too large (Max 300KB).`);
-            return;
-          }
-        }
-      }
-    }
-
-    if (validateForm.validateFormTeam({ formTeam, setError })) {
-      const formData = new FormData();
-      formData.append("name", formTeam.name);
-      formData.append("country", formTeam.country);
-      formData.append("description", formTeam.description);
-
-      if (formTeam.logo_url instanceof File) {
-        formData.append("logo", formTeam.logo_url);
-      } else {
-        formData.append("logo_url", formTeam.logo_url);
-      }
-
-      const oldKits = [];
-      formTeam.kit_url.forEach((kit) => {
-        if (kit instanceof File) {
-          formData.append("kit", kit);
-        } else if (typeof kit === "string" && kit !== "") {
-          oldKits.push(kit);
-        }
-      });
-      formData.append("kit_url", JSON.stringify(oldKits));
-
-      try {
-        await teamService.updateTeam({
-          url: `/teams/${teamId}`,
-          data: formData,
-        });
-        deleteQueryString();
-        await teamService.getAllTeam({
-          url: "/teams",
-          dispatch,
-          func: setTeams,
-        });
-      } catch (error) {
-        console.error("Error occurred", error);
-        dispatch(updateTeam(formTeam));
-        toast("Server error, temporarily updated on Frontend");
-        deleteQueryString();
-      }
-    }
-  };
-
   return (
     <>
       <dialog
@@ -293,7 +292,7 @@ const FormTeam = ({ ref }) => {
         <div className="sticky top-0 z-20 bg-surface-bg px-4 pt-4 pb-0 lg:px-6 lg:pt-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-headline-sm md:text-headline-md text-brand-primary font-bold italic uppercase">
-              {isEdit ? "Update Team" : "Create Team"}
+              Update team
             </h3>
             <button
               onClick={() => deleteQueryString()}
@@ -305,57 +304,56 @@ const FormTeam = ({ ref }) => {
           </div>
 
           {/* TAB NAVIGATION */}
-          {isEdit && (
-            <div className="flex gap-1 bg-surface-white rounded-xl p-1 shadow-sm">
-              <button
-                type="button"
-                onClick={() => setActiveTab("info")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-label-sm font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                  activeTab === "info"
-                    ? "bg-brand-primary text-white shadow-md"
-                    : "text-nav-muted hover:text-surface-nav hover:bg-surface-bg"
-                }`}
+
+          <div className="flex gap-1 bg-surface-white rounded-xl p-1 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setActiveTab("info")}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-label-sm font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                activeTab === "info"
+                  ? "bg-brand-primary text-white shadow-md"
+                  : "text-nav-muted hover:text-surface-nav hover:bg-surface-bg"
+              }`}
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              Team Info
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("members")}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-label-sm font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                activeTab === "members"
+                  ? "bg-brand-primary text-white shadow-md"
+                  : "text-nav-muted hover:text-surface-nav hover:bg-surface-bg"
+              }`}
+            >
+              <FaUsers className="w-4 h-4" />
+              Members
+              {members.length > 0 && (
+                <span
+                  className={`ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    activeTab === "members"
+                      ? "bg-white/20 text-white"
+                      : "bg-brand-primary/10 text-brand-primary"
+                  }`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                Team Info
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("members")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-label-sm font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                  activeTab === "members"
-                    ? "bg-brand-primary text-white shadow-md"
-                    : "text-nav-muted hover:text-surface-nav hover:bg-surface-bg"
-                }`}
-              >
-                <FaUsers className="w-4 h-4" />
-                Members
-                {members.length > 0 && (
-                  <span
-                    className={`ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                      activeTab === "members"
-                        ? "bg-white/20 text-white"
-                        : "bg-brand-primary/10 text-brand-primary"
-                    }`}
-                  >
-                    {members.length}
-                  </span>
-                )}
-              </button>
-            </div>
-          )}
+                  {members.length}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* SCROLLABLE CONTENT */}
@@ -657,4 +655,4 @@ const FormTeam = ({ ref }) => {
     </>
   );
 };
-export default FormTeam;
+export default FormUpdateTeam;
