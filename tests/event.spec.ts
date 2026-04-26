@@ -128,36 +128,6 @@ test.describe('Soccer Platform - Full Coverage (TC_01 to TC_28)', () => {
             await reqPromise;
         });
 
-        /*test('TC_10: Edit team button click', async ({ page }) => {
-            await ensureTeamExistsViaAPI();
-            await performLogin(page);
-            await page.goto(`${BASE_URL}/teams`);
-            await page.waitForSelector('table tbody tr', { state: 'visible', timeout: 15000 });
-            await page.locator('table tbody tr').first().locator('button').first().click();
-
-            const saveBtn = page.getByRole('button', { name: /SAVE/i });
-            await saveBtn.waitFor({ state: 'visible' });
-
-            const reqPromise = waitForUmamiEvent(page, 'Edit team button click');
-            await saveBtn.click({ force: true });
-            await reqPromise;
-        });
-
-        test('TC_11: Cancel edit team button click', async ({ page }) => {
-            await ensureTeamExistsViaAPI();
-            await performLogin(page);
-            await page.goto(`${BASE_URL}/teams`);
-            await page.waitForSelector('table tbody tr', { state: 'visible' });
-            await page.locator('table tbody tr').first().locator('button').first().click();
-
-            const cancelBtn = page.getByRole('button', { name: /CANCEL/i });
-            await cancelBtn.waitFor({ state: 'visible' });
-
-            const reqPromise = waitForUmamiEvent(page, 'Cancel edit team button click');
-            await cancelBtn.click({ force: true });
-            await reqPromise;
-        });*/
-
         test('TC_10: Cancel confirm button click', async ({ page }) => {
             await ensureTeamExistsViaAPI();
             await performLogin(page);

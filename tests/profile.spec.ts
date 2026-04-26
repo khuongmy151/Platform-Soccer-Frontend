@@ -42,7 +42,6 @@ test.describe('MY PROFILE ', () => {
     });
 
     test('TC_05: Kiểm tra hiển thị nút Change Password', async ({ page }) => {
-        // Chỉ kiểm tra sự tồn tại của nút, không thực hiện đổi
         const changeBtn = page.getByRole('button', { name: /CHANGE PASSWORD/i });
         await expect(changeBtn).toBeVisible();
         console.log("Nút Change Password hiển thị bình thường, không thực hiện đổi pass.");
@@ -50,11 +49,10 @@ test.describe('MY PROFILE ', () => {
 
     test('TC_06: Kiểm tra hiển thị nút SAVE CHANGES và Xử lý Dialog thành công', async ({ page }) => {
         // 1. Nhập số điện thoại đúng định dạng để tránh lỗi "Invalid phone number format"
-        // Thường là ô input type tel hoặc tìm theo label/placeholder
         const phoneInput = page.locator('input[type="tel"], input[name*="phone"]').first();
         if (await phoneInput.isVisible()) {
             await phoneInput.clear();
-            await phoneInput.fill('0901234567'); // Điền số giả lập để pass validation
+            await phoneInput.fill('0901234567');
         }
 
         const saveBtn = page.getByRole('button', { name: 'SAVE CHANGES' });
@@ -65,7 +63,6 @@ test.describe('MY PROFILE ', () => {
             const message = dialog.message();
             console.log(`Thông báo từ hệ thống: ${message}`);
 
-            // Chấp nhận cả trường hợp báo thành công hoặc nếu hệ thống vẫn báo lỗi thì mình biết đường debug
             expect(message).toContain('Lưu thông tin thành công!');
             await dialog.accept();
         });
@@ -98,7 +95,6 @@ test.describe('MY PROFILE ', () => {
     test('TC_10: Kiểm tra hiển thị nút DELETE ACCOUNT và màu sắc', async ({ page }) => {
         const deleteBtn = page.getByText(/DELETE ACCOUNT/i);
         await expect(deleteBtn).toBeVisible();
-        // Dùng mã màu từ log: rgb(176, 37, 0)
         await expect(deleteBtn).toHaveCSS('color', 'rgb(176, 37, 0)');
     });
 
