@@ -42,9 +42,21 @@ export const teamService = {
     const response = await axiosClient.get(`${url}`);
     return response;
   },
+  getTeamMemberById: async ({ url }) => {
+    const response = await axiosClient.get(`${url}`);
+    return response;
+  },
   // Add members to team
   addTeamMembers: async ({ url, data }) => {
-    const response = await axiosClient.post(`${url}`, data);
+    const config =
+      data instanceof FormData
+        ? {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        : undefined;
+    const response = await axiosClient.post(`${url}`, data, config);
     toast.success(response?.message || "Members added successfully");
     return response;
   },

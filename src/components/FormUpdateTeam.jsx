@@ -2,7 +2,6 @@ import { useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { teamService } from "../services/teamService";
-import { createPlayer, uploadPlayerAvatar } from "../services/playerService";
 import { setTeams, updateTeam } from "../stores/features/teamSlice";
 import validateForm from "../helpers/validateForm";
 import { toast } from "react-toastify";
@@ -26,6 +25,11 @@ const UploadIcon = () => (
     />
   </svg>
 );
+
+const unwrapMembers = (response) => {
+  const data = response?.data ?? response;
+  return data?.data ?? data?.members ?? data?.items ?? data;
+};
 
 const FormUpdateTeam = ({ ref }) => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -206,10 +210,14 @@ const FormUpdateTeam = ({ ref }) => {
       const res = await teamService.getTeamMembers({
         url: `/teams/${teamId}/members`,
       });
-      const data = Array.isArray(res) ? res : res?.items || res?.data || [];
+      const data = unwrapMembers(res);
       setMembers(data);
     } catch (error) {
       console.error("Error fetching members:", error);
+      if (error?.response?.status === 404) {
+        setMembers([]);
+        return;
+      }
       setMembers([]);
     } finally {
       setLoadingMembers(false);
@@ -223,40 +231,23 @@ const FormUpdateTeam = ({ ref }) => {
   const handleCreateNewMember = async (playerFormData) => {
     setAddingMembers(true);
     try {
-      let finalAvatarUrl = "";
+      const formData = new FormData();
+      formData.append("full_name", playerFormData.name);
+      formData.append("age", playerFormData.age);
+      formData.append("height_cm", playerFormData.height);
+      formData.append("weight_kg", playerFormData.weight);
+      formData.append("preferred_foot", playerFormData.preferred_foot);
+      formData.append("main_position", playerFormData.main_position);
+      formData.append("jersey_number", playerFormData.jersey_number);
       if (playerFormData.avatar instanceof File) {
-        try {
-          const uploadRes = await uploadPlayerAvatar(playerFormData.avatar);
-          finalAvatarUrl = uploadRes?.url || "";
-        } catch {
-          // ignore upload error locally
-        }
-      } else {
-        finalAvatarUrl = playerFormData.avatar || "";
+        formData.append("image", playerFormData.avatar);
+      } else if (playerFormData.avatar) {
+        formData.append("image_url", playerFormData.avatar);
       }
 
-      const payload = {
-        name: playerFormData.name,
-        height: playerFormData.height,
-        weight: playerFormData.weight,
-        preferredFoot: playerFormData.preferred_foot,
-        mainPosition: playerFormData.main_position,
-        avatarUrl: finalAvatarUrl,
-      };
-
-      // 1. Create player
-      let createdPlayer;
-      try {
-        createdPlayer = await createPlayer(payload);
-      } catch (err) {
-        toast.error("Failed to create new player in system");
-        throw err;
-      }
-
-      // 2. Add player to team
       await teamService.addTeamMembers({
         url: `/teams/${teamId}/members`,
-        data: { player_id: [createdPlayer?.id || createdPlayer?.data?.id] },
+        data: formData,
       });
 
       await fetchMembers();
@@ -587,33 +578,34 @@ const FormUpdateTeam = ({ ref }) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[500px] overflow-y-auto pr-1">
                       {members.map((member) => {
                         const playerId = member.id || member.player_id;
+                        const memberName =
+                          member.full_name || member.name || "Unknown";
+                        const memberAvatar =
+                          member.image_url ||
+                          member.avatar_url ||
+                          member.avatarUrl ||
+                          member.avatar;
                         return (
                           <div
                             key={playerId}
                             className="flex items-center gap-3 p-3 rounded-xl bg-surface-bg hover:bg-surface-bg/80 transition-all group"
                           >
                             <div className="w-11 h-11 rounded-lg overflow-hidden bg-surface-nav/10 flex-shrink-0 shadow-sm">
-                              {member.avatar_url ||
-                              member.avatarUrl ||
-                              member.avatar ? (
+                              {memberAvatar ? (
                                 <img
-                                  src={
-                                    member.avatar_url ||
-                                    member.avatarUrl ||
-                                    member.avatar
-                                  }
-                                  alt={member.name}
+                                  src={memberAvatar}
+                                  alt={memberName}
                                   className="w-full h-full object-cover"
                                 />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center text-surface-nav/40 text-label-sm font-bold">
-                                  {member.name?.charAt(0)?.toUpperCase() || "?"}
+                                  {memberName.charAt(0).toUpperCase()}
                                 </div>
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-body-sm font-bold text-surface-nav truncate">
-                                {member.name || "Unknown"}
+                                {memberName}
                               </p>
                               <p className="text-label-sm text-nav-muted">
                                 {member.main_position ||
