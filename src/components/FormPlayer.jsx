@@ -7,22 +7,26 @@ const EMPTY_PLAYER = {
   id: "",
   name: "",
   avatar: "",
+  age: "",
   height: "",
   weight: "",
   preferred_foot: "LEFT",
   main_position: "",
+  jersey_number: "",
 };
 
 const derivePlayer = (isEdit, player) => {
   if (!isEdit || !player) return EMPTY_PLAYER;
   return {
     id: player.id || "",
-    name: player.name || "",
-    avatar: player.avatar || "",
-    height: player.height || "",
-    weight: player.weight || "",
+    name: player.name || player.full_name || "",
+    avatar: player.avatar || player.image_url || "",
+    age: player.age || "",
+    height: player.height || player.height_cm || "",
+    weight: player.weight || player.weight_kg || "",
     preferred_foot: player.preferred_foot || "LEFT",
     main_position: player.position || player.main_position || "",
+    jersey_number: player.jersey_number || player.number || "",
   };
 };
 
@@ -126,7 +130,7 @@ const FormPlayer = ({ ref, mode = "add", player = null, onSubmit }) => {
           <div className="flex flex-col gap-6 font-body">
             <div className="flex flex-col">
               <label className="text-label-sm text-brand-primary font-bold tracking-[0.15em] uppercase mb-2">
-                Name
+                Full Name
               </label>
               <input
                 type="text"
@@ -135,6 +139,35 @@ const FormPlayer = ({ ref, mode = "add", player = null, onSubmit }) => {
                 placeholder="Enter player name"
                 className="w-full px-3 py-2 bg-surface-bg/60 outline-none border-b-2 border-transparent text-body-md text-surface-nav focus:border-brand-primary transition-colors rounded-t-[4px]"
               />
+            </div>
+
+            <div className="flex gap-6">
+              <div className="flex flex-col flex-1">
+                <label className="text-label-sm text-brand-primary font-bold tracking-[0.15em] uppercase mb-2">
+                  Age
+                </label>
+                <input
+                  type="number"
+                  value={formPlayer.age}
+                  onChange={(e) => handleChange("age", e.target.value)}
+                  placeholder="e.g. 22"
+                  className="w-full px-3 py-2 bg-surface-bg/60 outline-none border-b-2 border-transparent text-body-md text-surface-nav focus:border-brand-primary transition-colors rounded-t-[4px]"
+                />
+              </div>
+              <div className="flex flex-col flex-1">
+                <label className="text-label-sm text-brand-primary font-bold tracking-[0.15em] uppercase mb-2">
+                  Jersey No.
+                </label>
+                <input
+                  type="number"
+                  value={formPlayer.jersey_number}
+                  onChange={(e) =>
+                    handleChange("jersey_number", e.target.value)
+                  }
+                  placeholder="e.g. 10"
+                  className="w-full px-3 py-2 bg-surface-bg/60 outline-none border-b-2 border-transparent text-body-md text-surface-nav focus:border-brand-primary transition-colors rounded-t-[4px]"
+                />
+              </div>
             </div>
 
             <div className="flex gap-6">

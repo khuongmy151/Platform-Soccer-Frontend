@@ -1,15 +1,14 @@
-import { useDispatch, useSelector } from "react-redux";
 import { useSearchParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { teamService } from "../services/teamService";
 import { setTeams, updateTeam } from "../stores/features/teamSlice";
-import { useEffect, useMemo, useRef, useState } from "react";
+import validateForm from "../helpers/validateForm";
 import { toast } from "react-toastify";
 import { PiCoatHangerBold } from "react-icons/pi";
 import { IoClose, IoPersonAddSharp } from "react-icons/io5";
 import { FaUserMinus, FaUsers } from "react-icons/fa";
-import { createPlayer, uploadPlayerAvatar } from "../services/playerService";
 import FormPlayer from "./FormPlayer";
-import validateForm from "../helpers/validateForm";
 
 const UploadIcon = () => (
   <svg
@@ -27,12 +26,18 @@ const UploadIcon = () => (
   </svg>
 );
 
-const FormTeam = ({ ref }) => {
-  const [_, setSearchParams] = useSearchParams();
+const unwrapMembers = (response) => {
+  const data = response?.data ?? response;
+  const members = data?.data ?? data?.members ?? data?.items ?? data;
+  return Array.isArray(members) ? members : [];
+};
+
+const FormUpdateTeam = ({ ref }) => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const teamId = searchParams.get("teamId");
   const dispatch = useDispatch();
   const teams = useSelector((state) => state.teams);
-  const [searchParams] = useSearchParams();
-  const teamId = searchParams.get("teamId");
+
   const [formTeam, setFormTeam] = useState({
     id: "",
     logo_url: "",
@@ -41,7 +46,6 @@ const FormTeam = ({ ref }) => {
     country: "",
     description: "",
   });
-  const [isEdit, setIsEdit] = useState(false);
   const logoRef = useRef();
   const playerJerseyRef = useRef();
   const goalkeeperJerseyRef = useRef();
@@ -57,6 +61,15 @@ const FormTeam = ({ ref }) => {
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [removingId, setRemovingId] = useState(null);
   const [addingMembers, setAddingMembers] = useState(false);
+
+  //Hàm xóa query String trên URL
+  const deleteQueryString = () => {
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      if (params.has("teamId")) params.delete("teamId");
+      return params;
+    });
+  };
 
   // Logo preview handler
   const logoPreview = useMemo(() => {
@@ -80,7 +93,6 @@ const FormTeam = ({ ref }) => {
     if (teamId && teams?.items) {
       const foundTeam = teams.items.find((item) => item.id == teamId);
       if (foundTeam) {
-        setIsEdit(true);
         setFormTeam({
           id: foundTeam.id || "",
           logo_url: foundTeam.logo_url || null,
@@ -93,7 +105,6 @@ const FormTeam = ({ ref }) => {
         ref.current?.showModal();
       }
     } else {
-      setIsEdit(false);
       setFormTeam({
         id: "",
         logo_url: null,
@@ -107,104 +118,7 @@ const FormTeam = ({ ref }) => {
     }
   }, [teamId, teams?.items, ref]);
 
-  // Fetch members when switching to members tab
-  useEffect(() => {
-    if (activeTab === "members" && teamId) {
-      fetchMembers();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, teamId]);
-
-  const fetchMembers = async () => {
-    setLoadingMembers(true);
-    try {
-      const res = await teamService.getTeamMembers({
-        url: `/teams/${teamId}/members`,
-      });
-      const data = Array.isArray(res) ? res : res?.items || res?.data || [];
-      setMembers(data);
-    } catch (error) {
-      console.error("Error fetching members:", error);
-      setMembers([]);
-    } finally {
-      setLoadingMembers(false);
-    }
-  };
-
-  const handleOpenAddForm = () => {
-    formPlayerRef.current?.showModal();
-  };
-
-  const handleCreateNewMember = async (playerFormData) => {
-    setAddingMembers(true);
-    try {
-      let finalAvatarUrl = "";
-      if (playerFormData.avatar instanceof File) {
-        try {
-          const uploadRes = await uploadPlayerAvatar(playerFormData.avatar);
-          finalAvatarUrl = uploadRes?.url || "";
-        } catch {
-          // ignore upload error locally
-        }
-      } else {
-        finalAvatarUrl = playerFormData.avatar || "";
-      }
-
-      const payload = {
-        name: playerFormData.name,
-        height: playerFormData.height,
-        weight: playerFormData.weight,
-        preferredFoot: playerFormData.preferred_foot,
-        mainPosition: playerFormData.main_position,
-        avatarUrl: finalAvatarUrl,
-      };
-
-      // 1. Create player
-      let createdPlayer;
-      try {
-        createdPlayer = await createPlayer(payload);
-      } catch (err) {
-        toast.error("Failed to create new player in system");
-        throw err;
-      }
-
-      // 2. Add player to team
-      await teamService.addTeamMembers({
-        url: `/teams/${teamId}/members`,
-        data: { player_id: [createdPlayer?.id || createdPlayer?.data?.id] },
-      });
-
-      await fetchMembers();
-    } catch (error) {
-      console.error("Error creating and adding member:", error);
-    } finally {
-      setAddingMembers(false);
-    }
-  };
-
-  const handleRemoveMember = async (playerId) => {
-    setRemovingId(playerId);
-    try {
-      await teamService.removeTeamMember({
-        url: `/teams/${teamId}/members/${playerId}`,
-      });
-      await fetchMembers();
-    } catch (error) {
-      console.error("Error removing member:", error);
-      toast.error("Failed to remove member");
-    } finally {
-      setRemovingId(null);
-    }
-  };
-
-  const deleteQueryString = () => {
-    setSearchParams((prev) => {
-      const params = new URLSearchParams(prev);
-      if (params.has("teamId")) params.delete("teamId");
-      return params;
-    });
-  };
-
+  //Hàm Update team
   const handleUpdateTeam = async (e) => {
     e.preventDefault();
     const logoFile = logoRef.current.files[0];
@@ -283,6 +197,83 @@ const FormTeam = ({ ref }) => {
     }
   };
 
+  // Fetch members when switching to members tab
+  useEffect(() => {
+    if (activeTab === "members" && teamId) {
+      fetchMembers();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, teamId]);
+
+  const fetchMembers = async () => {
+    setLoadingMembers(true);
+    try {
+      const res = await teamService.getTeamMembers({
+        url: `/teams/${teamId}/members`,
+      });
+      const data = unwrapMembers(res);
+      setMembers(data);
+    } catch (error) {
+      console.error("Error fetching members:", error);
+      if (error?.response?.status === 404) {
+        setMembers([]);
+        return;
+      }
+      setMembers([]);
+    } finally {
+      setLoadingMembers(false);
+    }
+  };
+
+  const handleOpenAddForm = () => {
+    formPlayerRef.current?.showModal();
+  };
+
+  const handleCreateNewMember = async (playerFormData) => {
+    setAddingMembers(true);
+    try {
+      const formData = new FormData();
+      formData.append("full_name", playerFormData.name);
+      formData.append("age", playerFormData.age);
+      formData.append("height_cm", playerFormData.height);
+      formData.append("weight_kg", playerFormData.weight);
+      formData.append("preferred_foot", playerFormData.preferred_foot);
+      formData.append("main_position", playerFormData.main_position);
+      formData.append("jersey_number", playerFormData.jersey_number);
+      if (playerFormData.avatar instanceof File) {
+        formData.append("image", playerFormData.avatar);
+      } else if (playerFormData.avatar) {
+        formData.append("image_url", playerFormData.avatar);
+      }
+
+      await teamService.addTeamMembers({
+        url: `/teams/${teamId}/members`,
+        data: formData,
+      });
+
+      await fetchMembers();
+    } catch (error) {
+      console.error("Error creating and adding member:", error);
+    } finally {
+      setAddingMembers(false);
+    }
+  };
+
+  const handleRemoveMember = async (playerId) => {
+    setRemovingId(playerId);
+    try {
+      await teamService.removeTeamMember({
+        url: `/teams/${teamId}/members/${playerId}`,
+      });
+      await fetchMembers();
+    } catch (error) {
+      console.error("Error removing member:", error);
+      toast.error("Failed to remove member");
+    } finally {
+      setRemovingId(null);
+    }
+  };
+
   return (
     <>
       <dialog
@@ -293,7 +284,7 @@ const FormTeam = ({ ref }) => {
         <div className="sticky top-0 z-20 bg-surface-bg px-4 pt-4 pb-0 lg:px-6 lg:pt-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-headline-sm md:text-headline-md text-brand-primary font-bold italic uppercase">
-              {isEdit ? "Update Team" : "Create Team"}
+              Update team
             </h3>
             <button
               onClick={() => deleteQueryString()}
@@ -305,57 +296,56 @@ const FormTeam = ({ ref }) => {
           </div>
 
           {/* TAB NAVIGATION */}
-          {isEdit && (
-            <div className="flex gap-1 bg-surface-white rounded-xl p-1 shadow-sm">
-              <button
-                type="button"
-                onClick={() => setActiveTab("info")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-label-sm font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                  activeTab === "info"
-                    ? "bg-brand-primary text-white shadow-md"
-                    : "text-nav-muted hover:text-surface-nav hover:bg-surface-bg"
-                }`}
+
+          <div className="flex gap-1 bg-surface-white rounded-xl p-1 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setActiveTab("info")}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-label-sm font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                activeTab === "info"
+                  ? "bg-brand-primary text-white shadow-md"
+                  : "text-nav-muted hover:text-surface-nav hover:bg-surface-bg"
+              }`}
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              Team Info
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("members")}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-label-sm font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                activeTab === "members"
+                  ? "bg-brand-primary text-white shadow-md"
+                  : "text-nav-muted hover:text-surface-nav hover:bg-surface-bg"
+              }`}
+            >
+              <FaUsers className="w-4 h-4" />
+              Members
+              {members.length > 0 && (
+                <span
+                  className={`ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    activeTab === "members"
+                      ? "bg-white/20 text-white"
+                      : "bg-brand-primary/10 text-brand-primary"
+                  }`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                Team Info
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("members")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-label-sm font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                  activeTab === "members"
-                    ? "bg-brand-primary text-white shadow-md"
-                    : "text-nav-muted hover:text-surface-nav hover:bg-surface-bg"
-                }`}
-              >
-                <FaUsers className="w-4 h-4" />
-                Members
-                {members.length > 0 && (
-                  <span
-                    className={`ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                      activeTab === "members"
-                        ? "bg-white/20 text-white"
-                        : "bg-brand-primary/10 text-brand-primary"
-                    }`}
-                  >
-                    {members.length}
-                  </span>
-                )}
-              </button>
-            </div>
-          )}
+                  {members.length}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* SCROLLABLE CONTENT */}
@@ -589,33 +579,34 @@ const FormTeam = ({ ref }) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[500px] overflow-y-auto pr-1">
                       {members.map((member) => {
                         const playerId = member.id || member.player_id;
+                        const memberName =
+                          member.full_name || member.name || "Unknown";
+                        const memberAvatar =
+                          member.image_url ||
+                          member.avatar_url ||
+                          member.avatarUrl ||
+                          member.avatar;
                         return (
                           <div
                             key={playerId}
                             className="flex items-center gap-3 p-3 rounded-xl bg-surface-bg hover:bg-surface-bg/80 transition-all group"
                           >
                             <div className="w-11 h-11 rounded-lg overflow-hidden bg-surface-nav/10 flex-shrink-0 shadow-sm">
-                              {member.avatar_url ||
-                              member.avatarUrl ||
-                              member.avatar ? (
+                              {memberAvatar ? (
                                 <img
-                                  src={
-                                    member.avatar_url ||
-                                    member.avatarUrl ||
-                                    member.avatar
-                                  }
-                                  alt={member.name}
+                                  src={memberAvatar}
+                                  alt={memberName}
                                   className="w-full h-full object-cover"
                                 />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center text-surface-nav/40 text-label-sm font-bold">
-                                  {member.name?.charAt(0)?.toUpperCase() || "?"}
+                                  {memberName.charAt(0).toUpperCase()}
                                 </div>
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-body-sm font-bold text-surface-nav truncate">
-                                {member.name || "Unknown"}
+                                {memberName}
                               </p>
                               <p className="text-label-sm text-nav-muted">
                                 {member.main_position ||
@@ -657,4 +648,4 @@ const FormTeam = ({ ref }) => {
     </>
   );
 };
-export default FormTeam;
+export default FormUpdateTeam;

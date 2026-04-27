@@ -1,21 +1,8 @@
 import { Link } from "react-router-dom";
-import { FaEye, FaCircleNotch } from "react-icons/fa";
+import { FaEye } from "react-icons/fa";
 import { MdEdit, MdDelete } from "react-icons/md";
 
-const ListTeam = ({
-  data,
-  isLoading,
-  handleOpenFormDialog,
-  handleOpenConfirmDialog,
-}) => {
-  if (isLoading)
-    return (
-      <div className="flex gap-2 items-center w-[20%] mt-3 mx-auto">
-        <FaCircleNotch className="animate-spin" />
-        <p>Loading...</p>
-      </div>
-    );
-
+const ListTeam = ({ data, handleOpenFormDialog, handleOpenConfirmDialog }) => {
   return (
     <>
       <div className="w-[90%] mt-4 mx-auto pb-10">

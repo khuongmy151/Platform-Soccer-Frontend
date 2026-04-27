@@ -9,30 +9,27 @@ export const teamService = {
     return data;
   },
   getTeamById: async ({ url, setData }) => {
-    try {
-      const result = await axiosClient.get(`${url}`);
-      setData(result.data || null);
-      return result;
-    } catch {
-      console.log("Network error");
-    }
+    const result = await axiosClient.get(`${url}`);
+    setData(result.data || null);
+    return result;
   },
-  createTeam: async ({ url, data }) => {
-    const response = await axiosClient.post(`${url}`, data, {
+  deleteTeam: async ({ url }) => {
+    const response = await axiosClient.delete(`${url}`);
+    console.log(response);
+    toast.success(response?.message || "Delete successfully");
+  },
+  updateTeam: async ({ url, data }) => {
+    const response = await axiosClient.put(`${url}`, data, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     });
     console.log(response);
-    toast.success(response?.message);
+    toast.success(response?.message || "Update successfully");
   },
-  deleteTeam: async ({ url }) => {
-    const response = await axiosClient.delete(`${url}`);
-    console.log(response);
-    toast.success(response?.message);
-  },
-  updateTeam: async ({ url, data }) => {
-    const response = await axiosClient.put(`${url}`, data, {
+
+  createTeam: async ({ url, data }) => {
+    const response = await axiosClient.post(`${url}`, data, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -45,9 +42,21 @@ export const teamService = {
     const response = await axiosClient.get(`${url}`);
     return response;
   },
+  getTeamMemberById: async ({ url }) => {
+    const response = await axiosClient.get(`${url}`);
+    return response;
+  },
   // Add members to team
   addTeamMembers: async ({ url, data }) => {
-    const response = await axiosClient.post(`${url}`, data);
+    const config =
+      data instanceof FormData
+        ? {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        : undefined;
+    const response = await axiosClient.post(`${url}`, data, config);
     toast.success(response?.message || "Members added successfully");
     return response;
   },

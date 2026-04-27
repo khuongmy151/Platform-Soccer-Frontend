@@ -3,29 +3,29 @@ import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { teamService } from "../services/teamService";
 import { deleteTeam, setTeams } from "../stores/features/teamSlice";
+import { toast } from "react-toastify";
 import { IoFilter } from "react-icons/io5";
 import { IoIosAdd } from "react-icons/io";
-import { FaSearch } from "react-icons/fa";
+import { FaSearch, FaCircleNotch } from "react-icons/fa";
 import { players } from "../mock_data";
 import ListTeam from "../components/ListTeam";
-import FormTeam from "../components/FormTeam";
+import FormUpdateTeam from "../components/FormUpdateTeam";
 import ConfirmDialog from "../components/ConfirmDialog";
-import { toast } from "react-toastify";
 
 const TeamManagement = () => {
-  const dispatch = useDispatch();
-  const teams = useSelector((state) => state.teams);
-  const [teamWithId, setTeamWithId] = useState(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const params = new URLSearchParams(searchParams);
   const key = searchParams.get("key");
+  const dispatch = useDispatch();
+  const teams = useSelector((state) => state.teams);
+  const [teamById, setTeamById] = useState(null);
   const [inputValue, setInputValue] = useState(key || "");
   const [isLoading, setIsLoading] = useState(true);
   const formDialog = useRef();
   const confirmDialog = useRef();
 
-  // GetAllTeam
+  //Hàm lấy danh sách tất cả đội bóng của organizer
   useEffect(() => {
     const fetchGetAllTeam = async () => {
       try {
@@ -43,7 +43,7 @@ const TeamManagement = () => {
     fetchGetAllTeam();
   }, [dispatch]);
 
-  // Hiển thị list team theo điều kiện
+  //Hàm hiển thị list team theo điều kiện
   const displayTeams = useMemo(() => {
     if (key)
       return teams?.items?.filter((team) =>
@@ -74,19 +74,19 @@ const TeamManagement = () => {
 
   //Hàm mở hộp thoại xác nhận
   const handleOpenConfirmDialog = (id) => {
-    setTeamWithId(teams?.items?.find((value) => value.id == id));
+    setTeamById(teams?.items?.find((value) => value.id == id));
     confirmDialog.current.showModal();
   };
 
   //Hàm xóa team
   const handleDeleteTeam = async () => {
     try {
-      await teamService.deleteTeam({ url: `/teams/${teamWithId?.id}` });
+      await teamService.deleteTeam({ url: `/teams/${teamById?.id}` });
       await teamService.getAllTeam({ url: "/teams", dispatch, func: setTeams });
       confirmDialog.current.close();
     } catch (error) {
       console.error("Delete error:", error);
-      dispatch(deleteTeam(teamWithId?.id));
+      dispatch(deleteTeam(teamById?.id));
       toast.success("Server error, temporarily removed from Frontend");
       confirmDialog.current.close();
     }
@@ -157,14 +157,20 @@ const TeamManagement = () => {
           </button>
         </div>
         {/* LIST TEAM*/}
-        <ListTeam
-          data={displayTeams}
-          isLoading={isLoading}
-          handleOpenFormDialog={handleOpenFormDialog}
-          handleOpenConfirmDialog={handleOpenConfirmDialog}
-        />
+        {isLoading ? (
+          <div className="flex gap-2 items-center w-[20%] mt-3 mx-auto">
+            <FaCircleNotch className="animate-spin" />
+            <p>Loading...</p>
+          </div>
+        ) : (
+          <ListTeam
+            data={displayTeams}
+            handleOpenFormDialog={handleOpenFormDialog}
+            handleOpenConfirmDialog={handleOpenConfirmDialog}
+          />
+        )}
         {/* MODAL FORM */}
-        <FormTeam ref={formDialog} />
+        <FormUpdateTeam ref={formDialog} />
         <ConfirmDialog
           message="Are you sure you want to delete this team?"
           ref={confirmDialog}

@@ -1,10 +1,11 @@
-import { useNavigate, useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { teamService } from "../services/teamService";
-import { players as mockPlayers } from "../mock_data";
 import { MdGroup, MdSportsSoccer } from "react-icons/md";
-import { FaArrowLeft, FaTimes, FaUserCircle } from "react-icons/fa";
-import { GiTShirt } from "react-icons/gi";
+import { FaArrowLeft, FaUserCircle } from "react-icons/fa";
+import { FiPlus, FiTrash2 } from "react-icons/fi";
+import { toast } from "react-toastify";
+import FormPlayer from "../components/FormPlayer";
 
 const STATUS_STYLES = {
   FIT: "bg-emerald-100 text-emerald-700",
@@ -13,6 +14,48 @@ const STATUS_STYLES = {
 };
 
 const formatStatLabel = (key) => key.replaceAll("_", " ").toUpperCase();
+
+const unwrapData = (response) => {
+  const data = response?.data ?? response;
+  const members = data?.data ?? data?.members ?? data?.member ?? data;
+  return Array.isArray(members) ? members : [];
+};
+
+const normalizeMember = (member) => {
+  const player = member?.player || member;
+  return {
+    ...player,
+    ...member,
+    id: player?.id || member?.player_id || member?.playerId || member?.id,
+    name: player?.full_name || player?.name || member?.full_name || member?.name || "Unknown",
+    avatar:
+      player?.image_url ||
+      player?.avatar_url ||
+      player?.avatarUrl ||
+      player?.avatar ||
+      member?.image_url ||
+      member?.avatar_url ||
+      member?.avatarUrl ||
+      member?.avatar ||
+      "",
+    position:
+      player?.main_position ||
+      player?.mainPosition ||
+      player?.position ||
+      member?.main_position ||
+      member?.mainPosition ||
+      member?.position ||
+      "Unknown",
+    number:
+      player?.jersey_number ||
+      player?.number ||
+      member?.jersey_number ||
+      member?.number ||
+      member?.shirt_number ||
+      "-",
+    status: player?.status || member?.status || "ACTIVE",
+  };
+};
 
 const ImageWithFallback = ({
   src,
@@ -50,19 +93,95 @@ const ImageWithFallback = ({
 
 const TeamDetail = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { teamId } = useParams();
+  const isPublicRoute = location.pathname.startsWith("/public/");
   const [team, setTeam] = useState(null);
-  const playersList = mockPlayers;
+  const [playersList, setPlayersList] = useState([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
+  const [addingMember, setAddingMember] = useState(false);
+  const [deletingMemberId, setDeletingMemberId] = useState(null);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [hoverHint, setHoverHint] = useState({
     visible: false,
     x: 0,
     y: 0,
   });
+  const formPlayerRef = useRef();
+
+  const fetchMembers = useCallback(async () => {
+    setLoadingMembers(true);
+    try {
+      const response = await teamService.getTeamMembers({
+        url: `/teams/${teamId}/members`,
+      });
+      const data = unwrapData(response);
+      setPlayersList(Array.isArray(data) ? data.map(normalizeMember) : []);
+    } catch (error) {
+      console.error("Error fetching team members:", error);
+      if (error?.response?.status === 404) {
+        setPlayersList([]);
+        return;
+      }
+      toast.error("Failed to load team members");
+      setPlayersList([]);
+    } finally {
+      setLoadingMembers(false);
+    }
+  }, [teamId]);
 
   useEffect(() => {
     teamService.getTeamById({ url: `/teams/${teamId}`, setData: setTeam });
-  }, [teamId]);
+    fetchMembers();
+  }, [teamId, fetchMembers]);
+
+  const handleAddMember = async (playerFormData) => {
+    setAddingMember(true);
+    try {
+      const formData = new FormData();
+      formData.append("full_name", playerFormData.name);
+      formData.append("age", playerFormData.age);
+      formData.append("height_cm", playerFormData.height);
+      formData.append("weight_kg", playerFormData.weight);
+      formData.append("preferred_foot", playerFormData.preferred_foot);
+      formData.append("main_position", playerFormData.main_position);
+      formData.append("jersey_number", playerFormData.jersey_number);
+      if (playerFormData.avatar instanceof File) {
+        formData.append("image", playerFormData.avatar);
+      } else if (playerFormData.avatar) {
+        formData.append("image_url", playerFormData.avatar);
+      }
+
+      await teamService.addTeamMembers({
+        url: `/teams/${teamId}/members`,
+        data: formData,
+      });
+      await fetchMembers();
+    } catch (error) {
+      console.error("Error adding team member:", error);
+      toast.error("Failed to add team member");
+    } finally {
+      setAddingMember(false);
+    }
+  };
+
+  const handleDeleteMember = async (event, playerId) => {
+    event.stopPropagation();
+    if (!playerId) return;
+    setDeletingMemberId(playerId);
+    try {
+      await teamService.removeTeamMember({
+        url: `/teams/${teamId}/members/${playerId}`,
+      });
+      setSelectedPlayer((current) => (current?.id === playerId ? null : current));
+      await fetchMembers();
+    } catch (error) {
+      console.error("Error deleting team member:", error);
+      toast.error("Failed to delete team member");
+    } finally {
+      setDeletingMemberId(null);
+    }
+  };
 
   useEffect(() => {
     if (!selectedPlayer) return undefined;
@@ -138,15 +257,35 @@ const TeamDetail = () => {
                   PLAYERS
                 </p>
               </div>
+              {!isPublicRoute && (
+                <button
+                  type="button"
+                  onClick={() => formPlayerRef.current?.showModal()}
+                  disabled={addingMember}
+                  className="flex items-center gap-2 rounded-[8px] bg-brand-primary px-4 py-2 text-label-sm font-bold uppercase tracking-[0.12em] text-surface-white transition-transform hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <FiPlus className="h-4 w-4" />
+                  Add Member
+                </button>
+              )}
             </div>
             <div className="h-px bg-surface-bg my-6" />
+            {loadingMembers ? (
+              <div className="flex min-h-[220px] items-center justify-center rounded-[12px] bg-surface-bg text-body-lg font-bold text-nav-muted">
+                Loading members...
+              </div>
+            ) : playersList.length === 0 ? (
+              <div className="flex min-h-[220px] items-center justify-center rounded-[12px] bg-surface-bg text-body-lg font-bold text-nav-muted">
+                No members in this team yet
+              </div>
+            ) : (
             <ul className="flex flex-wrap gap-6">
               {playersList?.map((value, index) => {
                 return (
-                  <li key={index} className="w-[calc((100%-72px)/4)]">
+                  <li key={index} className="relative w-[calc((100%-72px)/4)]">
                     <button
                       type="button"
-                      onClick={() => setSelectedPlayer(value)}
+                      onClick={() => navigate(`members/${value.id}`)}
                       onMouseEnter={(event) =>
                         setHoverHint({
                           visible: true,
@@ -208,10 +347,24 @@ const TeamDetail = () => {
                       </div>
                       <div className="h-1 bg-cta-gradient" />
                     </button>
+                    {!isPublicRoute && (
+                      <button
+                        type="button"
+                        onClick={(event) =>
+                          handleDeleteMember(event, value.id)
+                        }
+                        disabled={deletingMemberId === value.id}
+                        aria-label={`Remove ${value.name}`}
+                        className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-surface-white/90 text-brand-primary shadow-md transition-transform hover:scale-110 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <FiTrash2 className="h-4 w-4" />
+                      </button>
+                    )}
                   </li>
                 );
               })}
             </ul>
+            )}
             <div className="flex justify-end mt-4">
               <div className="text-right">
                 <p className="text-label-sm text-nav-muted font-semibold tracking-[0.15em] uppercase">
@@ -335,6 +488,9 @@ const TeamDetail = () => {
             </div>
           </div>
         </div>
+      )}
+      {!isPublicRoute && (
+        <FormPlayer ref={formPlayerRef} mode="add" onSubmit={handleAddMember} />
       )}
     </>
   );

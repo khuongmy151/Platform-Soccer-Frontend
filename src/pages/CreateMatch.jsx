@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import matchService from "../services/matchService";
 import { axiosClient } from "../services/axiosClient";
+import { toast } from "react-toastify";
 
 const InputField = ({
   label,
@@ -85,8 +86,7 @@ const InputField = ({
 
 export default function CreateMatch() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const tournamentId = searchParams.get("tournamentId");
+  const { tournamentId } = useParams();
 
   // --- THIẾT LẬP STATE LƯU TRỮ DỮ LIỆU ĐỂ GỬI API ---
   const [teamA, setTeamA] = useState("");
@@ -172,7 +172,7 @@ export default function CreateMatch() {
 
       const newMatchData = {
         // Chỉ gửi các field có trong DB schema:
-        tournamentId: tournamentId ? parseInt(tournamentId) : 1,
+        tournamentId: tournamentId,
         homeTeamId: teamA,
         awayTeamId: teamB,
         startTime: isoWithTimezone,
@@ -185,11 +185,11 @@ export default function CreateMatch() {
         data: newMatchData,
       });
       console.log("Create Match Response:", response);
-      alert("Match created successfully!");
-      navigate("/matches"); // Quay về danh sách sau khi tạo xong
+      toast.success("Match created successfully!");
+      navigate(-1);
     } catch (error) {
       console.error("Error creating match:", error);
-      alert(
+      toast.error(
         "Backend connection error. Please ensure the server is running and not blocked by CORS!"
       );
     }
