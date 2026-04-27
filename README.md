@@ -17,9 +17,9 @@ If you are developing a production application, we recommend using TypeScript wi
 
 # Platform-Soccer-Frontend
 
-# HƯỚNG DẪN TEST FRONTEND BẰNG PLAYWRIGHT
+## HƯỚNG DẪN TEST FRONTEND BẰNG PLAYWRIGHT
 
-## Mục tiêu hướng dẫn
+### Mục tiêu hướng dẫn
 
 - Chạy project Frontend trên máy local.
 - Chạy test tự động bằng Playwright.
@@ -32,81 +32,51 @@ If you are developing a production application, we recommend using TypeScript wi
 
 ## TRƯỜNG HỢP CHƯA CÓ PROJECT
 
-1. **Clone project** — Mở terminal (Git Bash / CMD), gõ:
-   ```bash
-   git clone https://github.com/DPSgion/Platform-Soccer-Frontend.git
-   ```
+1. Clone project
 
-2. **Vào thư mục project**
-   ```bash
-   cd Platform-Soccer-Frontend
-   ```
+   Mở terminal (Git Bash / CMD), gõ:
+    - git clone https://github.com/DPSgion/Platform-Soccer-Frontend.git
+
+2. Vào thư mục project
+    - cd Platform-Soccer-Frontend
 
 ---
 
 ## TRƯỜNG HỢP ĐÃ CÓ PROJECT
 
-1. **Lấy code nhánh Tester**
-   ```bash
-   git branch -a
-   ```
-   > Tìm nhánh: `remotes/origin/feat/tester`
+1. Lấy code nhánh Tester
+    - Gõ: git branch -a
+        - Tìm nhánh: remotes/origin/feat/tester
+    - Tạo và chuyển sang nhánh:
+        - Gõ: git checkout -b feat/tester origin/feat/tester
+    - Kiểm tra file: dir
 
-   Tạo và chuyển sang nhánh:
-   ```bash
-   git checkout -b feat/tester origin/feat/tester
-   ```
+2. Cài đặt thư viện
+    - Cài đặt dependencies
+        - npm install
+    - Cài Playwright (nếu chưa có)
+        - npx playwright install
+        - npm install --save-dev jest @types/jest ts-jest typescript
+        - npm install --save-dev @playwright/test
+        - yarn
 
-   Kiểm tra file:
-   ```bash
-   dir
-   ```
+3. Chạy project Frontend
 
-2. **Cài đặt thư viện**
-
-   Cài đặt dependencies:
-   ```bash
-   npm install
-   ```
-
-   Cài Playwright (nếu chưa có):
-   ```bash
-   npx playwright install
-   npm install --save-dev jest @types/jest ts-jest typescript
-   npm install --save-dev @playwright/test
-   yarn
-   ```
-
-3. **Chạy project Frontend**
-   ```bash
    npm run dev
-   ```
-   Khi chạy thành công, terminal sẽ hiển thị địa chỉ, ví dụ:
-   ```
-   Local: http://localhost:5173
-   ```
 
-4. **Chạy test tự động bằng Playwright**
+   Khi chạy thành công, terminal sẽ hiển thị địa chỉ, ví dụ: Local: http://localhost:5173
 
-   Chạy một file test trên 1 trình duyệt nhất định:
-   ```bash
-   npx playwright test dashboardPublic.spec.ts --project=chromium
-   ```
+4. Chạy test tự động bằng Playwright
+    - Chạy một file test trên 1 trình duyệt nhất định
+        - Ví dụ: npx playwright test dashboardPublic.spec.ts --project=chromium
+    - Chạy toàn bộ test
+        - npx playwright test
+    - Xem kết quả test
+        - npx playwright show-report
 
-   Chạy toàn bộ test:
-   ```bash
-   npx playwright test
-   ```
+5. Chạy test trên giao diện (UI Mode)
 
-   Xem kết quả test:
-   ```bash
-   npx playwright show-report
-   ```
-
-5. **Chạy test trên giao diện (UI Mode)**
-   ```bash
    npx playwright test --ui
-   ```
 
    Chức năng của UI Mode:
     - Xem quá trình chạy test trực tiếp.
@@ -116,8 +86,8 @@ If you are developing a production application, we recommend using TypeScript wi
 
 ## Quy trình
 
-1. Chạy Frontend trên local.
-2. Chạy Playwright test.
-3. Fix lỗi nếu test fail.
-4. Kiểm tra lại kết quả test.
-5. Push code.
+- Chạy Frontend trên local.
+- Chạy Playwright test.
+- Fix lỗi nếu test fail.
+- Kiểm tra lại kết quả test.
+- Push code.
