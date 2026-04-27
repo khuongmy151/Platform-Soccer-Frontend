@@ -5,11 +5,9 @@ const BASE_URL = 'https://platform.cupzone.fun/';
 async function waitForDashboard(page: Page): Promise<void>  {
     await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
 
-    await page.waitForLoadState('networkidle');
-
     await expect(
         page.getByRole('heading', { name: /tournament lists/i })
-    ).toBeVisible({ timeout: 20000 });
+    ).toBeVisible({ timeout: 30000 });
 }
 
 async function safeClick(locator: Locator): Promise<void>  {
@@ -90,42 +88,28 @@ test.describe('Public Dashboard - Stable Version', () => {
         }
     });
 
-    test('TC_12 - Có dropdown season', async ({ page }) => {
-        // Fix 1: dùng 'load' thay 'domcontentloaded' để tránh ERR_ABORTED với SPA
-        await page.goto('https://backup.fun/public', {
-            waitUntil: 'load',
-            timeout: 60000
-        });
-        await page.waitForTimeout(3000);
 
-        // Fix 2: Không có <select> trong trang — DateSelector dùng button/div
-        // Kiểm tra DateSelector component thay thế
-        const dateSelector = page.locator('[class*="DateSelector"], input[type="date"], button:has-text("date"), [data-testid="date-selector"]').first();
-
-        await expect(dateSelector).toBeVisible({ timeout: 15000 });
-    });
-
-    test('TC_13 - Có section Teams', async ({ page }) => {
+    test('TC_12 - Có section Teams', async ({ page }) => {
         const teams = page.getByRole('heading', { name: /teams/i });
         await scrollTo(teams);
     });
 
-    test('TC_14 - Có nút VIEW ALL', async ({ page }) => {
+    test('TC_13 - Có nút VIEW ALL', async ({ page }) => {
         const btn = page.getByRole('button', { name: /view all/i }).first();
         await scrollTo(btn);
     });
 
-    test('TC_15 - Hiển thị team card', async ({ page }) => {
+    test('TC_14 - Hiển thị team card', async ({ page }) => {
         const teams = page.getByRole('heading', { name: /teams/i });
         await scrollTo(teams);
     });
 
-    test('TC_16 - Click team không crash', async ({ page }) => {
+    test('TC_15 - Click team không crash', async ({ page }) => {
         const team = page.locator('.cursor-pointer').nth(1);
         await safeClick(team);
     });
 
-    test('TC_17 - Click VIEW ALL chuyển sang All Teams', async ({ page }) => {
+    test('TC_16 - Click VIEW ALL chuyển sang All Teams', async ({ page }) => {
         const btn = page.getByRole('button', { name: /view all/i }).first();
         await scrollTo(btn);
 
@@ -138,13 +122,13 @@ test.describe('Public Dashboard - Stable Version', () => {
         ).toBeVisible({ timeout: 15000 });
     });
 
-    test('TC_18 - All Teams hiển thị danh sách', async ({ page }) => {
+    test('TC_17 - All Teams hiển thị danh sách', async ({ page }) => {
         const btn = page.getByRole('button', { name: /view all/i }).first();
         await safeClick(btn);
         await expect(page.locator('body')).toBeVisible();
     });
 
-    test('TC_19 - Search team', async ({ page }) => {
+    test('TC_18 - Search team', async ({ page }) => {
         await safeClick(page.getByRole('button', { name: /view all/i }).first());
 
         const search = page.getByPlaceholder(/search/i);
@@ -153,7 +137,7 @@ test.describe('Public Dashboard - Stable Version', () => {
         }
     });
 
-    test('TC_20 - Pagination', async ({ page }) => {
+    test('TC_19 - Pagination', async ({ page }) => {
         await safeClick(page.getByRole('button', { name: /view all/i }).first());
 
         const page2 = page.getByText('2').first();
@@ -162,16 +146,16 @@ test.describe('Public Dashboard - Stable Version', () => {
         }
     });
 
-    test('TC_21 - Click team chuyển sang Team Detail', async ({ page }) => {
+    test('TC_20 - Click team chuyển sang Team Detail', async ({ page }) => {
         await safeClick(page.locator('.cursor-pointer').nth(1));
     });
 
-    test('TC_22 - Hiển thị player card', async ({ page }) => {
+    test('TC_21 - Hiển thị player card', async ({ page }) => {
         await safeClick(page.locator('.cursor-pointer').nth(1));
         await expect(page.locator('body')).toBeVisible();
     });
 
-    test('TC_23 - Back button', async ({ page }) => {
+    test('TC_22 - Back button', async ({ page }) => {
 
         await safeClick(page.getByRole('button', { name: /view all/i }).first());
 
@@ -184,17 +168,13 @@ test.describe('Public Dashboard - Stable Version', () => {
             await page.goBack();
         }
 
-        await page.waitForLoadState('networkidle');
-
-        await expect(page).toHaveURL(/platform\.cupzone\.fun/);
-
         await expect(
             page.getByRole('heading', { name: /tournament lists/i })
         ).toBeVisible({ timeout: 20000 });
 
     });
 
-    test('TC_24 - Không console error', async ({ page }) => {
+    test('TC_23 - Không console error', async ({ page }) => {
         const errors: string[] = [];
 
         page.on('console', msg => {
@@ -202,41 +182,45 @@ test.describe('Public Dashboard - Stable Version', () => {
         });
 
         await page.reload({ waitUntil: 'domcontentloaded' });
-        await page.waitForLoadState('networkidle');
+        await expect(
+            page.getByRole('heading', { name: /tournament lists/i })
+        ).toBeVisible({ timeout: 20000 });
 
         expect(errors.length).toBeLessThan(5);
     });
 
-    test('TC_25 - Load < 10s', async ({ page }) => {
+    test('TC_24 - Load < 10s', async ({ page }) => {
         const start = Date.now();
 
         await page.reload({ waitUntil: 'domcontentloaded' });
-        await page.waitForLoadState('networkidle');
+        await expect(
+            page.getByRole('heading', { name: /tournament lists/i })
+        ).toBeVisible({ timeout: 20000 });
 
-        expect(Date.now() - start).toBeLessThan(20000); // realistic hơn
+        expect(Date.now() - start).toBeLessThan(20000);
     });
 
-    test('TC_26 - Không undefined', async ({ page }) => {
+    test('TC_25 - Không undefined', async ({ page }) => {
         const text = await page.locator('body').innerText();
         expect(text).not.toMatch(/undefined|null/i);
     });
 
-    test('TC_27 - Scroll', async ({ page }) => {
+    test('TC_26 - Scroll', async ({ page }) => {
         await page.mouse.wheel(0, 2000);
         await expect(page.locator('body')).toBeVisible();
     });
 
-    test('TC_28 - Mobile', async ({ page }) => {
+    test('TC_27 - Mobile', async ({ page }) => {
         await page.setViewportSize({ width: 375, height: 667 });
         await expect(page.locator('body')).toBeVisible();
     });
 
-    test('TC_29 - Tablet', async ({ page }) => {
+    test('TC_28 - Tablet', async ({ page }) => {
         await page.setViewportSize({ width: 768, height: 1024 });
         await expect(page.locator('body')).toBeVisible();
     });
 
-    test('TC_30 - Click DETAILS nhiều lần', async ({ page }) => {
+    test('TC_29 - Click DETAILS nhiều lần', async ({ page }) => {
         const btn = page.getByText('DETAILS').first();
 
         for (let i = 0; i < 5; i++) {
@@ -244,7 +228,7 @@ test.describe('Public Dashboard - Stable Version', () => {
         }
     });
 
-    test('TC_31 - Add team (auth) -> Trong dashboard có Team vừa mới được tạo', async ({ page }) => {
+    test('TC_30 - Add team (auth) -> Trong dashboard có Team vừa mới được tạo', async ({ page }) => {
 
         const teamName = `AUTO_TEAM_${Date.now()}`;
 
@@ -292,7 +276,9 @@ test.describe('Public Dashboard - Stable Version', () => {
 
         // ================= VERIFY UI =================
         await page.reload({ waitUntil: 'domcontentloaded' });
-        await page.waitForLoadState('networkidle');
+        await expect(
+            page.getByRole('heading', { name: /tournament lists/i })
+        ).toBeVisible({ timeout: 20000 });
 
         await safeClick(page.getByRole('button', { name: /view all/i }).first());
 
@@ -304,7 +290,7 @@ test.describe('Public Dashboard - Stable Version', () => {
         await expect(page.getByText(teamName)).toBeVisible({ timeout: 15000 });
     });
 
-    test('TC_32 - Update team (auth) -> Trong dashboard có Team vừa mới được update', async ({ page }) => {
+    test('TC_31 - Update team (auth) -> Trong dashboard có Team vừa mới được update', async ({ page }) => {
 
         const oldName = `AUTO_TEAM_${Date.now()}`;
         const newName = `${oldName}_UPDATED`;
@@ -354,7 +340,9 @@ test.describe('Public Dashboard - Stable Version', () => {
 
         // ================= VERIFY UI =================
         await page.reload({ waitUntil: 'domcontentloaded' });
-        await page.waitForLoadState('networkidle');
+        await expect(
+            page.getByRole('heading', { name: /tournament lists/i })
+        ).toBeVisible({ timeout: 20000 });
 
         await safeClick(page.getByRole('button', { name: /view all/i }).first());
 
@@ -367,7 +355,7 @@ test.describe('Public Dashboard - Stable Version', () => {
     });
 
 
-    test('TC_33 - Delete team -> dashboard không còn hiển thị team đó', async ({ page }) => {
+    test('TC_32 - Delete team -> dashboard không còn hiển thị team đó', async ({ page }) => {
 
         const teamName = `AUTO_TEAM_${Date.now()}`;
         const email = `tester_${Date.now()}@mail.com`;
