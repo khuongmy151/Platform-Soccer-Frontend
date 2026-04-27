@@ -171,12 +171,12 @@ export default function CreateMatch() {
         pad(Math.abs(offset) % 60);
 
       const newMatchData = {
-        tournamentId: tournamentId,
-        homeTeamId: teamA,
-        awayTeamId: teamB,
-        startTime: isoWithTimezone,
-        stadium: arena,        // Sửa lại cho chuẩn DB (stadium)
-        matchRound: matchTitle // Sửa lại cho chuẩn DB (matchRound)
+        tournament_id: tournamentId,
+        home_team_id: teamA,
+        away_team_id: teamB,
+        start_time: isoWithTimezone,
+        stadium: arena,
+        match_round: matchTitle
       };
 
       const response = await matchService.createMatch({
