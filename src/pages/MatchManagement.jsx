@@ -505,7 +505,7 @@ export default function MatchManagement() {
     try {
       await matchService.updateMatchStatus({
         url: `/matches/${matchId}/status`,
-        data: { status: "FIRST_HALF" },
+        data: { status: "LIVE" },
       });
       // Tự động reload lại danh sách sau khi start
       matchService.getAllMatches({
