@@ -171,13 +171,12 @@ export default function CreateMatch() {
         pad(Math.abs(offset) % 60);
 
       const newMatchData = {
-        // Chỉ gửi các field có trong DB schema:
         tournamentId: tournamentId,
         homeTeamId: teamA,
         awayTeamId: teamB,
         startTime: isoWithTimezone,
-        matchRound: arena,
-        status: "SCHEDULED",
+        stadium: arena,        // Sửa lại cho chuẩn DB (stadium)
+        matchRound: matchTitle // Sửa lại cho chuẩn DB (matchRound)
       };
 
       const response = await matchService.createMatch({
@@ -189,9 +188,8 @@ export default function CreateMatch() {
       navigate(-1);
     } catch (error) {
       console.error("Error creating match:", error);
-      toast.error(
-        "Backend connection error. Please ensure the server is running and not blocked by CORS!"
-      );
+      const errorMsg = error.response?.data?.message || "Lỗi tạo trận đấu từ Server!";
+      toast.error(`Tạo thất bại: ${errorMsg}`);
     }
   };
 
