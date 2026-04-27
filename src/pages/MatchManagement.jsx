@@ -454,6 +454,37 @@ const btnDisabled = {
   opacity: 0.8,
 };
 
+/* ───────────────── Normalize BE → FE data ───────────────── */
+function normalizeMatch(raw) {
+  if (raw.homeTeam) return raw; // Nếu đã có homeTeam thì không cần chuyển đổi
+  
+  let status = "SCHEDULED";
+  if (Number(raw.is_cancelled) === 1 || raw.is_cancelled === true) {
+    status = "CANCELLED";
+  } else if (Number(raw.is_active) === 1 || raw.is_active === true) {
+    status = "FIRST_HALF"; // Đang thi đấu
+  } else if (raw.ended_at) {
+    status = "FINISHED";
+  }
+
+  return {
+    ...raw,
+    status,
+    homeTeam: {
+      id: raw.home_team_id,
+      name: raw.home_team_name || "TEAM A",
+      logoUrl: raw.home_team_logo,
+    },
+    awayTeam: {
+      id: raw.away_team_id,
+      name: raw.away_team_name || "TEAM B",
+      logoUrl: raw.away_team_logo,
+    },
+    startTime: raw.start_time || raw.startTime,
+    arena: raw.stadium || raw.arena || "",
+  };
+}
+
 /* ─────────────────────────────── Page ─────────────────────────────── */
 
 export default function MatchManagement() {
@@ -478,7 +509,7 @@ export default function MatchManagement() {
       });
       // Tự động reload lại danh sách sau khi start
       matchService.getAllMatches({
-        url: "/matches",
+        url: `/matches?tournament_id=${tournamentId}`,
         dispatch,
         func: setMatches,
       });
@@ -492,7 +523,7 @@ export default function MatchManagement() {
   };
 
   // Hiển thị matches từ API, nếu trống thì không hiển thị gì (đã loại bỏ mockup)
-  const displayMatches = [...matches].reverse();
+  const displayMatches = [...matches].reverse().map(normalizeMatch);
 
   return (
     <div
@@ -542,16 +573,23 @@ export default function MatchManagement() {
           gap: 24,
         }}
       >
-        {displayMatches.map((m) => (
-          <MatchCard
-            key={m.id}
-            match={m}
-            onStart={handleStartMatch}
-            onCancel={handleCancelMatch}
-            onUpdate={(id) => navigate(`/match/${id}/update`)}
-            onView={(id) => navigate(`/match/${id}`)}
-          />
-        ))}
+        {displayMatches.length === 0 ? (
+          <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "60px 20px", color: "#6b7280", background: "#f9fafb", borderRadius: 24, border: "2px dashed #e5e7eb" }}>
+            <p style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Chưa có trận đấu nào!</p>
+            <p style={{ fontSize: 13, marginTop: 8 }}>Vui lòng bấm nút CREATE MATCH để tạo trận đấu đầu tiên cho giải này.</p>
+          </div>
+        ) : (
+          displayMatches.map((m) => (
+            <MatchCard
+              key={m.id}
+              match={m}
+              onStart={handleStartMatch}
+              onCancel={handleCancelMatch}
+              onUpdate={(id) => navigate(`/match/${id}/update`)}
+              onView={(id) => navigate(`/match/${id}`)}
+            />
+          ))
+        )}
       </div>
 
       {displayMatches.length > 6 && (
