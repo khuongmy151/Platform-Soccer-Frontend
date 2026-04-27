@@ -71,7 +71,7 @@ function Hero({ home, away, status }) {
       <div style={{ position: "relative", zIndex: 1, height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, padding: "0 32px" }}>
         {/* Status badge */}
         <span style={{ background: "rgba(255,255,255,0.18)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.25)", color: "#fff", fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", padding: "4px 14px", borderRadius: 99 }}>
-          FT (KẾT THÚC)
+          {status}
         </span>
 
         {/* Teams + Score row */}
