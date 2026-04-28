@@ -1,4 +1,5 @@
 import axios from "axios";
+import { toast } from "react-toastify";
 // File cấu hình axios dùng chung cho toàn bộ dự án
 export const axiosClient = axios.create({
   baseURL: "https://backend.cupzone.fun/",
@@ -23,7 +24,7 @@ axiosClient.interceptors.response.use(
     return response.data;
   },
   (error) => {
-    // Các status lỗi khác nhau sẽ xử lý sau
+    toast.error(error.response.data.message);
     return Promise.reject(error);
   }
 );
