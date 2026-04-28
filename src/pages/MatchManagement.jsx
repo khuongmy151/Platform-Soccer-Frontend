@@ -442,20 +442,7 @@ const btnUpdate = {
   color: "#fff",
   background: "#1f2937",
 };
-const btnDisabled = {
-  flex: 1,
-  padding: "12px 0",
-  borderRadius: 12,
-  border: "1.5px solid #e5e7eb",
-  cursor: "not-allowed",
-  fontWeight: 800,
-  fontSize: 10,
-  letterSpacing: "0.1em",
-  textTransform: "uppercase",
-  color: "#6b7280",
-  background: "#f9fafb",
-  opacity: 0.8,
-};
+
 
 /* ───────────────── Normalize BE → FE data ───────────────── */
 function normalizeMatch(raw) {
