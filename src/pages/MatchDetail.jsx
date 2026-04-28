@@ -34,85 +34,6 @@ const StatBlock = ({ label, value, color = "#1f2937" }) => (
   </div>
 );
 
-const CardStatRow = ({ team1Val, team2Val, label, iconBg }) => (
-  <div
-    style={{
-      background: "#ffffff",
-      borderRadius: 24,
-      padding: "24px 32px",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      flex: 1,
-      boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
-      gap: 20,
-    }}
-  >
-    <div style={{ textAlign: "center" }}>
-      <span style={{ fontSize: 24, fontWeight: 900, color: "#1f2937" }}>
-        {team1Val}
-      </span>
-      <p
-        style={{
-          fontSize: 9,
-          fontWeight: 700,
-          color: "#d1d5db",
-          margin: 0,
-          marginTop: 4,
-        }}
-      >
-        TEAM 1
-      </p>
-    </div>
-
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 4,
-      }}
-    >
-      <div
-        style={{
-          width: 32,
-          height: 44,
-          borderRadius: 4,
-          background: iconBg,
-          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-        }}
-      />
-      <span
-        style={{
-          fontSize: 9,
-          fontWeight: 900,
-          color: "#1f2937",
-          letterSpacing: "0.05em",
-        }}
-      >
-        {label}
-      </span>
-    </div>
-
-    <div style={{ textAlign: "center" }}>
-      <span style={{ fontSize: 24, fontWeight: 900, color: "#1f2937" }}>
-        {team2Val}
-      </span>
-      <p
-        style={{
-          fontSize: 9,
-          fontWeight: 700,
-          color: "#d1d5db",
-          margin: 0,
-          marginTop: 4,
-        }}
-      >
-        TEAM 2
-      </p>
-    </div>
-  </div>
-);
-
 /* ─────────────────────────────── Main Page ─────────────────────────────── */
 
 export default function MatchList() {
@@ -353,53 +274,6 @@ export default function MatchList() {
               {matchData.arena}
             </span>
           </div>
-        </div>
-      </div>
-
-      {/* ── Cards Section ── */}
-      <div style={{ marginBottom: 40 }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            marginBottom: 20,
-          }}
-        >
-          <div
-            style={{
-              width: 4,
-              height: 24,
-              background: "#c8102e",
-              borderRadius: 4,
-            }}
-          />
-          <h2
-            style={{
-              fontSize: 18,
-              fontWeight: 900,
-              color: "#1f2937",
-              margin: 0,
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-            }}
-          >
-            Thẻ
-          </h2>
-        </div>
-        <div style={{ display: "flex", gap: 24 }}>
-          <CardStatRow
-            label="YELLOW"
-            iconBg="#ffff00"
-            team1Val={matchData.yellowHome}
-            team2Val={matchData.yellowAway}
-          />
-          <CardStatRow
-            label="RED"
-            iconBg="#ff0000"
-            team1Val={matchData.redHome}
-            team2Val={matchData.redAway}
-          />
         </div>
       </div>
 
