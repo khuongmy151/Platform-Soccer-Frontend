@@ -10,6 +10,13 @@ export const matchSlice = createSlice({
     setMatches: (state, action) => {
       state.items = action.payload;
     },
+    startMatch: (state, action) => {
+      const matchId = action.payload;
+      const match = state.items.find((m) => m.id === matchId);
+      if (match) {
+        match._userStarted = true;
+      }
+    },
   },
 });
-export const { setMatches } = matchSlice.actions;
+export const { setMatches, startMatch } = matchSlice.actions;

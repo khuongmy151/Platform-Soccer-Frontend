@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import matchService from "../services/matchService";
-import { setMatches } from "../stores/features/matchSlice";
+import { setMatches, startMatch } from "../stores/features/matchSlice";
 
 /* ─────────────────────────────── helpers ─────────────────────────────── */
 
@@ -449,26 +449,19 @@ function normalizeMatch(raw) {
   if (raw.homeTeam) return raw; // Nếu đã có homeTeam thì không cần chuyển đổi
 
   // Debug: In ra dữ liệu thô từ BE để kiểm tra
-  console.log("[normalizeMatch] raw data:", { id: raw.id, is_active: raw.is_active, is_cancelled: raw.is_cancelled, ended_at: raw.ended_at, home_score: raw.home_score });
-  
   let status = "SCHEDULED";
-  const now = new Date();
-  const startTime = raw.start_time ? new Date(raw.start_time) : null;
-  const matchAlreadyStarted = startTime ? startTime <= now : true;
-
+  
   if (Number(raw.is_cancelled) === 1 || raw.is_cancelled === true) {
     status = "CANCELLED";
   } else if (raw.ended_at) {
-    // Có ended_at → đã kết thúc chắc chắn
     status = "FINISHED";
-  } else if ((Number(raw.is_active) === 1 || raw.is_active === true) && matchAlreadyStarted) {
-    // is_active=1 VÀ đã qua giờ bắt đầu → đang thi đấu thật
+  } else if (Number(raw.is_active) === 0 && raw.home_score > 0) {
+    status = "FINISHED";
+  } else if (raw._userStarted) {
+    // User đã bấm START MATCH trong phiên này → LIVE
     status = "LIVE";
-  } else if (!raw.ended_at && Number(raw.is_active) === 0 && raw.home_score > 0) {
-    // Có bàn thắng nhưng is_active=0 và chưa có ended_at → cũng FINISHED
-    status = "FINISHED";
   }
-  // Còn lại (kể cả is_active=1 mà chưa đến giờ) → giữ SCHEDULED
+  // Mặc định: SCHEDULED (bỏ qua is_active=1 từ BE vì nó luôn là 1)
 
   return {
     ...raw,
@@ -506,18 +499,16 @@ export default function MatchManagement() {
 
   const handleStartMatch = async (matchId) => {
     try {
+      // Gọi API để BE ghi nhận (dù is_active đã = 1)
       await matchService.updateMatchStatus({
         url: `/matches/${matchId}/status`,
         data: { status: "LIVE" },
       });
-      // Tự động reload lại danh sách sau khi start
-      matchService.getAllMatches({
-        url: `/matches?tournament_id=${tournamentId}`,
-        dispatch,
-        func: setMatches,
-      });
+      // Cập nhật local Redux state → card chuyển sang LIVE ngay lập tức
+      dispatch(startMatch(matchId));
     } catch (err) {
       console.error(err);
+      alert("Lỗi khi bắt đầu trận đấu!");
     }
   };
 
