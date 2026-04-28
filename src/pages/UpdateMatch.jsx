@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import matchService from "../services/matchService";
 
 /* ─── SHARED UI COMPONENTS (Match) ────────────────────────────── */
-function TeamLogo({ letter, bgColor = "#1a1a2e", size = 80 }) {
+function TeamLogo({ letter, bgColor = "#1a1a2e", size = 80, logoUrl }) {
   return (
     <div style={{ width: size, height: size }} className="relative mx-auto">
       <div
@@ -13,34 +13,36 @@ function TeamLogo({ letter, bgColor = "#1a1a2e", size = 80 }) {
           boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
         }}
       />
-      <div
-        className="absolute inset-1.5 rounded-full flex items-center justify-center"
-        style={{ background: bgColor }}
-      >
-        <span
-          className="text-white font-black text-2xl"
-          style={{ fontSize: size * 0.3 }}
+      {logoUrl ? (
+        <img
+          src={logoUrl}
+          alt="logo"
+          className="absolute inset-1.5 rounded-full object-cover"
+          style={{ width: size - 12, height: size - 12 }}
+        />
+      ) : (
+        <div
+          className="absolute inset-1.5 rounded-full flex items-center justify-center"
+          style={{ background: bgColor }}
         >
-          {letter}
-        </span>
-      </div>
+          <span
+            className="text-white font-black text-2xl"
+            style={{ fontSize: size * 0.3 }}
+          >
+            {letter}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
 
-function Stepper({ value, onChange, min = 0 }) {
+function Stepper({ value, onChange }) {
   return (
     <div
       className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3"
       style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}
     >
-      <button
-        onClick={() => onChange(Math.max(min, value - 1))}
-        className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-lg transition-colors active:scale-95"
-        style={{ lineHeight: 1 }}
-      >
-        −
-      </button>
       <span className="text-5xl font-black text-gray-900 min-w-[2ch] text-center leading-none">
         {value}
       </span>
@@ -55,12 +57,7 @@ function Stepper({ value, onChange, min = 0 }) {
   );
 }
 
-
-function TeamCard({
-  team,
-  score,
-  onScore,
-}) {
+function TeamCard({ team, score, onScore }) {
   return (
     <div
       className="flex-1 rounded-3xl overflow-hidden"
@@ -72,7 +69,7 @@ function TeamCard({
       }}
     >
       <div className="px-6 pt-6 pb-6 flex flex-col items-center gap-3">
-        <TeamLogo letter={team.letter} bgColor={team.color} size={72} />
+        <TeamLogo letter={team.letter} bgColor={team.color} size={72} logoUrl={team.logoUrl} />
         <h2 className="font-black text-xl tracking-wider text-gray-900 text-center">
           {team.name}
         </h2>
@@ -103,10 +100,15 @@ export default function MatchPage() {
 
   const [finished, setFinished] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // NOTE: Thay đổi các giá trị khởi tạo này thành data lấy từ API
-  const [homeScore, setHomeScore] = useState(2);
-  const [awayScore, setAwayScore] = useState(1);
+  // Score
+  const [homeScore, setHomeScore] = useState(0);
+  const [awayScore, setAwayScore] = useState(0);
+
+  // Dữ liệu đội bóng thật từ API
+  const [homeTeam, setHomeTeam] = useState({ name: "HOME", letter: "A", color: "var(--color-surface-nav)", logoUrl: null });
+  const [awayTeam, setAwayTeam] = useState({ name: "AWAY", letter: "B", color: "var(--color-brand-primary)", logoUrl: null });
 
   const totalGoals = homeScore + awayScore;
 
@@ -120,17 +122,41 @@ export default function MatchPage() {
 
         if (response) {
           console.log("Data retrieved successfully:", response);
-          // Khoá UI khi trận đã kết thúc
-          if (response.status === "FINISHED") setFinished(true);
 
-          // Hỗ trợ cả camelCase (homeScore) lẫn snake_case (home_score) từ backend
-          const hs = response.homeScore ?? response.home_score;
-          const as = response.awayScore ?? response.away_score;
-          if (hs !== undefined) setHomeScore(hs);
-          if (as !== undefined) setAwayScore(as);
+          // Lấy thông tin thật từ API (BE trả về dạng response.data hoặc response trực tiếp)
+          const data = response.data || response;
+
+          // Khoá UI khi trận đã kết thúc
+          if (data.status === "FINISHED" || data.status === "COMPLETED") setFinished(true);
+
+          // Load tỉ số từ BE (hỗ trợ cả camelCase lẫn snake_case)
+          const hs = data.score?.home ?? data.homeScore ?? data.home_score;
+          const as = data.score?.away ?? data.awayScore ?? data.away_score;
+          if (hs !== undefined && hs !== null) setHomeScore(hs);
+          if (as !== undefined && as !== null) setAwayScore(as);
+
+          // Load tên đội bóng thật từ API
+          if (data.homeTeam) {
+            setHomeTeam({
+              name: data.homeTeam.name || "HOME",
+              letter: (data.homeTeam.name || "A").charAt(0).toUpperCase(),
+              color: "var(--color-surface-nav)",
+              logoUrl: data.homeTeam.logoUrl || null,
+            });
+          }
+          if (data.awayTeam) {
+            setAwayTeam({
+              name: data.awayTeam.name || "AWAY",
+              letter: (data.awayTeam.name || "B").charAt(0).toUpperCase(),
+              color: "var(--color-brand-primary)",
+              logoUrl: data.awayTeam.logoUrl || null,
+            });
+          }
         }
       } catch (error) {
         console.error("Error fetching data from Backend:", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchMatchDetails();
@@ -153,6 +179,14 @@ export default function MatchPage() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <p className="text-gray-400 font-semibold">Đang tải dữ liệu trận đấu...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full pb-10 font-[var(--font-body)]">
       <div className="flex items-center gap-4 mb-4">
@@ -174,7 +208,7 @@ export default function MatchPage() {
           </svg>
         </button>
         <h1 className="text-2xl font-black tracking-wide text-gray-900">
-          MATCH #{matchId}
+          {homeTeam.name} vs {awayTeam.name}
         </h1>
       </div>
       {finished ? (
@@ -183,14 +217,12 @@ export default function MatchPage() {
           <h2 className="text-3xl font-black text-gray-900">Match Finished!</h2>
           <div className="flex items-center gap-8 text-center mt-3">
             <div>
-              <p className="text-gray-500 font-semibold text-sm">TITANS FC</p>
+              <p className="text-gray-500 font-semibold text-sm">{homeTeam.name}</p>
               <p className="text-6xl font-black text-gray-900">{homeScore}</p>
             </div>
             <p className="text-3xl font-black text-brand-primary">VS</p>
             <div>
-              <p className="text-gray-500 font-semibold text-sm">
-                STORM UNITED
-              </p>
+              <p className="text-gray-500 font-semibold text-sm">{awayTeam.name}</p>
               <p className="text-6xl font-black text-gray-900">{awayScore}</p>
             </div>
           </div>
@@ -205,11 +237,7 @@ export default function MatchPage() {
         <>
           <div className="flex items-stretch gap-6">
             <TeamCard
-              team={{
-                name: "TITANS FC",
-                letter: "A",
-                color: "var(--color-surface-nav)",
-              }}
+              team={homeTeam}
               score={homeScore}
               onScore={setHomeScore}
             />
@@ -219,11 +247,7 @@ export default function MatchPage() {
               </span>
             </div>
             <TeamCard
-              team={{
-                name: "STORM UNITED",
-                letter: "B",
-                color: "var(--color-brand-primary)",
-              }}
+              team={awayTeam}
               score={awayScore}
               onScore={setAwayScore}
             />
@@ -272,14 +296,14 @@ export default function MatchPage() {
             >
               <div className="text-center">
                 <p className="text-xs font-bold text-gray-400 tracking-wider">
-                  TITANS FC
+                  {homeTeam.name}
                 </p>
                 <p className="text-4xl font-black text-gray-900">{homeScore}</p>
               </div>
               <span className="text-xl font-black text-red-400">—</span>
               <div className="text-center">
                 <p className="text-xs font-bold text-gray-400 tracking-wider">
-                  STORM UNITED
+                  {awayTeam.name}
                 </p>
                 <p className="text-4xl font-black text-gray-900">{awayScore}</p>
               </div>
