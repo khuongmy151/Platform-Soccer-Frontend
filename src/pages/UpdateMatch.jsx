@@ -55,42 +55,11 @@ function Stepper({ value, onChange, min = 0 }) {
   );
 }
 
-function MiniStepper({ value, onChange, emoji }) {
-  return (
-    <div
-      className="flex-1 bg-white rounded-2xl px-3 py-3 flex flex-col items-center gap-2"
-      style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.06)" }}
-    >
-      <div className="flex items-center gap-1.5">
-        <span className="text-lg">{emoji}</span>
-        <span className="font-bold text-gray-800 text-lg">{value}</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => onChange(Math.max(0, value - 1))}
-          className="w-6 h-6 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 text-sm font-bold transition-colors active:scale-95"
-        >
-          −
-        </button>
-        <button
-          onClick={() => onChange(value + 1)}
-          className="w-6 h-6 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 text-sm font-bold transition-colors active:scale-95"
-        >
-          +
-        </button>
-      </div>
-    </div>
-  );
-}
 
 function TeamCard({
   team,
   score,
   onScore,
-  yellowCards,
-  onYellow,
-  redCards,
-  onRed,
 }) {
   return (
     <div
@@ -102,7 +71,7 @@ function TeamCard({
         minWidth: 0,
       }}
     >
-      <div className="px-6 pt-6 pb-4 flex flex-col items-center gap-3">
+      <div className="px-6 pt-6 pb-6 flex flex-col items-center gap-3">
         <TeamLogo letter={team.letter} bgColor={team.color} size={72} />
         <h2 className="font-black text-xl tracking-wider text-gray-900 text-center">
           {team.name}
@@ -111,11 +80,6 @@ function TeamCard({
         <p className="text-[11px] font-semibold tracking-[0.15em] uppercase text-gray-400">
           Match Score
         </p>
-      </div>
-      <div className="mx-5 border-t border-gray-200/70" />
-      <div className="px-5 py-5 flex gap-3">
-        <MiniStepper value={yellowCards} onChange={onYellow} emoji="🟨" />
-        <MiniStepper value={redCards} onChange={onRed} emoji="🟥" />
       </div>
     </div>
   );
@@ -143,14 +107,8 @@ export default function MatchPage() {
   // NOTE: Thay đổi các giá trị khởi tạo này thành data lấy từ API
   const [homeScore, setHomeScore] = useState(2);
   const [awayScore, setAwayScore] = useState(1);
-  const [homeYellow, setHomeYellow] = useState(3);
-  const [homeRed, setHomeRed] = useState(0);
-  const [awayYellow, setAwayYellow] = useState(2);
-  const [awayRed, setAwayRed] = useState(1);
 
   const totalGoals = homeScore + awayScore;
-  const totalYellow = homeYellow + awayYellow;
-  const totalRed = homeRed + awayRed;
 
   useEffect(() => {
     const fetchMatchDetails = async () => {
@@ -180,27 +138,18 @@ export default function MatchPage() {
 
   const handleFinish = async () => {
     try {
-      await matchService.updateMatchStatus({
-        url: `/matches/${matchId}/status`,
-        data: { status: "FINISHED" },
-      });
-
+      // Backend yêu cầu action="END" để kết thúc trận đấu, cập nhật score và set ended_at = NOW()
       await matchService.submitMatchResult({
         url: `/matches/${matchId}/result`,
-        data: { homeScore, awayScore },
+        data: { action: "END", homeScore, awayScore },
       });
-
-      // submitMatchStats bị tắt: endpoint /stats đã bị gạch ngang
-      // và DB không có cột cho thẻ vàng/đỏ
-      // await matchService.submitMatchStats({ ... });
 
       setShowConfirm(false);
       setFinished(true);
     } catch (error) {
       console.error("Error finalizing match", error);
-      alert(
-        "Connection to Backend failed! \nPlease ensure the Backend Server is running on port 8080 or verify the URL in the file."
-      );
+      const msg = error.response?.data?.message || error.message || "Lỗi không xác định";
+      alert(`Lỗi từ Server: ${msg}`);
     }
   };
 
@@ -263,10 +212,6 @@ export default function MatchPage() {
               }}
               score={homeScore}
               onScore={setHomeScore}
-              yellowCards={homeYellow}
-              onYellow={setHomeYellow}
-              redCards={homeRed}
-              onRed={setHomeRed}
             />
             <div className="flex items-center justify-center px-2">
               <span className="font-black text-4xl select-none text-brand-primary drop-shadow-md">
@@ -281,16 +226,10 @@ export default function MatchPage() {
               }}
               score={awayScore}
               onScore={setAwayScore}
-              yellowCards={awayYellow}
-              onYellow={setAwayYellow}
-              redCards={awayRed}
-              onRed={setAwayRed}
             />
           </div>
           <div className="flex gap-4 mt-4">
             <StatBox label="Total Goals" value={totalGoals} />
-            <StatBox label="Yellow Cards" value={totalYellow} />
-            <StatBox label="Red Cards" value={totalRed} />
           </div>
           <div className="flex justify-center mt-6">
             <button
