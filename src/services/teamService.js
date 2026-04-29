@@ -6,26 +6,36 @@ export const teamService = {
     const data = result?.data || result;
     console.log(data);
     dispatch(func(data || []));
-    return data;
+    return result;
   },
   getTeamById: async ({ url, setData }) => {
     const result = await axiosClient.get(`${url}`);
+    const data = result?.data || null;
+    console.log(data);
     setData(result.data || null);
     return result;
   },
   deleteTeam: async ({ url }) => {
-    const response = await axiosClient.delete(`${url}`);
-    console.log(response);
-    toast.success(response?.message || "Delete successfully");
+    try {
+      const response = await axiosClient.delete(`${url}`);
+      console.log(response);
+      toast.success(response?.message || "Delete successfully");
+      return response;
+    } catch (error) {
+      toast.error(error?.response?.data?.message);
+    }
   },
   updateTeam: async ({ url, data }) => {
-    const response = await axiosClient.put(`${url}`, data, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-    console.log(response);
-    toast.success(response?.message || "Update successfully");
+    try {
+      const response = await axiosClient.put(`${url}`, data, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      toast.success(response?.message || "Update successfully");
+    } catch (error) {
+      toast.error(error?.response?.data?.message);
+    }
   },
 
   createTeam: async ({ url, data }) => {

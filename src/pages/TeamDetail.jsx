@@ -144,7 +144,6 @@ const TeamDetail = () => {
         return;
       }
       console.error("Error fetching team members:", error);
-      toast.error("Failed to load team members");
     } finally {
       setLoading(false);
     }
@@ -159,7 +158,10 @@ const TeamDetail = () => {
           return;
         }
 
-        await teamService.getTeamById({ url: `/teams/${teamId}`, setData: setTeam });
+        await teamService.getTeamById({
+          url: `/teams/${teamId}`,
+          setData: setTeam,
+        });
       } catch (error) {
         console.error("Error fetching team detail:", error);
         toast.error("Failed to load team detail");
@@ -182,7 +184,9 @@ const TeamDetail = () => {
             url: `/teams/${teamId}/members/${player.id}`,
           });
       const member = unwrapData(response);
-      setSelectedMember(member ? normalizeMember(member) : normalizeMember(player));
+      setSelectedMember(
+        member ? normalizeMember(member) : normalizeMember(player)
+      );
     } catch (error) {
       console.error("Error fetching member detail:", error);
       toast.error("Failed to load member detail");
@@ -348,7 +352,10 @@ const TeamDetail = () => {
             className="relative max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-surface-bg p-5 shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <MemberDetailContent member={selectedMember} loading={memberLoading} />
+            <MemberDetailContent
+              member={selectedMember}
+              loading={memberLoading}
+            />
           </div>
         </div>
       )}
