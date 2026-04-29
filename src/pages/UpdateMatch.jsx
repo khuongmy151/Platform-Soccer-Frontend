@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import matchService from "../services/matchService";
+import { finishMatch } from "../stores/features/matchSlice";
 
 /* ─── SHARED UI COMPONENTS (Match) ────────────────────────────── */
 function TeamLogo({ letter, bgColor = "#1a1a2e", size = 80, logoUrl }) {
@@ -97,6 +99,7 @@ function StatBox({ label, value }) {
 export default function MatchPage() {
   const { matchId } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const [finished, setFinished] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -169,6 +172,9 @@ export default function MatchPage() {
         url: `/matches/${matchId}/result`,
         data: { action: "END", homeScore, awayScore },
       });
+
+      // Xóa matchId khỏi localStorage → khi quay về list sẽ không còn LIVE nữa
+      dispatch(finishMatch(matchId));
 
       setShowConfirm(false);
       setFinished(true);
