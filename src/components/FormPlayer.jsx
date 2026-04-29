@@ -30,6 +30,63 @@ const derivePlayer = (isEdit, player) => {
   };
 };
 
+const PLAYER_LIMITS = {
+  age: { min: 5, max: 60, label: "Age" },
+  jersey_number: { min: 1, max: 99, label: "Jersey number" },
+  height: { min: 100, max: 250, label: "Height" },
+  weight: { min: 30, max: 200, label: "Weight" },
+};
+const MAX_AVATAR_SIZE_MB = 2;
+const MAX_AVATAR_SIZE_BYTES = MAX_AVATAR_SIZE_MB * 1024 * 1024;
+const ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/png"];
+
+const validateIntegerRange = (value, { min, max, label }) => {
+  if (value === "") return `${label} is required.`;
+  const numberValue = Number(value);
+  if (!Number.isInteger(numberValue)) return `${label} must be a whole number.`;
+  if (numberValue < min || numberValue > max) {
+    return `${label} must be between ${min} and ${max}.`;
+  }
+  return "";
+};
+
+const validatePlayer = (formPlayer, isEdit) => {
+  const nextErrors = {};
+  const trimmedName = formPlayer.name.trim();
+  const trimmedPosition = formPlayer.main_position.trim();
+
+  if (!trimmedName) {
+    nextErrors.name = "Full name is required.";
+  } else if (trimmedName.length < 2) {
+    nextErrors.name = "Full name must be at least 2 characters.";
+  } else if (!/^[\p{L}\s'.-]+$/u.test(trimmedName)) {
+    nextErrors.name = "Full name can only contain letters, spaces, apostrophes, dots, and hyphens.";
+  }
+
+  if (!isEdit && !formPlayer.avatar) {
+    nextErrors.avatar = "Profile image is required.";
+  } else if (formPlayer.avatar instanceof File) {
+    if (!ALLOWED_AVATAR_TYPES.includes(formPlayer.avatar.type)) {
+      nextErrors.avatar = "Profile image must be a JPG or PNG file.";
+    } else if (formPlayer.avatar.size > MAX_AVATAR_SIZE_BYTES) {
+      nextErrors.avatar = `Profile image must be ${MAX_AVATAR_SIZE_MB}MB or smaller.`;
+    }
+  }
+
+  Object.entries(PLAYER_LIMITS).forEach(([field, limits]) => {
+    const error = validateIntegerRange(formPlayer[field], limits);
+    if (error) nextErrors[field] = error;
+  });
+
+  if (!trimmedPosition) {
+    nextErrors.main_position = "Main position is required.";
+  } else if (trimmedPosition.length < 2) {
+    nextErrors.main_position = "Main position must be at least 2 characters.";
+  }
+
+  return nextErrors;
+};
+
 const FormPlayer = ({ ref, mode = "add", player = null, onSubmit }) => {
   const isEdit = mode === "edit";
   const avatarRef = useRef();
@@ -38,11 +95,13 @@ const FormPlayer = ({ ref, mode = "add", player = null, onSubmit }) => {
   const [formPlayer, setFormPlayer] = useState(() =>
     derivePlayer(isEdit, player)
   );
+  const [errors, setErrors] = useState({});
 
   // Sync state when props change
   if (prevKey !== sourceKey) {
     setPrevKey(sourceKey);
     setFormPlayer(derivePlayer(isEdit, player));
+    setErrors({});
   }
 
   const avatarPreview = useMemo(() => {
@@ -52,16 +111,72 @@ const FormPlayer = ({ ref, mode = "add", player = null, onSubmit }) => {
       : formPlayer.avatar;
   }, [formPlayer.avatar]);
 
-  const handleChange = (key, val) =>
+  const handleChange = (key, val) => {
     setFormPlayer((prev) => ({ ...prev, [key]: val }));
+    setErrors((prev) => ({ ...prev, [key]: "" }));
+  };
 
-  const handleClose = () => ref.current?.close();
+  const handleAvatarChange = (e) => {
+    const file = e.target.files?.[0] || "";
 
-  const handleSubmit = (e) => {
+    if (!file) {
+      handleChange("avatar", "");
+      return;
+    }
+
+    if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
+      e.target.value = "";
+      setFormPlayer((prev) => ({ ...prev, avatar: "" }));
+      setErrors((prev) => ({
+        ...prev,
+        avatar: "Profile image must be a JPG or PNG file.",
+      }));
+      return;
+    }
+
+    if (file.size > MAX_AVATAR_SIZE_BYTES) {
+      e.target.value = "";
+      setFormPlayer((prev) => ({ ...prev, avatar: "" }));
+      setErrors((prev) => ({
+        ...prev,
+        avatar: `Profile image must be ${MAX_AVATAR_SIZE_MB}MB or smaller.`,
+      }));
+      return;
+    }
+
+    handleChange("avatar", file);
+  };
+
+  const handleClose = () => {
+    setErrors({});
+    ref.current?.close();
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit?.(formPlayer);
+    const nextErrors = validatePlayer(formPlayer, isEdit);
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+
+    await onSubmit?.({
+      ...formPlayer,
+      name: formPlayer.name.trim(),
+      main_position: formPlayer.main_position.trim(),
+    });
     handleClose();
   };
+
+  const inputClass = (field) =>
+    `w-full px-3 py-2 bg-surface-bg/60 outline-none border-b-2 text-body-md text-surface-nav focus:border-brand-primary transition-colors rounded-t-[4px] ${
+      errors[field] ? "border-brand-primary" : "border-transparent"
+    }`;
+
+  const renderError = (field) =>
+    errors[field] ? (
+      <p className="mt-1 text-xs font-semibold text-brand-primary">
+        {errors[field]}
+      </p>
+    ) : null;
 
   return (
     <dialog
@@ -87,7 +202,7 @@ const FormPlayer = ({ ref, mode = "add", player = null, onSubmit }) => {
             <input
               type="file"
               ref={avatarRef}
-              onChange={(e) => handleChange("avatar", e.target.files[0])}
+              onChange={handleAvatarChange}
               className="hidden"
               accept=".png, .jpg, .jpeg"
             />
@@ -113,6 +228,7 @@ const FormPlayer = ({ ref, mode = "add", player = null, onSubmit }) => {
               </span>
             </button>
           </div>
+          {renderError("avatar")}
         </div>
 
         {/* RIGHT: FORM */}
@@ -137,8 +253,9 @@ const FormPlayer = ({ ref, mode = "add", player = null, onSubmit }) => {
                 value={formPlayer.name}
                 onChange={(e) => handleChange("name", e.target.value)}
                 placeholder="Enter player name"
-                className="w-full px-3 py-2 bg-surface-bg/60 outline-none border-b-2 border-transparent text-body-md text-surface-nav focus:border-brand-primary transition-colors rounded-t-[4px]"
+                className={inputClass("name")}
               />
+              {renderError("name")}
             </div>
 
             <div className="flex gap-6">
@@ -148,11 +265,15 @@ const FormPlayer = ({ ref, mode = "add", player = null, onSubmit }) => {
                 </label>
                 <input
                   type="number"
+                  min={PLAYER_LIMITS.age.min}
+                  max={PLAYER_LIMITS.age.max}
+                  step="1"
                   value={formPlayer.age}
                   onChange={(e) => handleChange("age", e.target.value)}
                   placeholder="e.g. 22"
-                  className="w-full px-3 py-2 bg-surface-bg/60 outline-none border-b-2 border-transparent text-body-md text-surface-nav focus:border-brand-primary transition-colors rounded-t-[4px]"
+                  className={inputClass("age")}
                 />
+                {renderError("age")}
               </div>
               <div className="flex flex-col flex-1">
                 <label className="text-label-sm text-brand-primary font-bold tracking-[0.15em] uppercase mb-2">
@@ -160,13 +281,17 @@ const FormPlayer = ({ ref, mode = "add", player = null, onSubmit }) => {
                 </label>
                 <input
                   type="number"
+                  min={PLAYER_LIMITS.jersey_number.min}
+                  max={PLAYER_LIMITS.jersey_number.max}
+                  step="1"
                   value={formPlayer.jersey_number}
                   onChange={(e) =>
                     handleChange("jersey_number", e.target.value)
                   }
                   placeholder="e.g. 10"
-                  className="w-full px-3 py-2 bg-surface-bg/60 outline-none border-b-2 border-transparent text-body-md text-surface-nav focus:border-brand-primary transition-colors rounded-t-[4px]"
+                  className={inputClass("jersey_number")}
                 />
+                {renderError("jersey_number")}
               </div>
             </div>
 
@@ -177,11 +302,15 @@ const FormPlayer = ({ ref, mode = "add", player = null, onSubmit }) => {
                 </label>
                 <input
                   type="number"
+                  min={PLAYER_LIMITS.height.min}
+                  max={PLAYER_LIMITS.height.max}
+                  step="1"
                   value={formPlayer.height}
                   onChange={(e) => handleChange("height", e.target.value)}
                   placeholder="e.g. 185"
-                  className="w-full px-3 py-2 bg-surface-bg/60 outline-none border-b-2 border-transparent text-body-md text-surface-nav focus:border-brand-primary transition-colors rounded-t-[4px]"
+                  className={inputClass("height")}
                 />
+                {renderError("height")}
               </div>
               <div className="flex flex-col flex-1">
                 <label className="text-label-sm text-brand-primary font-bold tracking-[0.15em] uppercase mb-2">
@@ -189,11 +318,15 @@ const FormPlayer = ({ ref, mode = "add", player = null, onSubmit }) => {
                 </label>
                 <input
                   type="number"
+                  min={PLAYER_LIMITS.weight.min}
+                  max={PLAYER_LIMITS.weight.max}
+                  step="1"
                   value={formPlayer.weight}
                   onChange={(e) => handleChange("weight", e.target.value)}
                   placeholder="e.g. 78"
-                  className="w-full px-3 py-2 bg-surface-bg/60 outline-none border-b-2 border-transparent text-body-md text-surface-nav focus:border-brand-primary transition-colors rounded-t-[4px]"
+                  className={inputClass("weight")}
                 />
+                {renderError("weight")}
               </div>
             </div>
 
@@ -234,10 +367,11 @@ const FormPlayer = ({ ref, mode = "add", player = null, onSubmit }) => {
                       handleChange("main_position", e.target.value)
                     }
                     placeholder="e.g. Center Forward"
-                    className="w-full px-3 pr-10 py-2 bg-surface-bg/60 outline-none border-b-2 border-transparent text-body-md text-surface-nav focus:border-brand-primary transition-colors rounded-t-[4px]"
+                    className={`${inputClass("main_position")} pr-10`}
                   />
                   <FiTarget className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-primary" />
                 </div>
+                {renderError("main_position")}
               </div>
             </div>
           </div>

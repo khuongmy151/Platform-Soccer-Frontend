@@ -1,11 +1,70 @@
-/* eslint-disable no-unused-vars */
+import { createElement } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { teamService } from "../services/teamService";
+import publicDashboard from "../services/publicDashboardService";
 import { MdGroup, MdSportsSoccer } from "react-icons/md";
 import { FaArrowLeft, FaUserCircle } from "react-icons/fa";
-import { FiPlus, FiTrash2 } from "react-icons/fi";
-import FormPlayer from "../components/FormPlayer";
+import { toast } from "react-toastify";
+import { MemberDetailContent } from "./MemberDetail";
+
+const unwrapData = (response) => {
+  const data = response?.data ?? response;
+  return data?.data ?? data?.member ?? data?.player ?? data ?? null;
+};
+
+const normalizeMember = (member) => {
+  const player = member?.player || member;
+  return {
+    ...player,
+    ...member,
+    id: player?.id || member?.player_id || member?.playerId || member?.id,
+    name:
+      player?.full_name ||
+      player?.name ||
+      member?.full_name ||
+      member?.name ||
+      "Unknown Member",
+    avatar:
+      player?.image_url ||
+      player?.avatar_url ||
+      player?.avatarUrl ||
+      player?.avatar ||
+      member?.image_url ||
+      member?.avatar_url ||
+      member?.avatarUrl ||
+      member?.avatar ||
+      "",
+    height:
+      player?.height_cm ||
+      player?.height ||
+      member?.height_cm ||
+      member?.height ||
+      "",
+    weight:
+      player?.weight_kg ||
+      player?.weight ||
+      member?.weight_kg ||
+      member?.weight ||
+      "",
+    main_foot:
+      player?.preferred_foot ||
+      player?.preferredFoot ||
+      player?.main_foot ||
+      member?.preferred_foot ||
+      member?.preferredFoot ||
+      member?.main_foot ||
+      "",
+    position:
+      player?.main_position ||
+      player?.mainPosition ||
+      player?.position ||
+      member?.main_position ||
+      member?.mainPosition ||
+      member?.position ||
+      "Unknown",
+  };
+};
 
 const ImageWithFallback = ({
   src,
@@ -20,7 +79,11 @@ const ImageWithFallback = ({
       <div
         className={`flex items-center justify-center bg-surface-bg ${className}`}
       >
-        <Icon className={iconClassName || "h-10 w-10 text-surface-nav/20"} />
+        {Icon
+          ? createElement(Icon, {
+              className: iconClassName || "h-10 w-10 text-surface-nav/20",
+            })
+          : null}
       </div>
     );
   }
@@ -36,21 +99,25 @@ const ImageWithFallback = ({
 
 const TeamDetail = () => {
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const location = useLocation();
   const { teamId } = useParams();
-  const isPublicRoute = pathname.startsWith("/public/");
+  const isPublicRoute = location.pathname.startsWith("/public/");
 
   const [team, setTeam] = useState(null);
   const [playersList, setPlayersList] = useState([]);
   const [loading, setLoading] = useState(false);
-  const formPlayerRef = useRef();
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [memberLoading, setMemberLoading] = useState(false);
+  const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
 
   const fetchMembers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await teamService.getTeamMembers({
-        url: `/teams/${teamId}/members`,
-      });
+      const res = isPublicRoute
+        ? await publicDashboard.getMembersByTeam(teamId)
+        : await teamService.getTeamMembers({
+            url: `/teams/${teamId}/members`,
+          });
       const data = res?.data?.data || res?.data || res || [];
       // Chuẩn hóa dữ liệu ngay khi nhận
       const normalized = Array.isArray(data)
@@ -68,15 +135,66 @@ const TeamDetail = () => {
           })
         : [];
       setPlayersList(normalized);
+    } catch (error) {
+      if (
+        isPublicRoute &&
+        error?.response?.data?.code === "TEAM_MEMBERS_NOT_FOUND"
+      ) {
+        setPlayersList([]);
+        return;
+      }
+      console.error("Error fetching team members:", error);
+      toast.error("Failed to load team members");
     } finally {
       setLoading(false);
     }
-  }, [teamId]);
+  }, [isPublicRoute, teamId]);
 
   useEffect(() => {
-    teamService.getTeamById({ url: `/teams/${teamId}`, setData: setTeam });
+    const fetchTeam = async () => {
+      try {
+        if (isPublicRoute) {
+          const publicTeam = await publicDashboard.getTeamById(teamId);
+          setTeam(publicTeam);
+          return;
+        }
+
+        await teamService.getTeamById({ url: `/teams/${teamId}`, setData: setTeam });
+      } catch (error) {
+        console.error("Error fetching team detail:", error);
+        toast.error("Failed to load team detail");
+      }
+    };
+
+    fetchTeam();
     fetchMembers();
-  }, [teamId, fetchMembers]);
+  }, [isPublicRoute, teamId, fetchMembers]);
+
+  const handleViewMember = async (player) => {
+    setIsMemberModalOpen(true);
+    setSelectedMember(normalizeMember(player));
+    setMemberLoading(true);
+
+    try {
+      const response = isPublicRoute
+        ? await publicDashboard.getMemberDetailById(teamId, player.id)
+        : await teamService.getTeamMemberById({
+            url: `/teams/${teamId}/members/${player.id}`,
+          });
+      const member = unwrapData(response);
+      setSelectedMember(member ? normalizeMember(member) : normalizeMember(player));
+    } catch (error) {
+      console.error("Error fetching member detail:", error);
+      toast.error("Failed to load member detail");
+    } finally {
+      setMemberLoading(false);
+    }
+  };
+
+  const closeMemberModal = () => {
+    setIsMemberModalOpen(false);
+    setSelectedMember(null);
+  };
 
   return (
     <div className="flex flex-col rounded-3xl py-4 md:py-6 bg-surface-white min-h-screen">
@@ -140,14 +258,6 @@ const TeamDetail = () => {
                 Players
               </p>
             </div>
-            {!isPublicRoute && (
-              <button
-                onClick={() => formPlayerRef.current?.showModal()}
-                className="flex items-center justify-center gap-2 rounded-lg bg-[#D31145] px-6 py-2.5 text-xs font-bold text-surface-white hover:bg-[#b00e3a] transition-all shadow-md active:scale-95"
-              >
-                <FiPlus size={16} /> ADD MEMBER
-              </button>
-            )}
           </div>
 
           {/* GRID TỐI ƯU: 1 cột (Mobile), 2 cột (Tablet), 3-4 cột (Desktop) */}
@@ -160,8 +270,8 @@ const TeamDetail = () => {
               {playersList.map((player, idx) => (
                 <div key={player.id} className="group relative">
                   <button
-                    onClick={() => navigate(`members/${player.id}`)}
-                    className="w-full flex flex-col rounded-xl overflow-hidden bg-surface-nav shadow-lg transition-all hover:-translate-y-2 hover:shadow-2xl"
+                    onClick={() => handleViewMember(player)}
+                    className="w-full flex flex-col rounded-xl overflow-hidden bg-surface-nav shadow-lg transition-all hover:-translate-y-2 hover:shadow-2xl focus-visible:-translate-y-2 focus-visible:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
                   >
                     <div className="relative h-72 sm:h-64 md:h-72 w-full">
                       <ImageWithFallback
@@ -179,6 +289,11 @@ const TeamDetail = () => {
                         <p className="text-xl text-white font-black truncate leading-tight uppercase italic">
                           {player.name}
                         </p>
+                      </div>
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/45 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100">
+                        <span className="rounded-full bg-white px-4 py-2 text-xs font-black uppercase tracking-widest text-surface-nav shadow-lg">
+                          Click to view details
+                        </span>
                       </div>
                     </div>
                     <div className="flex justify-between items-center bg-white p-4 border-t border-gray-100">
@@ -200,17 +315,6 @@ const TeamDetail = () => {
                       </div>
                     </div>
                   </button>
-
-                  {!isPublicRoute && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation(); /* Logic xóa */
-                      }}
-                      className="absolute top-3 right-3 p-2.5 bg-white/95 rounded-full text-brand-primary shadow-md hover:bg-brand-primary hover:text-white transition-all z-10"
-                    >
-                      <FiTrash2 size={14} />
-                    </button>
-                  )}
                 </div>
               ))}
             </div>
@@ -235,8 +339,18 @@ const TeamDetail = () => {
         </div>
       </div>
 
-      {!isPublicRoute && (
-        <FormPlayer ref={formPlayerRef} mode="add" onSubmit={fetchMembers} />
+      {isMemberModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={closeMemberModal}
+        >
+          <div
+            className="relative max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-surface-bg p-5 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <MemberDetailContent member={selectedMember} loading={memberLoading} />
+          </div>
+        </div>
       )}
     </div>
   );

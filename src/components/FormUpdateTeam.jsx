@@ -259,7 +259,12 @@ const FormUpdateTeam = ({ ref }) => {
     }
   };
 
-  const handleRemoveMember = async (playerId) => {
+  const handleRemoveMember = async (playerId, memberName = "this member") => {
+    const confirmed = window.confirm(
+      `Are you sure you want to remove ${memberName} from this team?`
+    );
+    if (!confirmed) return;
+
     setRemovingId(playerId);
     try {
       await teamService.removeTeamMember({
@@ -617,7 +622,9 @@ const FormUpdateTeam = ({ ref }) => {
                             </div>
                             <button
                               type="button"
-                              onClick={() => handleRemoveMember(playerId)}
+                              onClick={() =>
+                                handleRemoveMember(playerId, memberName)
+                              }
                               disabled={removingId === playerId}
                               className="flex items-center justify-center w-8 h-8 rounded-lg bg-transparent hover:bg-red-50 text-nav-muted hover:text-red-500 transition-all cursor-pointer opacity-0 group-hover:opacity-100 disabled:opacity-50"
                               title="Remove member"
