@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { HiOutlineRefresh } from "react-icons/hi";
 
 export default function DateSelector({ onApply }) {
   const scrollRef = useRef(null);
@@ -66,13 +67,23 @@ export default function DateSelector({ onApply }) {
 
   // Xử lý khi nhấn Apply
   const handleApply = () => {
-    // Gọi callback truyền ngày dạng YYYY-MM-DD ra ngoài
-    onApply(pickerDate);
+    // Nếu không có pickerDate, không làm gì cả hoặc báo lỗi
+    if (!pickerDate) return;
 
-    // Cập nhật hiển thị trên thanh (tô sáng ngày tương ứng)
     const selected = new Date(pickerDate);
+
+    // Kiểm tra nếu ngày không hợp lệ (ví dụ người dùng nhập tay sai)
+    if (isNaN(selected.getTime())) return;
+
+    onApply(pickerDate);
     setCurrentYear(selected.getFullYear());
     setSelectedDate(selected.toDateString());
+  };
+
+  const handleShowAll = () => {
+    setPickerDate(""); // Reset ô input date
+    setSelectedDate(null); // Bỏ highlight trên thanh cuộn ngang
+    onApply(null); // Gọi callback với giá trị null để Dashboard hiển thị tất cả
   };
 
   return (
@@ -130,7 +141,7 @@ export default function DateSelector({ onApply }) {
         })}
       </div>
 
-      {/* Date Picker + Apply */}
+      {/* Date Picker + Apply + Show All */}
       <div className="flex flex-col items-start gap-2 w-full lg:w-auto">
         <label className="text-[9px] font-black text-brand-primary uppercase tracking-widest lg:mr-2">
           Select Date
@@ -142,11 +153,19 @@ export default function DateSelector({ onApply }) {
             onChange={(e) => setPickerDate(e.target.value)}
             className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 bg-surface-white focus:outline-none focus:ring-2 focus:ring-brand-primary/50"
           />
+
           <button
             onClick={handleApply}
             className="bg-brand-primary hover:bg-brand-dark text-white text-[11px] font-bold px-4 py-2 rounded-lg transition-colors uppercase tracking-widest shadow-sm"
           >
             Apply
+          </button>
+
+          <button
+            onClick={handleShowAll}
+            className="bg-gray-100 hover:bg-gray-200 text-gray-600 text-[11px] font-bold px-3 py-2 rounded-lg transition-colors uppercase tracking-widest border border-gray-200"
+          >
+            <HiOutlineRefresh size={18}/>
           </button>
         </div>
       </div>

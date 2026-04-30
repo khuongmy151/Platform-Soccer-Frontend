@@ -2,8 +2,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { teamService } from "../services/teamService";
-import { deleteTeam, setTeams } from "../stores/features/teamSlice";
-import { toast } from "react-toastify";
+import { setTeams } from "../stores/features/teamSlice";
 import { IoFilter } from "react-icons/io5";
 import { IoIosAdd } from "react-icons/io";
 import { FaSearch, FaCircleNotch } from "react-icons/fa";
@@ -52,7 +51,7 @@ const TeamManagement = () => {
     return teams?.items;
   }, [key, teams]);
 
-  // Hàm tìm kiếm team theo tên
+  // Hàm tìm kiếm team
   const handleSearch = () => {
     if (inputValue !== "") {
       params.set("key", inputValue);
@@ -86,8 +85,6 @@ const TeamManagement = () => {
       confirmDialog.current.close();
     } catch (error) {
       console.error("Delete error:", error);
-      dispatch(deleteTeam(teamById?.id));
-      toast.success("Server error, temporarily removed from Frontend");
       confirmDialog.current.close();
     }
   };

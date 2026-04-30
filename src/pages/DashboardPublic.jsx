@@ -1,6 +1,7 @@
 import { useSelector, useDispatch } from "react-redux";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+
 import {
   IoChevronDown,
   IoChevronUp,
@@ -20,6 +21,8 @@ import TeamSection from "../components/TeamSection";
 
 export default function Dashboard() {
   const dispatch = useDispatch();
+  //limit dùng để giới hạn số lượng tournament hiển thị
+  const [limit, setLimit] = useState(8);
   const tournaments = useSelector((state) => state.tournaments.items);
   const [expandedId, setExpandedId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -98,13 +101,13 @@ export default function Dashboard() {
         <span
           className={`flex items-center gap-1 bg-red-50 text-brand-primary rounded animate-pulse ${sizeClass}`}
         >
-          <IoEllipse size={isSmall ? 6 : 8} /> LIVE
+          <IoEllipse size={isSmall ? 6 : 8} /> ONGOING
         </span>
       );
     if (s === "COMPLETE")
       return (
         <span className={`bg-gray-100 text-gray-500 rounded ${sizeClass}`}>
-          FINISHED
+          COMPLETE
         </span>
       );
     if (s === "UPCOMING")
@@ -135,6 +138,10 @@ export default function Dashboard() {
     return parseDateTime(dateTimeStr);
   };
 
+  const handleViewMoreTournaments = () => {
+    setLimit(() => limit + 8);
+  }
+
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface-bg text-title-lg font-bold text-gray-400 font-display italic tracking-tighter uppercase">
@@ -161,7 +168,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Show error when the page cannot fetch tournament api */}
+        {/* Hiện lỗi khi page không thể fetch api */}
         {error && (
           <div className="w-full max-w-md mx-auto my-8">
             <div className="flex flex-col items-center gap-4 rounded-2xl border border-red-100 bg-red-50/70 p-8 text-center backdrop-blur-sm">
@@ -192,6 +199,7 @@ export default function Dashboard() {
         )}
 
         <div className="space-y-4">
+          {/* Hiển thị khi filter ra kết quả nhưng không có tournament */}
           {filteredTournaments.length === 0 && filterDate ? (
             <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
               {/* Vòng tròn icon */}
@@ -229,8 +237,9 @@ export default function Dashboard() {
                 Show All Tournaments
               </button>
             </div>
-          ) : (
-            filteredTournaments.map((tournament) => {
+          ) : 
+          // Hiển thị danh sách tournaments được filter và giới hạn bởi limit 
+          (filteredTournaments.slice(0, limit).map((tournament) => {
               const isOpen = expandedId === tournament.id;
               return (
                 <div
@@ -245,24 +254,27 @@ export default function Dashboard() {
                         : "hover:bg-surface-card"
                     }`}
                   >
+                    {/* Nếu isOpen thì hiển thị thanh màu đỏ bên trái để highlight tournament đang mở. Nếu không mở thì chỉ hover nhẹ để có cảm giác tương tác khi rê chuột vào header của tournament. */}
                     {isOpen && (
                       <div className="absolute left-0 top-0 bottom-0 w-1 bg-brand-primary rounded-l-xl"></div>
                     )}
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-xl bg-surface-panel flex items-center justify-center border border-gray-800 shadow-sm overflow-hidden shrink-0">
                         <img
-                          src={tournament.logo_url}
-                          alt=""
+                          src={tournament.logo_url || null}
+                          alt={tournament.name}
                           className="w-full h-full object-cover"
                         />
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-title-sm md:text-title-lg font-bold text-gray-800">
-                            {tournament.name}
-                          </span>
-                          {renderStatusBadge(tournament.status, true)}
-                        </div>
+                        
+                          <div className="flex items-center gap-2">
+                            <span className="text-title-sm md:text-title-lg font-bold text-gray-800">
+                              {tournament.name}
+                            </span>
+                            {renderStatusBadge(tournament.status, true)}
+                          </div>
+
                         <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1 flex-wrap">
                           <IoCalendarClearOutline size={12} />{" "}
                           {parseDateTime(tournament.start_date).date}
@@ -375,6 +387,29 @@ export default function Dashboard() {
                 </div>
               );
             })
+          )}
+          {filteredTournaments.length > limit && (
+            <div className="flex justify-center mt-8 mb-4">
+              <button
+                className="
+      w-fit mx-auto
+      bg-brand-primary hover:bg-brand-dark 
+      text-white font-bold 
+      text-label-sm md:text-label-lg 
+      font-display uppercase tracking-widest
+      px-6 md:px-10 
+      py-2.5 md:py-3 
+      rounded-lg md:rounded-xl 
+      transition-all duration-300 
+      shadow-md hover:shadow-lg hover:shadow-red-200/50
+      whitespace-nowrap
+      flex items-center justify-center
+    "
+    onClick={handleViewMoreTournaments}
+              >
+                View More
+              </button>
+            </div>
           )}
           <TeamSection />
         </div>

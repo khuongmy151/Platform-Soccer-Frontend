@@ -16,17 +16,23 @@ const publicDashboard = {
   getAllTeams: async ({ url, dispatch, func }) => {
     const response = await axiosClient.get(`${url}`);
     console.log(response);
-    dispatch(func(response?.data || []));
+    dispatch?.(func?.(response?.data || []));
     return response;
   },
 
+  getTeamById: async (teamId) => {
+    const response = await axiosClient.get("/public/teams");
+    const teams = response?.data || [];
+    return teams.find((team) => team.id === teamId) || null;
+  },
+
   getMembersByTeam: (teamId) => {
-    const url = `/public/tournament/${teamId}/members`;
+    const url = `/public/teams/${teamId}/members`;
     return axiosClient.get(url);
   },
 
   getMemberDetailById: (teamId, playerId) => {
-    const url = `/public/tournament/${teamId}/members/${playerId}`;
+    const url = `/public/teams/${teamId}/members/${playerId}`;
     return axiosClient.get(url);
   },
 };

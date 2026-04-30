@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import matchService from "../services/matchService";
 
 /* ─────────────────────────────── Components ─────────────────────────────── */
 
@@ -15,7 +16,7 @@ const StatBlock = ({ label, value, color = "#1f2937" }) => (
       justifyContent: "center",
       flex: 1,
       boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
-      borderBottom: label === "SHOTS ON GOAL" ? "3px solid #c8102e" : "none",
+      borderBottom: label === "TOTAL GOALS" ? "3px solid #c8102e" : "none",
     }}
   >
     <span
@@ -34,29 +35,170 @@ const StatBlock = ({ label, value, color = "#1f2937" }) => (
   </div>
 );
 
+const TeamAvatar = ({ name, logoUrl, bgColor = "#1a1a2e" }) => {
+  const letter = (name || "?").charAt(0).toUpperCase();
+  return (
+    <div
+      style={{
+        width: 100,
+        height: 100,
+        borderRadius: "50%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        border: "8px solid rgba(255,255,255,0.3)",
+        boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
+        overflow: "hidden",
+        background: logoUrl ? "#fff" : bgColor,
+      }}
+    >
+      {logoUrl ? (
+        <img
+          src={logoUrl}
+          alt={name}
+          style={{ width: "70%", height: "70%", objectFit: "contain" }}
+        />
+      ) : (
+        <span
+          style={{
+            fontSize: 48,
+            fontWeight: 900,
+            color: logoUrl ? "#c8102e" : "#fff",
+            width: "100%",
+            textAlign: "center",
+          }}
+        >
+          {letter}
+        </span>
+      )}
+    </div>
+  );
+};
+
 /* ─────────────────────────────── Main Page ─────────────────────────────── */
 
-export default function MatchList() {
+export default function MatchDetail() {
   const navigate = useNavigate();
-  useParams();
+  const { matchId } = useParams();
 
-  // Mock data theo hình
-  const matchData = {
-    homeTeam: "RED DRAGONS",
-    awayTeam: "SKY EAGLES",
-    scoreHome: 2,
-    scoreAway: 1,
-    date: "AUG 24, 2024",
-    time: "20:45 CET",
-    arena: "METROPOLIS ARENA",
-    yellowHome: 3,
-    yellowAway: 2,
-    redHome: 0,
-    redAway: 1,
-    totalShots: 18,
-    shotsOnGoal: 7,
-    passAccuracy: "82%",
-  };
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [matchData, setMatchData] = useState(null);
+
+  useEffect(() => {
+    const fetchMatch = async () => {
+      if (!matchId) return;
+      try {
+        const response = await matchService.getMatchDetail({
+          url: `/matches/${matchId}`,
+        });
+
+        // BE trả về response.data hoặc response trực tiếp (tuỳ interceptor)
+        const data = response?.data || response;
+        console.log("MatchDetail API response:", data);
+
+        // Normalize dữ liệu từ BE (hỗ trợ cả camelCase lẫn snake_case)
+        const startTime = data.startTime || data.start_time;
+        const d = startTime ? new Date(startTime) : null;
+
+        setMatchData({
+          homeTeam: data.homeTeam?.name || data.home_team_name || "HOME",
+          awayTeam: data.awayTeam?.name || data.away_team_name || "AWAY",
+          homeLogoUrl: data.homeTeam?.logoUrl || data.home_team_logo || null,
+          awayLogoUrl: data.awayTeam?.logoUrl || data.away_team_logo || null,
+          scoreHome: data.score?.home ?? data.home_score ?? 0,
+          scoreAway: data.score?.away ?? data.away_score ?? 0,
+          date: d
+            ? d
+                .toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })
+                .toUpperCase()
+            : "N/A",
+          time: d
+            ? d.toLocaleTimeString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+              })
+            : "N/A",
+          arena: data.stadium || data.arena || "N/A",
+          status: data.status || "SCHEDULED",
+          tournamentName:
+            data.tournament?.name || data.tournament_name || "",
+        });
+      } catch (err) {
+        console.error("Error fetching match detail:", err);
+        setError(
+          err.response?.data?.message || err.message || "Lỗi không xác định"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMatch();
+  }, [matchId]);
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: 400,
+        }}
+      >
+        <p style={{ color: "#9ca3af", fontWeight: 600 }}>
+          Đang tải dữ liệu trận đấu...
+        </p>
+      </div>
+    );
+  }
+
+  if (error || !matchData) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: 400,
+          gap: 16,
+        }}
+      >
+        <p style={{ color: "#ef4444", fontWeight: 700, fontSize: 16 }}>
+          ⚠️ {error || "Không tải được dữ liệu trận đấu"}
+        </p>
+        <button
+          onClick={() => navigate(-1)}
+          style={{
+            padding: "12px 40px",
+            background: "#d1d5db",
+            color: "#1f2937",
+            border: "none",
+            borderRadius: 12,
+            fontSize: 14,
+            fontWeight: 900,
+            cursor: "pointer",
+          }}
+        >
+          BACK
+        </button>
+      </div>
+    );
+  }
+
+  // Xác định trạng thái badge
+  const isLive = matchData.status === "LIVE" || matchData.status === "FIRST_HALF" || matchData.status === "SECOND_HALF";
+  const isFinished = matchData.status === "FINISHED" || matchData.status === "COMPLETED";
+  const statusLabel = isLive ? "LIVE" : isFinished ? "FINISHED" : "SCHEDULED";
+  const statusColor = isLive ? "#f97316" : isFinished ? "#ff4d4d" : "#6b7280";
+
+  const totalGoals = (matchData.scoreHome || 0) + (matchData.scoreAway || 0);
 
   return (
     <div
@@ -108,31 +250,11 @@ export default function MatchList() {
               gap: 16,
             }}
           >
-            <div
-              style={{
-                width: 100,
-                height: 100,
-                background: "#fff",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyCenter: "center",
-                border: "8px solid rgba(255,255,255,0.3)",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: 48,
-                  fontWeight: 900,
-                  color: "#c8102e",
-                  width: "100%",
-                  textAlign: "center",
-                }}
-              >
-                A
-              </span>
-            </div>
+            <TeamAvatar
+              name={matchData.homeTeam}
+              logoUrl={matchData.homeLogoUrl}
+              bgColor="#c8102e"
+            />
             <span
               style={{
                 color: "#1f2937",
@@ -156,7 +278,7 @@ export default function MatchList() {
           >
             <span
               style={{
-                background: "#ff4d4d",
+                background: statusColor,
                 color: "#fff",
                 padding: "4px 16px",
                 borderRadius: 99,
@@ -165,7 +287,7 @@ export default function MatchList() {
                 letterSpacing: "0.1em",
               }}
             >
-              FINISHED
+              {statusLabel}
             </span>
             <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
               <span style={{ fontSize: 72, fontWeight: 900, color: "#c8102e" }}>
@@ -189,26 +311,11 @@ export default function MatchList() {
               gap: 16,
             }}
           >
-            <div
-              style={{
-                width: 100,
-                height: 100,
-                background: "#000",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyCenter: "center",
-                overflow: "hidden",
-                border: "8px solid rgba(255,255,255,0.3)",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
-              }}
-            >
-              <img
-                src="https://api.dicebear.com/7.x/identicon/svg?seed=SkyEagles&backgroundColor=000000"
-                alt="logo"
-                style={{ width: "60%", margin: "0 auto" }}
-              />
-            </div>
+            <TeamAvatar
+              name={matchData.awayTeam}
+              logoUrl={matchData.awayLogoUrl}
+              bgColor="#1a1a2e"
+            />
             <span
               style={{
                 color: "#1f2937",
@@ -244,7 +351,9 @@ export default function MatchList() {
             }}
           >
             📅{" "}
-            <span style={{ textTransform: "uppercase" }}>{matchData.date}</span>
+            <span style={{ textTransform: "uppercase" }}>
+              {matchData.date}
+            </span>
           </div>
           <div
             style={{
@@ -257,7 +366,9 @@ export default function MatchList() {
             }}
           >
             ⏳{" "}
-            <span style={{ textTransform: "uppercase" }}>{matchData.time}</span>
+            <span style={{ textTransform: "uppercase" }}>
+              {matchData.time}
+            </span>
           </div>
           <div
             style={{
@@ -274,6 +385,23 @@ export default function MatchList() {
               {matchData.arena}
             </span>
           </div>
+          {matchData.tournamentName && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                fontSize: 11,
+                fontWeight: 700,
+                color: "#4b5563",
+              }}
+            >
+              🏆{" "}
+              <span style={{ textTransform: "uppercase" }}>
+                {matchData.tournamentName}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -309,13 +437,19 @@ export default function MatchList() {
           </h2>
         </div>
         <div style={{ display: "flex", gap: 24 }}>
-          <StatBlock label="TOTAL SHOTS" value={matchData.totalShots} />
           <StatBlock
-            label="SHOTS ON GOAL"
-            value={matchData.shotsOnGoal}
+            label="TOTAL GOALS"
+            value={totalGoals}
             color="#c8102e"
           />
-          <StatBlock label="PASS ACCURACY" value={matchData.passAccuracy} />
+          <StatBlock
+            label={matchData.homeTeam}
+            value={matchData.scoreHome}
+          />
+          <StatBlock
+            label={matchData.awayTeam}
+            value={matchData.scoreAway}
+          />
         </div>
       </div>
 

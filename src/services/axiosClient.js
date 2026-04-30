@@ -1,4 +1,5 @@
 import axios from "axios";
+
 // File cấu hình axios dùng chung cho toàn bộ dự án
 export const axiosClient = axios.create({
   baseURL: "https://backend.cupzone.fun/",
@@ -15,6 +16,7 @@ axiosClient.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.log(error?.response?.data?.message);
     return Promise.reject(error);
   }
 );
@@ -23,7 +25,7 @@ axiosClient.interceptors.response.use(
     return response.data;
   },
   (error) => {
-    // Các status lỗi khác nhau sẽ xử lý sau
+    console.log(error.response.data.message);
     return Promise.reject(error);
   }
 );

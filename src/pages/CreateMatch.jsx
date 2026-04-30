@@ -184,6 +184,17 @@ export default function CreateMatch() {
         data: newMatchData,
       });
       console.log("Create Match Response:", response);
+
+      // Workaround: BE mặc định is_active=1 khi tạo trận, gây ra trận mới hiện LIVE ngay.
+      // Gọi thêm API để set is_active=0 → trận mới sẽ hiện đúng SCHEDULED (START MATCH + CANCEL)
+      const newMatchId = response?.data?.id || response?.id;
+      if (newMatchId) {
+        await matchService.updateMatchStatus({
+          url: `/matches/${newMatchId}/status`,
+          data: { status: "SCHEDULED" },
+        });
+      }
+
       toast.success("Match created successfully!");
       navigate(-1);
     } catch (error) {

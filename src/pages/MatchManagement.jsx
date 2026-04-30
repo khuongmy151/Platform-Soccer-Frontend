@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import matchService from "../services/matchService";
-import { setMatches } from "../stores/features/matchSlice";
+import { setMatches, startMatch } from "../stores/features/matchSlice";
 
 /* ─────────────────────────────── helpers ─────────────────────────────── */
 
@@ -50,12 +50,13 @@ const ChevronDown = () => (
 /* ─────────────────────────────── Badge ─────────────────────────────── */
 
 const STATUS_STYLES = {
-  SCHEDULED: { bg: "#f3f4f6", color: "#6b7280", dot: null },
-  FIRST_HALF: { bg: "#fff7ed", color: "#ea580c", dot: "#ef4444" },
-  HALF_TIME: { bg: "#fef3c7", color: "#d97706", dot: null },
-  SECOND_HALF: { bg: "#fff7ed", color: "#ea580c", dot: "#ef4444" },
-  FINISHED: { bg: "#22c55e", color: "#ffffff", dot: null },
-  CANCELLED: { bg: "#fee2e2", color: "#ef4444", dot: null },
+  SCHEDULED: { bg: "#f3f4f6", color: "#6b7280", dot: null, label: "Scheduled" },
+  LIVE: { bg: "#fff7ed", color: "#ea580c", dot: "#ef4444", label: "Live Now" },
+  FIRST_HALF: { bg: "#fff7ed", color: "#ea580c", dot: "#ef4444", label: "First Half" },
+  HALF_TIME: { bg: "#fef3c7", color: "#d97706", dot: null, label: "Half Time" },
+  SECOND_HALF: { bg: "#fff7ed", color: "#ea580c", dot: "#ef4444", label: "Second Half" },
+  FINISHED: { bg: "#22c55e", color: "#ffffff", dot: null, label: "Finished" },
+  CANCELLED: { bg: "#fee2e2", color: "#ef4444", dot: null, label: "Cancelled" },
 };
 
 const Badge = ({ match }) => {
@@ -93,7 +94,7 @@ const Badge = ({ match }) => {
           }}
         />
       )}
-      {status.replace("_", " ")}
+      {style.label || status.replace("_", " ")}
     </span>
   );
 };
@@ -164,12 +165,13 @@ const MatchCard = ({ match, onStart, onCancel, onUpdate, onView }) => {
     }
   }
 
-  const isLive = status?.includes("HALF");
+  const isLive = status === "FIRST_HALF" || status === "SECOND_HALF" || status === "LIVE";
   const isFinished = status === "FINISHED";
-  const isCancelled = is_cancelled === 1;
+  const isCancelled = Number(is_cancelled) === 1;
   const isScheduled = !isLive && !isFinished && !isCancelled;
 
-  const showScore = isFinished || isLive || home_score !== undefined;
+  // Chỉ hiện tỉ số khi trận đang đá hoặc đã kết thúc (không hiện cho trận chưa bắt đầu)
+  const showScore = isFinished || isLive;
   const arena = stadium || "";
 
   return (
@@ -377,8 +379,9 @@ const MatchCard = ({ match, onStart, onCancel, onUpdate, onView }) => {
 
       {isFinished && (
         <div style={{ display: "flex", gap: 12 }}>
-          <button style={btnDisabled}>MATCH STATS</button>
-          <button style={btnDisabled}>HIGHLIGHTS</button>
+          <button onClick={() => onView(match.id)} style={btnLiveView}>
+            VIEW MATCH DETAILS
+          </button>
         </div>
       )}
     </div>
@@ -439,33 +442,26 @@ const btnUpdate = {
   color: "#fff",
   background: "#1f2937",
 };
-const btnDisabled = {
-  flex: 1,
-  padding: "12px 0",
-  borderRadius: 12,
-  border: "1.5px solid #e5e7eb",
-  cursor: "not-allowed",
-  fontWeight: 800,
-  fontSize: 10,
-  letterSpacing: "0.1em",
-  textTransform: "uppercase",
-  color: "#6b7280",
-  background: "#f9fafb",
-  opacity: 0.8,
-};
+
 
 /* ───────────────── Normalize BE → FE data ───────────────── */
 function normalizeMatch(raw) {
   if (raw.homeTeam) return raw; // Nếu đã có homeTeam thì không cần chuyển đổi
-  
+
+  // Debug: In ra dữ liệu thô từ BE để kiểm tra
   let status = "SCHEDULED";
+  
   if (Number(raw.is_cancelled) === 1 || raw.is_cancelled === true) {
     status = "CANCELLED";
-  } else if (Number(raw.is_active) === 1 || raw.is_active === true) {
-    status = "FIRST_HALF"; // Đang thi đấu
   } else if (raw.ended_at) {
     status = "FINISHED";
+  } else if (Number(raw.is_active) === 0 && raw.home_score > 0) {
+    status = "FINISHED";
+  } else if (raw._userStarted) {
+    // User đã bấm START MATCH trong phiên này → LIVE
+    status = "LIVE";
   }
+  // Mặc định: SCHEDULED (bỏ qua is_active=1 từ BE vì nó luôn là 1)
 
   return {
     ...raw,
@@ -503,18 +499,16 @@ export default function MatchManagement() {
 
   const handleStartMatch = async (matchId) => {
     try {
+      // Gọi API để BE ghi nhận (dù is_active đã = 1)
       await matchService.updateMatchStatus({
         url: `/matches/${matchId}/status`,
         data: { status: "LIVE" },
       });
-      // Tự động reload lại danh sách sau khi start
-      matchService.getAllMatches({
-        url: `/matches?tournament_id=${tournamentId}`,
-        dispatch,
-        func: setMatches,
-      });
+      // Cập nhật local Redux state → card chuyển sang LIVE ngay lập tức
+      dispatch(startMatch(matchId));
     } catch (err) {
       console.error(err);
+      alert("Lỗi khi bắt đầu trận đấu!");
     }
   };
 
