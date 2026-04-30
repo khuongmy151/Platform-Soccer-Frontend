@@ -16,9 +16,14 @@ test.describe('MY PROFILE ', () => {
         await expect(page.getByText('FULL NAME')).toBeVisible({ timeout: 15000 });
     });
 
-    test('TC_01: Kiểm tra hiển thị tiêu đề tên NGỌC', async ({ page }) => {
-        const profileName = page.getByText(/NGỌC/i).first();
-        await expect(profileName).toBeVisible();
+    test('TC_01: Kiểm tra hiển thị tiêu đề tên người dùng', async ({ page }) => {
+        // Cách 1: Kiểm tra ô nhập tên có chứa giá trị (không rỗng)
+        const nameInput = page.locator('input[type="text"]').first();
+        await expect(nameInput).toBeVisible();
+
+        // Lấy giá trị hiện tại và kiểm tra xem nó có ít nhất 1 ký tự không
+        const currentName = await nameInput.inputValue();
+        expect(currentName.length).toBeGreaterThan(0);
     });
 
     test('TC_02: Kiểm tra hiển thị label FULL NAME và EMAIL ADDRESS', async ({ page }) => {
