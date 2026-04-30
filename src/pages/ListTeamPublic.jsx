@@ -84,7 +84,7 @@ const ListTeamPublic = () => {
 
   return (
     <div className="min-h-screen bg-surface-bg font-body pb-16">
-      <div className="bg-surface-white border-b border-gray-100 mb-6 pt-10 pb-7 shadow-sm">
+      <div className="bg-surface-white border-b border-gray-100 mb-6 pt-2 pb-7">
         <div className="max-w-[1000px] mx-auto px-6">
           <button
             onClick={() => navigate(-1)}

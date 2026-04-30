@@ -140,7 +140,7 @@ export default function Dashboard() {
 
   const handleViewMoreTournaments = () => {
     setLimit(() => limit + 8);
-  }
+  };
 
   if (loading)
     return (
@@ -237,9 +237,9 @@ export default function Dashboard() {
                 Show All Tournaments
               </button>
             </div>
-          ) : 
-          // Hiển thị danh sách tournaments được filter và giới hạn bởi limit 
-          (filteredTournaments.slice(0, limit).map((tournament) => {
+          ) : (
+            // Hiển thị danh sách tournaments được filter và giới hạn bởi limit
+            filteredTournaments.slice(0, limit).map((tournament) => {
               const isOpen = expandedId === tournament.id;
               return (
                 <div
@@ -267,13 +267,12 @@ export default function Dashboard() {
                         />
                       </div>
                       <div>
-                        
-                          <div className="flex items-center gap-2">
-                            <span className="text-title-sm md:text-title-lg font-bold text-gray-800">
-                              {tournament.name}
-                            </span>
-                            {renderStatusBadge(tournament.status, true)}
-                          </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-title-sm md:text-title-lg font-bold text-gray-800">
+                            {tournament.name}
+                          </span>
+                          {renderStatusBadge(tournament.status, true)}
+                        </div>
 
                         <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1 flex-wrap">
                           <IoCalendarClearOutline size={12} />{" "}
@@ -287,7 +286,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <div
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-label-sm font-bold transition-all ${
+                      className={`w-fit flex items-center gap-2 px-3 py-1.5 rounded-lg text-label-sm font-bold transition-all ${
                         isOpen
                           ? "bg-gray-200 text-gray-900"
                           : "bg-gray-100 text-gray-600"
@@ -322,7 +321,7 @@ export default function Dashboard() {
                               Matchup
                             </div>
                           </div>
-
+                          {/* PHẦN HIỂN THỊ TRẬN ĐẤU (MATCHES) */}
                           {matches.length > 0 ? (
                             <div className="flex flex-col">
                               {matches.map((match) => {
@@ -332,10 +331,52 @@ export default function Dashboard() {
                                 return (
                                   <div
                                     key={match.id}
-                                    className="flex flex-col md:grid md:grid-cols-3 items-center py-6 border-b border-gray-50 last:border-0 hover:bg-gray-50/30 transition-colors gap-4 md:gap-0"
+                                    className="border-b border-gray-50 last:border-0 hover:bg-gray-50/30 transition-colors"
                                   >
-                                    <div className="flex flex-row md:flex-col items-center justify-center gap-3 md:gap-1 md:border-r border-gray-50 w-full md:w-auto px-4">
-                                      <div className="flex flex-col items-center">
+                                    <div className="flex md:hidden items-center justify-between p-4 gap-2">
+                                      {/* Cột trái */}
+                                      <div className="flex flex-col shrink-0 min-w-[70px]">
+                                        <div className="flex flex-col">
+                                          <span className="text-gray-900 font-bold text-[10px] leading-tight">
+                                            {time}{" "}
+                                            {date
+                                              .split("/")
+                                              .slice(0, 2)
+                                              .join("/")}
+                                          </span>
+                                          <span className="text-gray-400 text-[8px] uppercase leading-tight mt-0.5">
+                                            {match.stadium}
+                                          </span>
+                                        </div>
+                                      </div>
+
+                                      {/* Đội nhà: Truyền mobileVertical={true} để dóng hàng dọc */}
+                                      <TeamDisplay
+                                        name={match.home_team?.name}
+                                        logoUrl={match.home_team?.logo}
+                                        teamId={match.home_team?.id}
+                                        mobileVertical={true}
+                                      />
+
+                                      {/* Tỉ số */}
+                                      <div className="shrink-0 bg-gradient-to-r from-[#ff4d2d] to-[#ff8c00] px-3 py-1.5 rounded-full shadow-md shadow-orange-100">
+                                        <span className="text-white font-black text-base font-display tracking-widest leading-none">
+                                          {match.home_score} -{" "}
+                                          {match.away_score}
+                                        </span>
+                                      </div>
+
+                                      {/* Đội khách: Truyền mobileVertical={true} để dóng hàng dọc */}
+                                      <TeamDisplay
+                                        name={match.away_team?.name}
+                                        logoUrl={match.away_team?.logo}
+                                        teamId={match.away_team?.id}
+                                        mobileVertical={true}
+                                      />
+                                    </div>
+
+                                    <div className="hidden md:grid md:grid-cols-3 items-center py-6">
+                                      <div className="flex flex-col items-center justify-center border-r border-gray-50 px-4">
                                         <span className="text-gray-400 font-bold text-label-sm tracking-tighter">
                                           {date}
                                         </span>
@@ -346,30 +387,29 @@ export default function Dashboard() {
                                           {match.stadium}
                                         </span>
                                       </div>
-                                    </div>
-
-                                    <div className="md:col-span-2 flex items-center justify-center gap-4 sm:gap-8 px-2 w-full">
-                                      <TeamDisplay
-                                        name={match.home_team?.name}
-                                        isHome={true}
-                                        logoUrl={match.home_team?.logo}
-                                        teamId={match.home_team?.id}
-                                      />
-                                      <div className="flex flex-col items-center min-w-[60px] md:min-w-[70px]">
-                                        <span className="text-gray-300 text-[10px] font-bold italic uppercase">
-                                          vs
-                                        </span>
-                                        <span className="text-xl md:text-2xl font-black text-gray-800 font-display">
-                                          {match.home_score} -{" "}
-                                          {match.away_score}
-                                        </span>
+                                      <div className="md:col-span-2 flex items-center justify-center gap-8 px-2 w-full">
+                                        <TeamDisplay
+                                          name={match.home_team?.name}
+                                          isHome={true}
+                                          logoUrl={match.home_team?.logo}
+                                          teamId={match.home_team?.id}
+                                        />
+                                        <div className="flex flex-col items-center min-w-[70px]">
+                                          <span className="text-gray-300 text-[10px] font-bold italic uppercase">
+                                            vs
+                                          </span>
+                                          <span className="text-xl md:text-2xl font-black text-gray-800 font-display">
+                                            {match.home_score} -{" "}
+                                            {match.away_score}
+                                          </span>
+                                        </div>
+                                        <TeamDisplay
+                                          name={match.away_team?.name}
+                                          isHome={false}
+                                          logoUrl={match.away_team?.logo}
+                                          teamId={match.away_team?.id}
+                                        />
                                       </div>
-                                      <TeamDisplay
-                                        name={match.away_team?.name}
-                                        isHome={false}
-                                        logoUrl={match.away_team?.logo}
-                                        teamId={match.away_team?.id}
-                                      />
                                     </div>
                                   </div>
                                 );
@@ -405,7 +445,7 @@ export default function Dashboard() {
       whitespace-nowrap
       flex items-center justify-center
     "
-    onClick={handleViewMoreTournaments}
+                onClick={handleViewMoreTournaments}
               >
                 View More
               </button>
