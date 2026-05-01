@@ -50,7 +50,7 @@ function App() {
         <Route path="/" element={<MainLayout />}>
           {/* PUBLIC: Ai cũng xem được */}
           <Route index element={<DashboardPublic />} />
-          <Route path="public/tournaments/:tournamentId" element={<TournamentDetail />} />
+          <Route path="public/tournament/:id/match" element={<TournamentDetail />} />
           <Route path="public/teams" element={<ListTeamPublic />} />
           <Route path="public/teams/:teamId" element={<TeamDetail />} />
           <Route path="public/teams/:teamId/members/:memberId" element={<MemberDetail />} />

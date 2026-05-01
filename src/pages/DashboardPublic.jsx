@@ -285,19 +285,36 @@ export default function Dashboard() {
                         </span>
                       </div>
                     </div>
-                    <div
-                      className={`w-fit flex items-center gap-2 px-3 py-1.5 rounded-lg text-label-sm font-bold transition-all ${
-                        isOpen
-                          ? "bg-gray-200 text-gray-900"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
-                    >
-                      DETAILS{" "}
-                      {isOpen ? (
-                        <IoChevronUp size={14} className="text-brand-primary" />
-                      ) : (
-                        <IoChevronDown size={14} />
-                      )}
+                    <div className="flex items-center gap-3">
+                      <Link
+                        to={`/public/tournament/${tournament.id}/match`}
+                        onClick={(event) => event.stopPropagation()}
+                        className="w-fit rounded-[8px] bg-[#e0e2e8] px-4 py-2 text-[14px] font-normal leading-5 text-[#2c2f32] transition-colors hover:bg-[#d7dae2]"
+                      >
+                        Details
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleToggle(tournament.id);
+                        }}
+                        className={`flex h-9 w-9 items-center justify-center rounded-[8px] transition-colors ${
+                          isOpen ? "bg-[#e0e2e8]" : "bg-[#eff1f5] hover:bg-[#e0e2e8]"
+                        }`}
+                        aria-label={
+                          isOpen ? "Collapse tournament matches" : "Expand tournament matches"
+                        }
+                      >
+                        {isOpen ? (
+                          <IoChevronUp
+                            size={16}
+                            className="text-brand-primary"
+                          />
+                        ) : (
+                          <IoChevronDown size={16} className="text-[#75777a]" />
+                        )}
+                      </button>
                     </div>
                   </div>
 
