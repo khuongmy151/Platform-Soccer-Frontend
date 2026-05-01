@@ -47,6 +47,14 @@ const TournamentDetail = () => {
     return dt.toLocaleDateString("en-GB");
   };
 
+  const resolveTournamentLogo = (logoUrl) => {
+    if (!logoUrl) return "";
+    if (/^(https?:)?\/\//i.test(logoUrl)) return logoUrl;
+    return `https://backend.cupzone.fun/${logoUrl.replace(/^\/+/, "")}`;
+  };
+
+  const tournamentLogo = resolveTournamentLogo(tournament?.logo_url);
+
   const tournamentInfoRows = [
     { label: "Tournament Name", value: tournament?.name || "N/A" },
     { label: "Format", value: tournament?.format || "N/A" },
@@ -74,7 +82,18 @@ const TournamentDetail = () => {
         </button>
 
         <section className="w-full rounded-[12px] border border-[rgba(171,173,177,0.1)] bg-white p-6 shadow-[0px_4px_12px_rgba(0,0,0,0.04)] md:flex md:items-center md:gap-8 md:p-8">
-          <div className="mb-6 h-36 w-36 rounded-2xl bg-[#f5f5f5] shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.1),0px_4px_6px_-4px_rgba(0,0,0,0.1)] md:mb-0 md:h-40 md:w-40" />
+          <div className="mb-6 h-36 w-36 overflow-hidden rounded-2xl bg-[#f5f5f5] shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.1),0px_4px_6px_-4px_rgba(0,0,0,0.1)] md:mb-0 md:h-40 md:w-40">
+            {tournamentLogo ? (
+              <img
+                src={tournamentLogo}
+                alt={`${tournament?.name || "Tournament"} logo`}
+                className="h-full w-full object-cover"
+                onError={(event) => {
+                  event.currentTarget.style.display = "none";
+                }}
+              />
+            ) : null}
+          </div>
           <h1 className="bg-linear-to-r from-[#ff0033] via-[#ff6d00] to-[#ffea00] bg-clip-text text-[42px] font-black leading-none tracking-[-1.8px] text-transparent md:text-[48px] md:tracking-[-2.4px]">
             {loading ? "Loading..." : tournament?.name || "Tournament Detail"}
           </h1>
