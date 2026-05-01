@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { HiOutlineRefresh } from "react-icons/hi";
 
 export default function DateSelector({ onApply }) {
@@ -11,23 +11,29 @@ export default function DateSelector({ onApply }) {
   const [scrollLeft, setScrollLeft] = useState(0);
 
   // Tạo danh sách ngày trong năm hiện tại
-  const daysInYear = [];
-  const dateCursor = new Date(currentYear, 0, 1);
-  while (dateCursor.getFullYear() === currentYear) {
-    daysInYear.push({
-      dayName: dateCursor
-        .toLocaleDateString("en-US", { weekday: "short" })
-        .toUpperCase(),
-      dayNumber: dateCursor.getDate().toString(),
-      monthName: dateCursor
-        .toLocaleDateString("en-US", { month: "short" })
-        .toUpperCase(),
-      fullDateString: dateCursor.toDateString(),
-      isoDate: dateCursor.toISOString().slice(0, 10), // thêm để đồng bộ picker
-      isToday: dateCursor.toDateString() === new Date().toDateString(),
-    });
-    dateCursor.setDate(dateCursor.getDate() + 1);
-  }
+  const daysInYear = useMemo(() => {
+    const days = [];
+    // Tạo ngày đầu năm với giờ địa phương là 00:00:00
+    const dateCursor = new Date(currentYear, 0, 1, 0, 0, 0);
+
+    while (dateCursor.getFullYear() === currentYear) {
+      days.push({
+        dayName: dateCursor
+          .toLocaleDateString("en-US", { weekday: "short" })
+          .toUpperCase(),
+        dayNumber: dateCursor.getDate().toString(),
+        monthName: dateCursor
+          .toLocaleDateString("en-US", { month: "short" })
+          .toUpperCase(),
+        fullDateString: dateCursor.toDateString(),
+        isoDate: dateCursor.toLocaleDateString("en-CA"), // Trả về dạng YYYY-MM-DD chuẩn Local
+        isToday: dateCursor.toDateString() === new Date().toDateString(),
+      });
+      // Tăng thêm 1 ngày
+      dateCursor.setDate(dateCursor.getDate() + 1);
+    }
+    return days;
+  }, [currentYear]);
 
   // Cuộn đến một ngày cụ thể trên thanh ngang
   const scrollToDate = (dateString) => {
@@ -67,12 +73,14 @@ export default function DateSelector({ onApply }) {
 
   // Xử lý khi nhấn Apply
   const handleApply = () => {
-    // Nếu không có pickerDate, không làm gì cả hoặc báo lỗi
     if (!pickerDate) return;
 
-    const selected = new Date(pickerDate);
+    // Tách chuỗi thành các số riêng biệt
+    const [year, month, day] = pickerDate.split("-").map(Number);
 
-    // Kiểm tra nếu ngày không hợp lệ (ví dụ người dùng nhập tay sai)
+    // Khởi tạo đúng ngày đó ở múi giờ địa phương (tháng trong JS là 0-11)
+    const selected = new Date(year, month - 1, day);
+
     if (isNaN(selected.getTime())) return;
 
     onApply(pickerDate);
@@ -165,7 +173,7 @@ export default function DateSelector({ onApply }) {
             onClick={handleShowAll}
             className="bg-gray-100 hover:bg-gray-200 text-gray-600 text-[11px] font-bold px-3 py-2 rounded-lg transition-colors uppercase tracking-widest border border-gray-200"
           >
-            <HiOutlineRefresh size={18}/>
+            <HiOutlineRefresh size={18} />
           </button>
         </div>
       </div>

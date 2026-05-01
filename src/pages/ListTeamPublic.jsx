@@ -10,10 +10,10 @@ import PublicTeamCard from "../components/PublicTeamCard";
 const ListTeamPublic = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const teams = useSelector((state) => state.teams.items || []);
+  const teams = useSelector((state) => state.teams?.items || []);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
-  // Logic Phân trang
+
   const [currentPage, setCurrentPage] = useState(1);
   const teamsPerPage = 8;
 
@@ -43,74 +43,79 @@ const ListTeamPublic = () => {
   const filteredTeams = useMemo(() => {
     const lowerSearch = search.toLowerCase();
     return teams.filter((team) =>
-      `${team.name} ${team.country}`.toLowerCase().includes(lowerSearch)
+      `${team.name} ${team.country}`.toLowerCase().includes(lowerSearch),
     );
   }, [teams, search]);
 
   const totalPages = Math.ceil(filteredTeams.length / teamsPerPage);
   const currentTeams = filteredTeams.slice(
     (currentPage - 1) * teamsPerPage,
-    currentPage * teamsPerPage
+    currentPage * teamsPerPage,
   );
+  const getPaginationDisplay = () => {
+    const total = totalPages;
+    if (total <= 3) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
 
-  // Logic hiển thị tối đa 4 trang với dấu ba chấm (...)
-  const getPaginationGroup = () => {
     let start = Math.max(currentPage - 1, 1);
-    let end = Math.min(start + 3, totalPages);
+    let end = Math.min(start + 2, total);
+    if (end - start < 2) start = Math.max(end - 2, 1);
 
-    if (end - start < 3) {
-      start = Math.max(end - 3, 1);
+    const result = [];
+    if (start > 1) {
+      result.push(1);
+      if (start > 2) result.push("...");
     }
-
-    const pages = [];
-    for (let i = start; i <= end; i++) {
-      pages.push(i);
+    for (let i = start; i <= end; i++) result.push(i);
+    if (end < total) {
+      if (end < total - 1) result.push("...");
+      result.push(total);
     }
-    return { pages, hasEllipsis: end < totalPages };
+    return result;
   };
 
-  const { pages, hasEllipsis } = getPaginationGroup();
+  const paginationDisplay = getPaginationDisplay();
 
   if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center bg-surface-bg text-gray-400 font-display uppercase italic font-bold">
+      <div className="min-h-screen flex items-center justify-center text-gray-400 font-display uppercase italic font-bold">
         <HiOutlineRefresh
           className="animate-spin mr-2 text-brand-primary"
           size={24}
-        />{" "}
+        />
         LOADING...
       </div>
     );
 
   return (
-    <div className="min-h-screen bg-surface-bg font-body pb-16">
-      <div className="bg-surface-white border-b border-gray-100 mb-6 pt-10 pb-7 shadow-sm">
-        <div className="max-w-[1000px] mx-auto px-6">
+    <div className="min-h-screen font-body">
+      <div className="bg-surface-white py-4">
+        <div className="w-full">
           <button
             onClick={() => navigate(-1)}
-            className="mb-4 flex items-center gap-2 text-[12px] font-black text-brand-primary uppercase tracking-widest"
+            className="mb-2 flex items-center text-[12px] font-black text-brand-primary uppercase tracking-widest hover:opacity-70 transition-opacity"
           >
             ← Back to Dashboard
           </button>
-          <h1 className="text-headline-md font-black text-gray-900 italic uppercase tracking-tighter font-display  ">
+          <h1 className="text-headline-md font-black text-gray-900 uppercase tracking-tighter font-display italic">
             All Teams
           </h1>
         </div>
       </div>
-
-      <main className="max-w-[1000px] mx-auto px-4 md:px-6">
-        <div className="mb-8">
+      <main className="w-full ">
+        <div className="mb-10">
           <input
             type="text"
-            placeholder="Search teams..."
-            className="w-full p-4 rounded-xl bg-surface-white border border-gray-100 outline-none focus:border-brand-primary transition-all font-medium"
+            placeholder="Search teams by name or country..."
+            className="w-full p-5 rounded-2xl bg-surface-white border border-gray-100 shadow-sm outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all font-medium text-lg"
             value={search}
             onChange={handleSearchChange}
           />
         </div>
 
-        {/* Grid Teams - View tĩnh (Không hover) */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        {/* Grid Teams */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-6 md:gap-8">
           {currentTeams.map((team) => (
             <PublicTeamCard
               key={team.id}
@@ -120,48 +125,51 @@ const ListTeamPublic = () => {
           ))}
         </div>
 
-        {/* Điều khiển chuyển trang với giới hạn hiển thị 4 số */}
+        {/* Pagination Controls */}
         {totalPages > 1 && (
-          <div className="mt-12 flex items-center justify-center gap-2">
+          <div className="mt-16 flex items-center justify-center gap-1 sm:gap-3">
+            {/* Lùi 1 trang */}
             <button
-              onClick={() => {
-                if (currentPage === 1) setCurrentPage(totalPages + 1);
-                setCurrentPage((p) => Math.max(p - 1, 1));
-              }}
-              className="p-2 rounded-lg border border-gray-200 text-brand-primary disabled:opacity-30 transition-colors hover:bg-gray-100"
+              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+              disabled={currentPage === 1}
+              className="p-2 sm:p-3 rounded-xl border border-gray-200 bg-surface-white text-brand-primary disabled:opacity-30 transition-all hover:bg-brand-primary hover:text-white"
             >
-              <IoChevronBack size={18} />
+              <IoChevronBack size={20} />
             </button>
 
-            <div className="flex items-center gap-2">
-              {pages.map((page) => (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`w-10 h-10 rounded-lg font-bold text-[13px] transition-all ${
-                    currentPage === page
-                      ? "bg-brand-primary text-white shadow-md shadow-brand-primary/20"
-                      : "bg-surface-white text-gray-400 border border-gray-100 hover:border-brand-primary/30"
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
-
-              {/* Dấu ba chấm hiển thị nếu còn nhiều trang phía sau */}
-              {hasEllipsis && (
-                <span className="text-gray-400 font-bold px-1">...</span>
+            {/* Số trang & dấu "..." */}
+            <div className="flex items-center gap-1 sm:gap-2">
+              {paginationDisplay.map((item, idx) =>
+                typeof item === "number" ? (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentPage(item)}
+                    className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl font-bold text-[13px] transition-all ${
+                      currentPage === item
+                        ? "bg-brand-primary text-white shadow-lg shadow-brand-primary/30 scale-110"
+                        : "bg-surface-white text-gray-500 border border-gray-100 hover:border-brand-primary"
+                    }`}
+                  >
+                    {item}
+                  </button>
+                ) : (
+                  <span
+                    key={idx}
+                    className="text-gray-400 font-bold px-1 text-xl"
+                  >
+                    ...
+                  </span>
+                ),
               )}
             </div>
 
+            {/* Tiến 1 trang */}
             <button
-              onClick={() => {
-                if (currentPage === totalPages) setCurrentPage(0);
-                setCurrentPage((p) => Math.min(p + 1, totalPages));
-              }}
-              className="p-2 rounded-lg border border-gray-200 text-brand-primary disabled:opacity-30 transition-colors hover:bg-gray-100"
+              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="p-2 sm:p-3 rounded-xl border border-gray-200 bg-surface-white text-brand-primary disabled:opacity-30 transition-all hover:bg-brand-primary hover:text-white"
             >
-              <IoChevronForward size={18} />
+              <IoChevronForward size={20} />
             </button>
           </div>
         )}
