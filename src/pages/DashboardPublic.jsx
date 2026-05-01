@@ -104,10 +104,10 @@ export default function Dashboard() {
           <IoEllipse size={isSmall ? 6 : 8} /> ONGOING
         </span>
       );
-    if (s === "COMPLETE")
+    if (s === "COMPLETED")
       return (
-        <span className={`bg-gray-100 text-gray-500 rounded ${sizeClass}`}>
-          COMPLETE
+        <span className={`bg-green-100 text-green-500 rounded ${sizeClass}`}>
+          COMPLETED
         </span>
       );
     if (s === "UPCOMING")
@@ -151,12 +151,12 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen font-body pb-16">
-      <main className="px-4 md:px-6">
+      <main className="">
         {/* Date Selector */}
         <DateSelector onApply={handleDateApply} />
 
         {/* Header */}
-        <div className="bg-surface-white border-b border-gray-100 mb-4 pb-2 md:pt-0">
+        <div className="bg-surface-white mb-4 pb-2 md:pt-0">
           <div className="px-6">
             <h1 className="text-headline-sm md:text-headline-md font-black text-gray-900 flex items-center gap-3 italic uppercase tracking-tighter font-display leading-none">
               <IoTrophySharp
@@ -328,51 +328,56 @@ export default function Dashboard() {
                                 const { date, time } = formatMatchDateTime(
                                   match.start_time,
                                 );
+
                                 return (
                                   <div
                                     key={match.id}
                                     className="border-b border-gray-50 last:border-0 hover:bg-gray-50/30 transition-colors"
                                   >
-                                    <div className="flex md:hidden items-center justify-between p-4 gap-2">
-                                      {/* Cột trái */}
-                                      <div className="flex flex-col shrink-0 min-w-[70px]">
-                                        <div className="flex flex-col">
-                                          <span className="text-gray-900 font-bold text-[10px] leading-tight">
-                                            {time}{" "}
-                                            {date
-                                              .split("/")
-                                              .slice(0, 2)
-                                              .join("/")}
-                                          </span>
-                                          <span className="text-gray-400 text-[8px] uppercase leading-tight mt-0.5">
-                                            {match.stadium}
+                                    <div className="md:hidden grid grid-cols-4 items-center p-4 gap-1">
+                                      {/* Thời gian & Sân */}
+                                      <div className="flex flex-col shrink-0 overflow-hidden">
+                                        <span className="text-gray-900 font-bold text-[10px] leading-tight">
+                                          {time}{" "}
+                                          {date
+                                            .split("/")
+                                            .slice(0, 2)
+                                            .join("/")}
+                                        </span>
+                                        <span className="text-gray-400 text-[8px] uppercase leading-tight mt-0.5 break-words">
+                                          {match.stadium}
+                                        </span>
+                                      </div>
+
+                                      {/*  Đội nhà */}
+                                      <div className="flex justify-center w-full">
+                                        <TeamDisplay
+                                          name={match.home_team?.name}
+                                          logoUrl={match.home_team?.logo}
+                                          teamId={match.home_team?.id}
+                                          mobileVertical={true}
+                                        />
+                                      </div>
+
+                                      {/*  Tỉ số  */}
+                                      <div className="flex justify-center">
+                                        <div className="shrink-0 bg-gradient-to-r from-[#ff4d2d] to-[#ff8c00] px-3 py-1.5 rounded-full shadow-md shadow-orange-100 min-w-[55px] text-center">
+                                          <span className="text-white font-black text-sm font-display tracking-widest leading-none">
+                                            {match.home_score}-
+                                            {match.away_score}
                                           </span>
                                         </div>
                                       </div>
 
-                                      {/* Đội nhà: Truyền mobileVertical={true} để dóng hàng dọc */}
-                                      <TeamDisplay
-                                        name={match.home_team?.name}
-                                        logoUrl={match.home_team?.logo}
-                                        teamId={match.home_team?.id}
-                                        mobileVertical={true}
-                                      />
-
-                                      {/* Tỉ số */}
-                                      <div className="shrink-0 bg-gradient-to-r from-[#ff4d2d] to-[#ff8c00] px-3 py-1.5 rounded-full shadow-md shadow-orange-100">
-                                        <span className="text-white font-black text-base font-display tracking-widest leading-none">
-                                          {match.home_score} -{" "}
-                                          {match.away_score}
-                                        </span>
+                                      {/* Đội khách */}
+                                      <div className="flex justify-center w-full">
+                                        <TeamDisplay
+                                          name={match.away_team?.name}
+                                          logoUrl={match.away_team?.logo}
+                                          teamId={match.away_team?.id}
+                                          mobileVertical={true}
+                                        />
                                       </div>
-
-                                      {/* Đội khách: Truyền mobileVertical={true} để dóng hàng dọc */}
-                                      <TeamDisplay
-                                        name={match.away_team?.name}
-                                        logoUrl={match.away_team?.logo}
-                                        teamId={match.away_team?.id}
-                                        mobileVertical={true}
-                                      />
                                     </div>
 
                                     <div className="hidden md:grid md:grid-cols-3 items-center py-6">
